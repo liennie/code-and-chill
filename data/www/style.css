@@ -1,0 +1,377 @@
+* {
+	box-sizing: border-box;
+}
+
+:root {
+	--max-width: 100ch;
+
+	--line: #000;
+
+	--color: #000;
+	--color-inactive: #666;
+	--color-em-shadow: rgba(0,0,0,0.3);
+
+	--bg: #fff;
+	--bg-code: #f9f9f9;
+	--bg-btn: #fff;
+	--bg-inactive: #e6e6e6;
+	--bg-gold: linear-gradient(135deg,#fff7dc 0 60%, #ffd700 70%);
+	--bg-silver: linear-gradient(135deg,#f6f7f8 0 60%, #c8c8c8 70%);
+
+	--p-link: #0645ad;
+	--p-link-hover: #0b66ff;
+	--p-link-visited: #4b0082;
+}
+
+html.dark {
+	--bg: #121316;
+	--bg-code: #161718;
+	--bg-btn: #141617;
+	--line: #d0d0d0;
+	--color: #e8e8e8;
+	--color-inactive: #6b6b6b;
+	--color-em-shadow: rgba(255,255,255,0.8);
+	--bg-inactive: #171717;
+	--bg-gold: linear-gradient(135deg, #5a3700 0 60%, #d49f00 70%);
+	--bg-silver: linear-gradient(135deg,#2b2d30 0 60%, #6e6f72 70%);
+
+	--p-link: #7fb3ff;
+	--p-link-hover: #a7c9ff;
+	--p-link-visited: #b39ddb;
+}
+
+body, div, pre, code, span, .topnav a, .leftmenu a, input, button, header, nav, aside, section, article {
+	--td: 0.2s;
+	transition: color var(--td), background-color var(--td), border-color var(--td), box-shadow var(--td);
+}
+
+.dark-switch {
+	display: inline-flex;
+	align-items: center;
+	margin-left: 0.6rem;
+}
+
+.dark-switch input {
+	display: none;
+}
+
+.dark-switch .switch {
+	color: inherit;
+	text-decoration: none;
+	padding: 0.35rem 0.6rem;
+	border: 1px solid var(--line);
+	background: var(--bg-btn);
+	display: inline-flex;
+	align-items: center;
+	height: 34px;
+	cursor: pointer;
+}
+
+.dark-switch .switch:hover {
+	text-decoration: underline;
+}
+
+.dark-switch input + .switch {
+	background: linear-gradient(135deg,#fff,#ccc);
+}
+
+.dark-switch input:checked + .switch {
+	background: linear-gradient(135deg,#444,#000);
+}
+
+.dark-switch .switch .icon {
+	display: inline-block;
+	text-align: center;
+	width: 24px;
+}
+
+html,body {
+	height: 100%;
+}
+
+body {
+	margin: 0;
+	font-family: "Courier New", ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+	background: var(--bg);
+	color: var(--color);
+}
+
+.page {
+	display: flex;
+	flex-direction: column;
+	min-height: 100vh;
+}
+
+.topbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0.6rem 1rem;
+	border-bottom: 2px solid var(--line);
+	clip-path: polygon(0 0, calc(100% - 1.2rem) 0, 100% 1.2rem, 100% 100%, 0 100%);
+}
+
+.brand {
+	font-weight: 700;
+}
+
+.brand-link {
+	color: inherit;
+	text-decoration: none;
+}
+
+.brand-link:hover {
+	text-decoration: underline;
+}
+
+.topnav {
+	display: flex;
+	gap: 1rem;
+	align-items: center;
+	flex-wrap: wrap;
+	justify-content: right;
+}
+
+.topnav a {
+	color: inherit;
+	text-decoration: none;
+	padding: 0.35rem 0.6rem;
+	border: 1px solid var(--line);
+	background: var(--bg-btn);
+	display: inline-flex;
+	align-items: center;
+	height: 34px;
+}
+
+.topnav a:hover {
+	text-decoration: underline;
+}
+
+.topnav a.profile {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	padding: 0 0.6rem 0 0;
+}
+
+.topnav img {
+	width: 28px;
+	height: 28px;
+	margin: 2px;
+	object-fit: cover;
+	border: 1px solid var(--line);
+	display: block;
+}
+
+.content {
+	display: flex;
+	gap: 1rem;
+	padding: 1rem;
+	flex: 1;
+}
+
+.leftmenu {
+	order: 2;
+	border-left: 2px solid var(--line);
+	padding-left: 1rem;
+	position: sticky;
+	top: 1rem;
+	max-height: calc(100vh - 2rem);
+}
+
+.leftmenu h3 {
+	margin-top: 0;
+}
+
+.leftmenu ul {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.leftmenu li {
+	padding: 0;
+	margin: 0;
+}
+
+.leftmenu li > a, .leftmenu li > span {
+	min-width: 42ch;
+	display: flex;
+	gap: 3ch;
+	justify-content: space-between;
+	align-items: center;
+	padding: 0.5rem;
+	border: 1px solid var(--line);
+	color: inherit;
+	text-decoration: none;
+	overflow: hidden;
+}
+
+.leftmenu li > a:hover span.day-label {
+	text-decoration: underline;
+}
+
+.leftmenu li.solved-both > a {
+	background: var(--bg-gold);
+}
+
+.leftmenu li.solved-one > a {
+	background: var(--bg-silver);
+}
+
+.leftmenu li.open > a {
+	background: var(--bg-btn);
+}
+
+.leftmenu li.closed > a {
+	background: var(--bg-inactive);
+	color: var(--color-inactive);
+	border-style: dashed;
+	cursor: default;
+	pointer-events: none;
+}
+
+.leftmenu li.closed > a:hover span.day-label {
+	text-decoration: none;
+}
+
+.center {
+	flex: 1;
+	display: flex;
+	justify-content: center;
+}
+
+article {
+	max-width: var(--max-width);
+	width: 100%;
+	padding: 1rem;
+	border: 2px solid var(--line);
+	position: relative;
+	line-height: 1.5;
+}
+
+article h1 {
+	margin: 0 0 0.25rem 0;
+	border-bottom: 1px dashed var(--line);
+}
+
+article ul {
+	list-style: none;
+	margin-left: 0;
+	padding-left: 2ch;
+}
+
+article ul li {
+	position: relative;
+	padding-left: 2ch;
+}
+
+article ul li:before {
+	content: "-";
+	position: absolute;
+	left: 0;
+	top: 0;
+}
+
+article pre {
+	background: var(--bg-code);
+	padding: 1ch;
+	margin: -1px;
+	border: 1px solid var(--line);
+	overflow: auto;
+	font-family: inherit;
+}
+
+article code {
+	background: var(--bg-code);
+	padding: 1px;
+	margin: -2px;
+	border: 1px solid var(--line);
+	font-family: inherit;
+}
+
+article input {
+	background: var(--bg-code);
+	min-width: 20ch;
+	font-family: inherit;
+	font-size: inherit;
+}
+
+article button {
+	background: var(--bg-code);
+	font-family: inherit;
+	font-size: inherit;
+}
+
+article a {
+	color: var(--p-link);
+	text-decoration: underline dotted;
+}
+
+article a:hover {
+	color: var(--p-link-hover);
+	text-decoration: underline;
+}
+
+article a:visited {
+	color: var(--p-link-visited);
+}
+
+article {
+	font-size: 12pt;
+}
+
+article em {
+	font-weight: 600;
+	text-shadow: 0 0 2px var(--color-em-shadow);
+}
+
+.output {
+	flex: 1;
+}
+
+.output h4 {
+	margin: 0 0 0.25rem 0;
+}
+
+.answer {
+	padding-top: 0.6rem;
+	border-top: 1px dashed var(--line);
+}
+
+.answer input, .answer button {
+	color: inherit;
+	background: var(--bg-btn);
+	padding: 0.4rem;
+	border: 1px solid var(--line);
+}
+
+@media (max-width:900px) {
+	.content {
+		flex-direction: column;
+	}
+	.leftmenu {
+		order: 0;
+		position: static;
+		width: 100%;
+		border-left: none;
+		border-bottom: 2px solid var(--line);
+		padding-bottom: 0.5rem;
+		padding-left: 0;
+		max-height: none;
+		overflow: visible;
+	}
+	.leftmenu li > a, .leftmenu li > span {
+		min-width: 0;
+	}
+}
+
+@media (max-height:600px) {
+	.leftmenu {
+		position: static;
+		max-height: none;
+	}
+}
