@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+GOBIN=$PWD/bin go install ./...
