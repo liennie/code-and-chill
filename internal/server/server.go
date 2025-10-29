@@ -59,6 +59,10 @@ func New(config Config, db *db.DB) *Server {
 	}
 }
 
+func ptr[T any](v T) *T {
+	return &v
+}
+
 func newHandler(config Config, db *db.DB) (h http.Handler) {
 	fsys := os.DirFS(filepath.FromSlash(config.DataDir))
 
@@ -69,6 +73,10 @@ func newHandler(config Config, db *db.DB) (h http.Handler) {
 		slog.Info("registering handler", "method", method, "path", path, "src", src)
 		mux.Handle(method+" "+path, handler)
 	}
+
+	page := templateHandler(dataFile(fsys, "templates/page.html"))
+
+	// TODO notFoundHandler as a templated page
 
 	registerHandler("GET", "/", "404.html", notFoundHandler(dataFile(fsys, "404.html")))
 
@@ -95,11 +103,85 @@ func newHandler(config Config, db *db.DB) (h http.Handler) {
 	}
 
 	// templates
+	test, _ := dataFile(fsys, "md/test.md")
+	registerHandler("GET", "/test", "md/test.md", page(func(ctx context.Context) (int, any) {
+		return http.StatusOK, pageData{
+			Title:  "Test Page",
+			Year:   2026,
+			Puzzle: 3,
+			User: &userData{
+				Name:   "Liennie",
+				Avatar: "https://placedog.net/40/40",
+			},
+			Content: contentData{
+				Parts: []partData{
+					{
+						MD:         string(test),
+						Answer:     "123",
+						WantAnswer: true,
+					},
+					{
+						MD:         `# Part 2`,
+						WantAnswer: true,
+					},
+				},
+			},
+			Puzzles: []puzzleData{
+				{
+					Class: puzzleClassSolvedBoth,
+					Name:  "01",
+				},
+				{
+					Class: puzzleClassSolvedOne,
+					Name:  "02",
+				},
+				{
+					Class: puzzleClassUnlocked,
+					Name:  "03: Binary Diagnostic",
+				},
+				{
+					Class:  puzzleClassLocked,
+					Name:   "04: Lorem ipsum dolor sit amet",
+					Unlock: ptr(time.Date(2025, 10, 29, 1, 9, 0, 0, time.Local)),
+				},
+				{
+					Class:  puzzleClassLocked,
+					Name:   "05",
+					Unlock: ptr(time.Date(2025, 10, 29, 12, 0, 0, 0, time.Local)),
+				},
+				{
+					Class:  puzzleClassLocked,
+					Name:   "06",
+					Unlock: ptr(time.Date(2025, 10, 30, 1, 9, 0, 0, time.Local)),
+				},
+				{
+					Class:  puzzleClassLocked,
+					Name:   "07",
+					Unlock: ptr(time.Date(2025, 10, 30, 12, 0, 0, 0, time.Local)),
+				},
+				{
+					Class:  puzzleClassLocked,
+					Name:   "08",
+					Unlock: ptr(time.Date(2025, 10, 31, 0, 0, 0, 0, time.Local)),
+				},
+				{
+					Class:  puzzleClassLocked,
+					Name:   "09",
+					Unlock: ptr(time.Date(2025, 10, 31, 12, 0, 0, 0, time.Local)),
+				},
+				{
+					Class:  puzzleClassLocked,
+					Name:   "10",
+					Unlock: ptr(time.Date(2025, 11, 1, 0, 0, 0, 0, time.Local)),
+				},
+			},
+		}
+	}))
 
 	// middleware
 
 	handler := http.Handler(mux)
-	handler = newRecover(handler, internalServerErrorHandler(dataFile(fsys, "static/500.html")))
+	handler = newRecover(handler, internalServerErrorHandler(dataFile(fsys, "500.html")))
 	handler = robotsMiddleware(handler)
 	handler = hostMiddleware(config.Host, handler)
 	handler = logMiddleware(handler)

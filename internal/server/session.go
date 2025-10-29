@@ -9,6 +9,6 @@ func sessionMiddleware(db *db.DB, next http.Handler) http.Handler {
 	// TODO session expiration
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
+		next.ServeHTTP(w, r)
 	})
 }

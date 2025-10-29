@@ -179,10 +179,6 @@ body {
 	max-height: calc(100vh - 2rem);
 }
 
-.leftmenu h3 {
-	margin-top: 0;
-}
-
 .leftmenu ul {
 	list-style: none;
 	padding: 0;
@@ -210,7 +206,11 @@ body {
 	overflow: hidden;
 }
 
-.leftmenu li > a:hover span.day-label {
+.leftmenu li > a:hover span.puzzle-label {
+	text-decoration: underline;
+}
+
+.leftmenu li.active > a span.puzzle-label {
 	text-decoration: underline;
 }
 
@@ -218,15 +218,25 @@ body {
 	background: var(--bg-gold);
 }
 
+.leftmenu li.solved-both .hint::before {
+	content: "✔✔";
+	line-height: 1;
+}
+
 .leftmenu li.solved-one > a {
 	background: var(--bg-silver);
 }
 
-.leftmenu li.open > a {
+.leftmenu li.solved-one .hint::before {
+	content: "✔";
+	line-height: 1;
+}
+
+.leftmenu li.unlocked > a {
 	background: var(--bg-btn);
 }
 
-.leftmenu li.closed > a {
+.leftmenu li.locked > a {
 	background: var(--bg-inactive);
 	color: var(--color-inactive);
 	border-style: dashed;
@@ -234,7 +244,7 @@ body {
 	pointer-events: none;
 }
 
-.leftmenu li.closed > a:hover span.day-label {
+.leftmenu li.locked > a:hover span.puzzle-label {
 	text-decoration: none;
 }
 
@@ -256,6 +266,14 @@ article {
 article h1 {
 	margin: 0 0 0.25rem 0;
 	border-bottom: 1px dashed var(--line);
+}
+
+article h2 {
+	margin: 0 0 0.25rem 0;
+}
+
+article p {
+	margin: 1rem 0;
 }
 
 article ul {
@@ -340,6 +358,10 @@ article em {
 .answer {
 	padding-top: 0.6rem;
 	border-top: 1px dashed var(--line);
+}
+
+div.answer {
+	padding: 1.6rem 0 3rem 0;
 }
 
 .answer input, .answer button {

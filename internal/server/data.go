@@ -1,15 +1,20 @@
 package server
 
 import (
+	"context"
 	"crypto/md5"
 	"encoding/base64"
 	"fmt"
+	"html/template"
 	"io/fs"
 	"mime"
 	"net/http"
 	"path"
 	"strconv"
+	"time"
 	"woc/internal/ctxlog"
+
+	"github.com/Masterminds/sprig/v3"
 )
 
 func dataFile(fsys fs.FS, file string) ([]byte, string) {
@@ -48,24 +53,39 @@ func cachedHandler(content []byte, ct string) http.Handler {
 	})
 }
 
+var extraFuncs = template.FuncMap{
+	"rfc3339Time": func(t time.Time) string {
+		return t.Format(time.RFC3339)
+	},
+	"renderMD": func(md string) string {
+		return md // TODO
+	},
+}
+
+func templateHandler(content []byte, ct string) func(func(ctx context.Context) (int, any)) http.Handler {
+	t := template.Must(template.New("page").Funcs(sprig.HtmlFuncMap()).Funcs(extraFuncs).Parse(string(content)))
+
+	return func(dataFunc func(ctx context.Context) (int, any)) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			status, data := dataFunc(r.Context())
+			w.Header().Set("Content-Type", ct)
+			w.WriteHeader(status)
+			if err := t.Execute(w, data); err != nil {
+				log := ctxlog.Get(r.Context())
+				log.Error("failed to write response", "error", err)
+				return
+			}
+			// TODO handle errors
+			// TODO handle custom status codes
+		})
+	}
+}
+
 func notFoundHandler(content []byte, ct string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", ct)
 		w.Header().Set("Content-Length", strconv.Itoa(len(content)))
 		w.WriteHeader(http.StatusNotFound)
-		if _, err := w.Write(content); err != nil {
-			log := ctxlog.Get(r.Context())
-			log.Error("failed to write response", "error", err)
-			return
-		}
-	})
-}
-
-func tooManyRequestsHandler(content []byte, ct string) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", ct)
-		w.Header().Set("Content-Length", strconv.Itoa(len(content)))
-		w.WriteHeader(http.StatusTooManyRequests)
 		if _, err := w.Write(content); err != nil {
 			log := ctxlog.Get(r.Context())
 			log.Error("failed to write response", "error", err)
@@ -85,4 +105,41 @@ func internalServerErrorHandler(content []byte, ct string) http.Handler {
 			return
 		}
 	})
+}
+
+type userData struct {
+	Name   string
+	Avatar string
+}
+
+type partData struct {
+	MD         string
+	Answer     string
+	WantAnswer bool
+}
+
+type contentData struct {
+	Parts []partData
+}
+
+const (
+	puzzleClassLocked     = "locked"
+	puzzleClassUnlocked   = "unlocked"
+	puzzleClassSolvedOne  = "solved-one"
+	puzzleClassSolvedBoth = "solved-both"
+)
+
+type puzzleData struct {
+	Name   string
+	Class  string
+	Unlock *time.Time
+}
+
+type pageData struct {
+	Title   string
+	Year    int
+	Puzzle  int
+	User    *userData
+	Content contentData
+	Puzzles []puzzleData
 }

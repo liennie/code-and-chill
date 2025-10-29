@@ -39,3 +39,45 @@ document.addEventListener('click', function (ev) {
 		}
 	} catch (e) { }
 }, true);
+
+(function () {
+	const HINT_SEL = '.leftmenu .hint[data-unlock]';
+	const nodes = Array.from(document.querySelectorAll(HINT_SEL));
+	if (!nodes.length) return;
+
+	function formatHMS(ms) {
+		if (ms <= 0) return '00:00:00';
+		const s = Math.ceil(ms / 1000);
+		const hh = String(Math.floor(s / 3600)).padStart(2, '0');
+		const mm = String(Math.floor((s % 3600) / 60)).padStart(2, '0');
+		const ss = String(s % 60).padStart(2, '0');
+		return `${hh}:${mm}:${ss}`;
+	}
+
+	function updateCountdown() {
+		const now = Date.now();
+		nodes.forEach(el => {
+			const iso = el.getAttribute('data-unlock');
+			if (!iso) return;
+			let t = Date.parse(iso);
+			if (isNaN(t)) return;
+			const diff = t - now;
+			if (diff > 24 * 3600 * 1000) {
+				el.textContent = '';
+			} else if (diff <= 0) {
+				el.textContent = '';
+				// toggle classes on closest li
+				const li = el.closest('li');
+				if (li && li.classList.contains('locked')) {
+					li.classList.remove('locked');
+					li.classList.add('unlocked');
+				}
+			} else {
+				el.textContent = formatHMS(diff);
+			}
+		});
+	}
+
+	updateCountdown();
+	setInterval(updateCountdown, 1000);
+})();
