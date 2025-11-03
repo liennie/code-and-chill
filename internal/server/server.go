@@ -16,6 +16,7 @@ import (
 	"time"
 	"woc/internal/ctxlog"
 	"woc/internal/db"
+	"woc/internal/puzzles"
 
 	"golang.org/x/sync/errgroup"
 )
@@ -28,7 +29,7 @@ type Server struct {
 	shutdownTimeout time.Duration
 }
 
-func New(config Config, db *db.DB) *Server {
+func New(config Config, puzzles *puzzles.Puzzles, db *db.DB) *Server {
 	if config.Port == 0 {
 		panic("server: port is required")
 	}
@@ -52,7 +53,7 @@ func New(config Config, db *db.DB) *Server {
 
 	return &Server{
 		addr:            fmt.Sprintf("%s:%d", config.Host, config.Port),
-		handler:         newHandler(config, db),
+		handler:         newHandler(config, puzzles, db),
 		tlsLoader:       loader,
 		httpsRedirect:   config.HTTPSRedirect,
 		shutdownTimeout: config.ShutdownTimeout,
@@ -63,7 +64,7 @@ func ptr[T any](v T) *T {
 	return &v
 }
 
-func newHandler(config Config, db *db.DB) (h http.Handler) {
+func newHandler(config Config, puzzles *puzzles.Puzzles, db *db.DB) (h http.Handler) {
 	fsys := os.DirFS(filepath.FromSlash(config.DataDir))
 
 	// handlers
@@ -104,8 +105,11 @@ func newHandler(config Config, db *db.DB) (h http.Handler) {
 
 	// templates
 	test, _ := dataFile(fsys, "md/test.md")
-	registerHandler("GET", "/test", "md/test.md", page(func(ctx context.Context) (int, any) {
+	registerHandler("GET", "/test", "md/test.md", page(func(r *http.Request) (int, any) {
+		pd := pageDataFromRequest(r)
+
 		return http.StatusOK, pageData{
+			Dark:   pd.Dark,
 			Title:  "Test Page",
 			Year:   2026,
 			Puzzle: 3,
@@ -117,12 +121,7 @@ func newHandler(config Config, db *db.DB) (h http.Handler) {
 				Parts: []partData{
 					{
 						MD:         string(test),
-						Answer:     "123",
-						WantAnswer: true,
-					},
-					{
-						MD:         `# Part 2`,
-						WantAnswer: true,
+						WantAnswer: false,
 					},
 				},
 			},
@@ -142,37 +141,37 @@ func newHandler(config Config, db *db.DB) (h http.Handler) {
 				{
 					Class:  puzzleClassLocked,
 					Name:   "04: Lorem ipsum dolor sit amet",
-					Unlock: ptr(time.Date(2025, 10, 29, 1, 9, 0, 0, time.Local)),
+					Unlock: ptr(time.Now().Truncate(24 * time.Hour).Add(0 * time.Hour)),
 				},
 				{
 					Class:  puzzleClassLocked,
 					Name:   "05",
-					Unlock: ptr(time.Date(2025, 10, 29, 12, 0, 0, 0, time.Local)),
+					Unlock: ptr(time.Now().Truncate(24 * time.Hour).Add(12 * time.Hour)),
 				},
 				{
 					Class:  puzzleClassLocked,
 					Name:   "06",
-					Unlock: ptr(time.Date(2025, 10, 30, 1, 9, 0, 0, time.Local)),
+					Unlock: ptr(time.Now().Truncate(24 * time.Hour).Add(24 * time.Hour)),
 				},
 				{
 					Class:  puzzleClassLocked,
 					Name:   "07",
-					Unlock: ptr(time.Date(2025, 10, 30, 12, 0, 0, 0, time.Local)),
+					Unlock: ptr(time.Now().Truncate(24 * time.Hour).Add(26 * time.Hour)),
 				},
 				{
 					Class:  puzzleClassLocked,
 					Name:   "08",
-					Unlock: ptr(time.Date(2025, 10, 31, 0, 0, 0, 0, time.Local)),
+					Unlock: ptr(time.Now().Truncate(24 * time.Hour).Add(48 * time.Hour)),
 				},
 				{
 					Class:  puzzleClassLocked,
 					Name:   "09",
-					Unlock: ptr(time.Date(2025, 10, 31, 12, 0, 0, 0, time.Local)),
+					Unlock: ptr(time.Now().Truncate(24 * time.Hour).Add(60 * time.Hour)),
 				},
 				{
 					Class:  puzzleClassLocked,
 					Name:   "10",
-					Unlock: ptr(time.Date(2025, 11, 1, 0, 0, 0, 0, time.Local)),
+					Unlock: ptr(time.Now().Truncate(24 * time.Hour).Add(72 * time.Hour)),
 				},
 			},
 		}
@@ -181,11 +180,13 @@ func newHandler(config Config, db *db.DB) (h http.Handler) {
 	// middleware
 
 	handler := http.Handler(mux)
-	handler = newRecover(handler, internalServerErrorHandler(dataFile(fsys, "500.html")))
+	handler = darkModeMiddleware(handler)
+	handler = sessionMiddleware(db, handler)
 	handler = robotsMiddleware(handler)
 	handler = hostMiddleware(config.Host, handler)
+	handler = pageDataBaseMiddleware(handler)
+	handler = newRecover(handler, internalServerErrorHandler(dataFile(fsys, "500.html")))
 	handler = logMiddleware(handler)
-	handler = sessionMiddleware(db, handler)
 
 	return handler
 }

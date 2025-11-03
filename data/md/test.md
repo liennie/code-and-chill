@@ -1,4 +1,4 @@
-#03: Binary Diagnostic (example)
+# 03: Binary Diagnostic (example)
 
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce dolor neque, fermentum sed molestie eget, viverra vel elit. Morbi felis sapien, malesuada eget lectus rutrum, volutpat auctor turpis. Nulla facilisi. Pellentesque id feugiat arcu. Ut sit amet tellus dignissim, accumsan nibh vitae, efficitur enim. Morbi rhoncus felis ac tellus facilisis dictum. Nam vitae facilisis odio.
 

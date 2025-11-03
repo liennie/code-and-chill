@@ -1,7 +1,7 @@
 package server
 
 import (
-	"context"
+	"bytes"
 	"crypto/md5"
 	"encoding/base64"
 	"fmt"
@@ -15,6 +15,9 @@ import (
 	"woc/internal/ctxlog"
 
 	"github.com/Masterminds/sprig/v3"
+	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/parser"
+	"github.com/yuin/goldmark/renderer/html"
 )
 
 func dataFile(fsys fs.FS, file string) ([]byte, string) {
@@ -57,17 +60,33 @@ var extraFuncs = template.FuncMap{
 	"rfc3339Time": func(t time.Time) string {
 		return t.Format(time.RFC3339)
 	},
-	"renderMD": func(md string) string {
-		return md // TODO
+	"renderMD": func(md string) (template.HTML, error) {
+		gm := goldmark.New(
+			// goldmark.WithExtensions(
+			// 	extension.Strikethrough,
+			// ),
+			goldmark.WithParserOptions(
+				parser.WithAutoHeadingID(),
+				parser.WithAttribute(),
+			),
+			goldmark.WithRendererOptions(
+				html.WithHardWraps(),
+			),
+		)
+		var buf bytes.Buffer
+		if err := gm.Convert([]byte(md), &buf); err != nil {
+			return "", fmt.Errorf("markdown: %w", err)
+		}
+		return template.HTML(buf.String()), nil
 	},
 }
 
-func templateHandler(content []byte, ct string) func(func(ctx context.Context) (int, any)) http.Handler {
+func templateHandler(content []byte, ct string) func(func(r *http.Request) (int, any)) http.Handler {
 	t := template.Must(template.New("page").Funcs(sprig.HtmlFuncMap()).Funcs(extraFuncs).Parse(string(content)))
 
-	return func(dataFunc func(ctx context.Context) (int, any)) http.Handler {
+	return func(dataFunc func(r *http.Request) (int, any)) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			status, data := dataFunc(r.Context())
+			status, data := dataFunc(r)
 			w.Header().Set("Content-Type", ct)
 			w.WriteHeader(status)
 			if err := t.Execute(w, data); err != nil {
@@ -75,8 +94,6 @@ func templateHandler(content []byte, ct string) func(func(ctx context.Context) (
 				log.Error("failed to write response", "error", err)
 				return
 			}
-			// TODO handle errors
-			// TODO handle custom status codes
 		})
 	}
 }
@@ -105,41 +122,4 @@ func internalServerErrorHandler(content []byte, ct string) http.Handler {
 			return
 		}
 	})
-}
-
-type userData struct {
-	Name   string
-	Avatar string
-}
-
-type partData struct {
-	MD         string
-	Answer     string
-	WantAnswer bool
-}
-
-type contentData struct {
-	Parts []partData
-}
-
-const (
-	puzzleClassLocked     = "locked"
-	puzzleClassUnlocked   = "unlocked"
-	puzzleClassSolvedOne  = "solved-one"
-	puzzleClassSolvedBoth = "solved-both"
-)
-
-type puzzleData struct {
-	Name   string
-	Class  string
-	Unlock *time.Time
-}
-
-type pageData struct {
-	Title   string
-	Year    int
-	Puzzle  int
-	User    *userData
-	Content contentData
-	Puzzles []puzzleData
 }

@@ -9,7 +9,7 @@
 
 	--color: #000;
 	--color-inactive: #666;
-	--color-em-shadow: rgba(0,0,0,0.3);
+	--color-em-shadow: rgba(0,0,0,0.5);
 
 	--bg: #fff;
 	--bg-code: #f9f9f9;
@@ -30,7 +30,7 @@ html.dark {
 	--line: #d0d0d0;
 	--color: #e8e8e8;
 	--color-inactive: #6b6b6b;
-	--color-em-shadow: rgba(255,255,255,0.8);
+	--color-em-shadow: rgba(255,255,255,0.5);
 	--bg-inactive: #171717;
 	--bg-gold: linear-gradient(135deg, #5a3700 0 60%, #d49f00 70%);
 	--bg-silver: linear-gradient(135deg,#2b2d30 0 60%, #6e6f72 70%);
@@ -85,7 +85,7 @@ body, div, pre, code, span, .topnav a, .leftmenu a, input, button, header, nav, 
 	width: 24px;
 }
 
-html,body {
+html, body {
 	height: 100%;
 }
 
@@ -94,6 +94,10 @@ body {
 	font-family: "Courier New", ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
 	background: var(--bg);
 	color: var(--color);
+}
+
+a {
+	text-underline-offset: 0.2rem;
 }
 
 .page {
@@ -261,6 +265,7 @@ article {
 	border: 2px solid var(--line);
 	position: relative;
 	line-height: 1.5;
+	font-size: 12pt;
 }
 
 article h1 {
@@ -309,6 +314,14 @@ article code {
 	margin: -2px;
 	border: 1px solid var(--line);
 	font-family: inherit;
+	white-space: pre;
+}
+
+article pre code {
+	background: transparent;
+	padding: 0;
+	margin: 0;
+	border: 0;
 }
 
 article input {
@@ -334,17 +347,14 @@ article a:hover {
 	text-decoration: underline;
 }
 
-article a:visited {
+/* article a:visited {
 	color: var(--p-link-visited);
-}
-
-article {
-	font-size: 12pt;
-}
+} */
 
 article em {
 	font-weight: 600;
-	text-shadow: 0 0 2px var(--color-em-shadow);
+	text-shadow: 1px 1px 1px var(--color-em-shadow);
+	font-style: normal;
 }
 
 .output {

@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"woc/internal/ctxlog"
 	"woc/internal/db"
+	"woc/internal/puzzles"
 	"woc/internal/rec"
 	"woc/internal/server"
 )
@@ -22,12 +23,15 @@ func run(ctx context.Context, config string) (err error) {
 		return fmt.Errorf("config: %w", err)
 	}
 
+	logger.Info("loading puzzles")
+	puzzles := puzzles.Load(c.Puzzles)
+
 	logger.Info("opening db")
 	db := db.Open(c.DB)
 	defer ctxlog.Close(ctx, "db", db)
 
 	logger.Info("starting server")
-	srv := server.New(c.Server, db)
+	srv := server.New(c.Server, puzzles, db)
 
 	return srv.Run(ctx)
 }

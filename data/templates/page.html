@@ -1,26 +1,26 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en" {{- if .Dark }} class="dark" {{- end }}>
 
 <head>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1" />
 	<title>{{ $.Title }} - Week of Code {{ $.Year }}</title>
-	<link rel="stylesheet" href="style.css">
-	<script src="script.js" defer async></script>
+	<link rel="stylesheet" href="/style.css">
+	<script src="/script.js" defer async></script>
 </head>
 
 <body>
 	<div class="page">
 		<header class="topbar">
-			<div class="brand"><a href="#" class="brand-link">Week of Code</a></div>
+			<div class="brand"><a href="/{{ $.Year }}" class="brand-link">Week of Code</a></div>
 			<nav class="topnav">
-				<a href="#">Home</a>
-				<a href="#">Rules</a>
-				<a href="#">Leaderboard</a>
+				<a href="/{{ $.Year }}">Home</a>
+				<a href="/{{ $.Year }}/rules">Rules</a>
+				<a href="/{{ $.Year }}/leaderboard">Leaderboard</a>
 				{{- if .User }}
-				<a href="#" class="profile"><img src="{{ .User.Avatar }}" alt="avatar"><span>{{ .User.Name }}</span></a>
+				<a href="/{{ $.Year }}/profile" class="profile"><img src="{{ .User.Avatar }}" alt="avatar"><span>{{ .User.Name }}</span></a>
 				{{- else }}
-				<a href="#">Log in</a>
+				<a href="/{{ $.Year }}/login">Log in</a>
 				{{- end }}
 				<label class="dark-switch" title="Toggle dark mode">
 					<input id="darkmode-toggle" type="checkbox" aria-label="Toggle dark mode">
@@ -33,7 +33,7 @@
 			<aside class="leftmenu">
 				<ul>
 					{{- range $idx, $_ := .Puzzles }}
-					<li class="{{ .Class }}{{ if $idx | add 1 | eq $.Puzzle }} active{{ end }}"><a href="/{{ $.Year }}/{{ $idx | add 1 }}"><span class="puzzle-label">{{ .Name }}</span><span class="hint" {{- if .Unlock }} data-unlock="{{ .Unlock | rfc3339Time }}" {{- end }}></span></a></li>
+					<li class="{{ .Class }}{{ if $idx | add 1 | eq $.Puzzle }} active{{ end }}"><a href="/{{ $.Year }}/puzzle/{{ $idx | add 1 }}"><span class="puzzle-label">{{ .Name }}</span><span class="hint" {{- if .Unlock }} data-unlock="{{ .Unlock | rfc3339Time }}" {{- end }}></span></a></li>
 					{{- end }}
 				</ul>
 			</aside>
@@ -41,7 +41,7 @@
 			<section class="center">
 				<article>
 					{{- range $idx, $_ := .Content.Parts }}
-					{{- .MD | renderMD }}
+					{{- if .MD }}{{- .MD | renderMD }}{{- else }}{{- .HTML }}{{- end }}
 					{{- if .Answer }}
 					<div class="answer">Your answer was <code>{{ .Answer }}</code>.</div>
 					{{- else if .WantAnswer }}
@@ -55,7 +55,7 @@
 						<button type="submit">Submit</button>
 					</form>
 					{{- else }}
-					<div class="answer">You must log in to submit an answer.</div>
+					<div class="answer">You must <a href="/{{ $.Year }}/login">log in</a> to submit an answer.</div>
 					{{- end }}
 					{{- end }}
 					{{- end }}

@@ -6,14 +6,16 @@ import (
 	"os"
 	"woc/internal/ctxlog"
 	"woc/internal/db"
+	"woc/internal/puzzles"
 	"woc/internal/server"
 
 	"github.com/goccy/go-yaml"
 )
 
 type Config struct {
-	Server server.Config
-	DB     db.Config
+	Server  server.Config  `yaml:"server"`
+	DB      db.Config      `yaml:"db"`
+	Puzzles puzzles.Config `yaml:"puzzles"`
 }
 
 func LoadConfig(ctx context.Context, filename string) (Config, error) {
