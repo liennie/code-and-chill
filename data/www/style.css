@@ -368,10 +368,15 @@ article em {
 .answer {
 	padding-top: 0.6rem;
 	border-top: 1px dashed var(--line);
+	margin: 1rem 0;
 }
 
 div.answer {
-	padding: 1.6rem 0 3rem 0;
+	padding-bottom: 1rem;
+}
+
+div.answer:last-child {
+	padding-bottom: 0;
 }
 
 .answer input, .answer button {

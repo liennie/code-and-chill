@@ -20,14 +20,17 @@ import (
 	"github.com/yuin/goldmark/renderer/html"
 )
 
-func dataFile(fsys fs.FS, file string) ([]byte, string) {
+func readFile(fsys fs.FS, file string) []byte {
 	content, err := fs.ReadFile(fsys, file)
 	if err != nil {
 		panic(fmt.Errorf("server: read data file %q: %w", file, err))
 	}
+	return content
+}
 
+func dataFile(fsys fs.FS, file string) ([]byte, string) {
+	content := readFile(fsys, file)
 	ct := mime.TypeByExtension(path.Ext(file))
-
 	return content, ct
 }
 
@@ -81,10 +84,12 @@ var extraFuncs = template.FuncMap{
 	},
 }
 
-func templateHandler(content []byte, ct string) func(func(r *http.Request) (int, any)) http.Handler {
+type dataFunc func(r *http.Request) (int, any)
+
+func templateHandler(content []byte, ct string) func(dataFunc) http.Handler {
 	t := template.Must(template.New("page").Funcs(sprig.HtmlFuncMap()).Funcs(extraFuncs).Parse(string(content)))
 
-	return func(dataFunc func(r *http.Request) (int, any)) http.Handler {
+	return func(dataFunc dataFunc) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			status, data := dataFunc(r)
 			w.Header().Set("Content-Type", ct)
@@ -98,28 +103,14 @@ func templateHandler(content []byte, ct string) func(func(r *http.Request) (int,
 	}
 }
 
-func notFoundHandler(content []byte, ct string) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", ct)
-		w.Header().Set("Content-Length", strconv.Itoa(len(content)))
-		w.WriteHeader(http.StatusNotFound)
-		if _, err := w.Write(content); err != nil {
-			log := ctxlog.Get(r.Context())
-			log.Error("failed to write response", "error", err)
-			return
-		}
-	})
-}
-
-func internalServerErrorHandler(content []byte, ct string) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", ct)
-		w.Header().Set("Content-Length", strconv.Itoa(len(content)))
-		w.WriteHeader(http.StatusInternalServerError)
-		if _, err := w.Write(content); err != nil {
-			log := ctxlog.Get(r.Context())
-			log.Error("failed to write response", "error", err)
-			return
-		}
-	})
+func mdDataFunc(status int, title string, content []byte) dataFunc {
+	return func(r *http.Request) (int, any) {
+		pd := pageDataFromRequest(r)
+		pd.Title = title
+		pd.Content.Parts = []partData{{
+			MD:         string(content),
+			WantAnswer: false,
+		}}
+		return status, pd
+	}
 }

@@ -15,6 +15,7 @@ const (
 )
 
 type pageData struct {
+	Now     time.Time
 	Dark    bool
 	Title   string
 	Year    int
@@ -61,7 +62,9 @@ func pageDataFromRequest(r *http.Request) *pageData {
 func pageDataBaseMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		ctx = context.WithValue(ctx, pageDataKey, &pageData{})
+		ctx = context.WithValue(ctx, pageDataKey, &pageData{
+			Now: time.Now(),
+		})
 		r = r.Clone(ctx)
 		next.ServeHTTP(w, r)
 	})

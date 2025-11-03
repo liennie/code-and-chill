@@ -43,11 +43,14 @@
 					{{- range $idx, $_ := .Content.Parts }}
 					{{- if .MD }}{{- .MD | renderMD }}{{- else }}{{- .HTML }}{{- end }}
 					{{- if .Answer }}
-					<div class="answer">Your answer was <code>{{ .Answer }}</code>.</div>
+					<div class="answer">
+						<p>Your answer was <code>{{ .Answer }}</code>.</p>
+						<p>You can still <a href="/{{ $.Year }}/puzzle/{{ $.Puzzle }}/input" download>download your input</a>.</p>
+					</div>
 					{{- else if .WantAnswer }}
 					{{- if $.User }}
-					<form class="answer" action="/{{ $.Year }}/{{ $.Puzzle }}/answer" method="post">
-						<p><a href="/{{ $.Year }}/{{ $.Puzzle }}/input" download>Download your input</a>.</p>
+					<form class="answer" action="/{{ $.Year }}/puzzle/{{ $.Puzzle }}/answer" method="post">
+						<p><a href="/{{ $.Year }}/puzzle/{{ $.Puzzle }}/input" download>Download your input</a>.</p>
 						<input type="hidden" name="part" value="{{ $idx }}">
 						<label>Answer (part {{ $idx | add 1 }}):
 							<input name="answer" autocomplete="off">
@@ -55,7 +58,9 @@
 						<button type="submit">Submit</button>
 					</form>
 					{{- else }}
-					<div class="answer">You must <a href="/{{ $.Year }}/login">log in</a> to submit an answer.</div>
+					<div class="answer">
+						<p>You must <a href="/{{ $.Year }}/login">log in</a> to submit an answer.</p>
+					</div>
 					{{- end }}
 					{{- end }}
 					{{- end }}
