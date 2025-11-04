@@ -1,3 +1,18 @@
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: local('JetBrains Mono'), url('/JetBrainsMono-VariableFont_wght.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: italic;
+  font-weight: 100 800;
+  font-display: swap;
+  src: local('JetBrains Mono'), url('/JetBrainsMono-Italic-VariableFont_wght.ttf') format('truetype');
+}
+
 * {
 	box-sizing: border-box;
 }
@@ -5,10 +20,11 @@
 :root {
 	--max-width: 100ch;
 
-	--line: #000;
+	--line: #1b1e22;
 
-	--color: #000;
+	--color: #1b1e22;
 	--color-inactive: #666;
+	--color-em: #000;
 	--color-em-shadow: rgba(0,0,0,0.5);
 
 	--bg: #fff;
@@ -24,13 +40,16 @@
 }
 
 html.dark {
-	--bg: #121316;
+	--line: #d0e0f4;
+
+	--color: #d0e0f4;
+	--color-inactive: #6b6b6b;
+	--color-em: #fff;
+	--color-em-shadow: rgba(255,255,255,0.5);
+
+	--bg: #1b1e22;
 	--bg-code: #161718;
 	--bg-btn: #141617;
-	--line: #d0d0d0;
-	--color: #e8e8e8;
-	--color-inactive: #6b6b6b;
-	--color-em-shadow: rgba(255,255,255,0.5);
 	--bg-inactive: #171717;
 	--bg-gold: linear-gradient(135deg, #5a3700 0 60%, #d49f00 70%);
 	--bg-silver: linear-gradient(135deg,#2b2d30 0 60%, #6e6f72 70%);
@@ -91,7 +110,7 @@ html, body {
 
 body {
 	margin: 0;
-	font-family: "Courier New", ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+	font-family: "JetBrains Mono", "Courier New", ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
 	background: var(--bg);
 	color: var(--color);
 }
@@ -116,7 +135,7 @@ a {
 }
 
 .brand {
-	font-weight: 700;
+	font-weight: 800;
 }
 
 .brand-link {
@@ -353,7 +372,8 @@ article a:hover {
 
 article em {
 	font-weight: 600;
-	text-shadow: 1px 1px 1px var(--color-em-shadow);
+	color: var(--color-em);
+	text-shadow: 0 0 1px var(--color-em-shadow);
 	font-style: normal;
 }
 
