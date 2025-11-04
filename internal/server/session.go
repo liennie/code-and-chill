@@ -9,7 +9,7 @@ func sessionMiddleware(db *db.DB, next http.Handler) http.Handler {
 	// TODO session expiration
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		pd := pageDataFromRequest(r)
+		pd := pageDataFromContext(r.Context())
 		pd.User = &userData{
 			Name:   "Test",
 			Avatar: "https://placedog.net/40/40",

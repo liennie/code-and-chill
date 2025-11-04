@@ -24,7 +24,7 @@ func logMiddleware(next http.Handler) http.Handler {
 		l = l.With("method", r.Method, "url", r.URL.String(), "remote_addr", r.RemoteAddr)
 		r = r.WithContext(ctxlog.Store(r.Context(), l))
 
-		pd := pageDataFromRequest(r)
+		pd := pageDataFromContext(r.Context())
 
 		cw := &statusCapturingResponseWriter{ResponseWriter: w}
 		next.ServeHTTP(cw, r)

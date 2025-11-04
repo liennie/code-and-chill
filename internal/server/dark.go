@@ -6,7 +6,7 @@ import (
 
 func darkModeMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		pd := pageDataFromRequest(r)
+		pd := pageDataFromContext(r.Context())
 		cookie, err := r.Cookie("darkmode")
 		if err != nil || cookie.Value != "0" {
 			pd.Dark = true

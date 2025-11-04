@@ -105,7 +105,7 @@ func templateHandler(content []byte, ct string) func(dataFunc) http.Handler {
 
 func mdDataFunc(status int, title string, content []byte) dataFunc {
 	return func(r *http.Request) (int, any) {
-		pd := pageDataFromRequest(r)
+		pd := pageDataFromContext(r.Context())
 		pd.Title = title
 		pd.Content.Parts = []partData{{
 			MD:         string(content),

@@ -51,8 +51,8 @@ type pageDataCtxKey struct{}
 
 var pageDataKey pageDataCtxKey
 
-func pageDataFromRequest(r *http.Request) *pageData {
-	data, ok := r.Context().Value(pageDataKey).(*pageData)
+func pageDataFromContext(ctx context.Context) *pageData {
+	data, ok := ctx.Value(pageDataKey).(*pageData)
 	if !ok {
 		panic("page data missing in context")
 	}

@@ -60,10 +60,6 @@ func New(config Config, puzzles *puzzles.Puzzles, db *db.DB) *Server {
 	}
 }
 
-func ptr[T any](v T) *T {
-	return &v
-}
-
 func newHandler(config Config, puzzles *puzzles.Puzzles, db *db.DB) (h http.Handler) {
 	fsys := os.DirFS(filepath.FromSlash(config.DataDir))
 

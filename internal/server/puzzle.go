@@ -8,7 +8,7 @@ import (
 
 func puzzlesMiddleware(year int, puzzles []puzzles.Puzzle, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		pd := pageDataFromRequest(r)
+		pd := pageDataFromContext(r.Context())
 		pd.Year = year
 
 		pd.Puzzles = make([]puzzleData, 0, len(puzzles))
@@ -35,7 +35,7 @@ func puzzlesMiddleware(year int, puzzles []puzzles.Puzzle, next http.Handler) ht
 
 func puzzleDataFunc(i int, puzzle puzzles.Puzzle, locked dataFunc) dataFunc {
 	return func(r *http.Request) (int, any) {
-		pd := pageDataFromRequest(r)
+		pd := pageDataFromContext(r.Context())
 		pd.Puzzle = i
 		pd.Title = puzzle.Name
 
@@ -61,7 +61,7 @@ func puzzleDataFunc(i int, puzzle puzzles.Puzzle, locked dataFunc) dataFunc {
 
 func latestPuzzleRedirect(year int, puzzles []puzzles.Puzzle) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		pd := pageDataFromRequest(r)
+		pd := pageDataFromContext(r.Context())
 
 		for i := len(puzzles) - 1; i >= 0; i-- {
 			puzzle := puzzles[i]
@@ -79,7 +79,7 @@ func latestPuzzleRedirect(year int, puzzles []puzzles.Puzzle) http.Handler {
 
 func puzzleInputHandler(i int, puzzle puzzles.Puzzle, locked http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		pd := pageDataFromRequest(r)
+		pd := pageDataFromContext(r.Context())
 
 		if puzzle.Unlock.After(pd.Now) {
 			locked.ServeHTTP(w, r)
