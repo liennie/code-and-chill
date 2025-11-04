@@ -5,6 +5,7 @@ go 1.24.0
 require (
 	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/goccy/go-yaml v1.18.0
+	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/yuin/goldmark v1.7.13
 	go.etcd.io/bbolt v1.4.1
 	golang.org/x/sync v0.10.0

@@ -12,6 +12,7 @@ import (
 	"cc/internal/puzzles"
 	"cc/internal/rec"
 	"cc/internal/server"
+	"cc/internal/session"
 )
 
 func run(ctx context.Context, config string) (err error) {
@@ -31,8 +32,12 @@ func run(ctx context.Context, config string) (err error) {
 	db := db.Open(c.DB)
 	defer ctxlog.Close(ctx, "db", db)
 
+	logger.Info("starting session store")
+	sess := session.NewStore(c.Session, db)
+	defer ctxlog.Close(ctx, "session store", sess)
+
 	logger.Info("starting server")
-	srv := server.New(c.Server, puzzles, db)
+	srv := server.New(c.Server, puzzles, db, sess)
 
 	return srv.Run(ctx)
 }

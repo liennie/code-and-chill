@@ -6,6 +6,11 @@ server:
 db:
   file: db/cc.db
 
+session:
+  bits: 256
+  lru: 100
+  expire: 720h # 30 days
+
 puzzles:
   name: "Code && Chill"
   default: "test"

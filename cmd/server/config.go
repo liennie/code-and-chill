@@ -9,6 +9,7 @@ import (
 	"cc/internal/db"
 	"cc/internal/puzzles"
 	"cc/internal/server"
+	"cc/internal/session"
 
 	"github.com/goccy/go-yaml"
 )
@@ -16,6 +17,7 @@ import (
 type Config struct {
 	Server  server.Config  `yaml:"server"`
 	DB      db.Config      `yaml:"db"`
+	Session session.Config `yaml:"session"`
 	Puzzles puzzles.Config `yaml:"puzzles"`
 }
 

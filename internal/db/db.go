@@ -2,11 +2,7 @@
 package db
 
 import (
-	"bytes"
-	"encoding/gob"
-	"errors"
 	"fmt"
-	"iter"
 	"os"
 	"path/filepath"
 	"time"
@@ -14,12 +10,9 @@ import (
 	"go.etcd.io/bbolt"
 )
 
-var (
-	bucketTeams = []byte("teams")
-)
-
 var allBuckets = [][]byte{
-	bucketTeams,
+	bucketSession,
+	bucketSessionExpire,
 }
 
 type DB struct {
@@ -76,48 +69,8 @@ func (db *DB) Close() error {
 	return db.closeErr
 }
 
-func get[T *V, V any](b *bbolt.Bucket, key string) (T, error) {
-	val := new(V)
-
-	data := b.Get([]byte(key))
-	if data != nil {
-		err := gob.NewDecoder(bytes.NewReader(data)).Decode(val)
-		if err != nil {
-			return nil, fmt.Errorf("unmarshal value for %q: %w", key, err)
-		}
-	}
-
-	return val, nil
-}
-
-var errStop = fmt.Errorf("stop iteration")
-
-func all[T *V, V any](db *DB, bucket string) iter.Seq2[string, T] {
-	return func(yield func(string, T) bool) {
-		err := db.db.View(func(tx *bbolt.Tx) error {
-			b := tx.Bucket([]byte(bucket))
-			if b == nil {
-				return fmt.Errorf("db: bucket %q not found", bucket)
-			}
-
-			return b.ForEach(func(k, v []byte) error {
-				val, err := get[T](b, string(k))
-				if err != nil {
-					return fmt.Errorf("db: get value for %q: %w", k, err)
-				}
-
-				if !yield(string(k), val) {
-					return errStop
-				}
-				return nil
-			})
-		})
-
-		if err != nil {
-			if errors.Is(err, errStop) {
-				return
-			}
-			panic(fmt.Errorf("db: get all from bucket %q: %w", bucket, err))
-		}
+func must(err error) {
+	if err != nil {
+		panic(fmt.Errorf("db: must: %w", err))
 	}
 }

@@ -18,6 +18,7 @@ import (
 	"cc/internal/ctxlog"
 	"cc/internal/db"
 	"cc/internal/puzzles"
+	"cc/internal/session"
 
 	"golang.org/x/sync/errgroup"
 )
@@ -30,7 +31,7 @@ type Server struct {
 	shutdownTimeout time.Duration
 }
 
-func New(config Config, puzzles *puzzles.Puzzles, db *db.DB) *Server {
+func New(config Config, puzzles *puzzles.Puzzles, db *db.DB, session *session.Store) *Server {
 	if config.Port == 0 {
 		panic("server: port is required")
 	}
@@ -54,14 +55,14 @@ func New(config Config, puzzles *puzzles.Puzzles, db *db.DB) *Server {
 
 	return &Server{
 		addr:            fmt.Sprintf("%s:%d", config.Host, config.Port),
-		handler:         newHandler(config, puzzles, db),
+		handler:         newHandler(config, puzzles, db, session),
 		tlsLoader:       loader,
 		httpsRedirect:   config.HTTPSRedirect,
 		shutdownTimeout: config.ShutdownTimeout,
 	}
 }
 
-func newHandler(config Config, pzls *puzzles.Puzzles, db *db.DB) (h http.Handler) {
+func newHandler(config Config, pzls *puzzles.Puzzles, db *db.DB, session *session.Store) (h http.Handler) {
 	fsys := os.DirFS(filepath.FromSlash(config.DataDir))
 
 	// handlers
@@ -146,7 +147,7 @@ func newHandler(config Config, pzls *puzzles.Puzzles, db *db.DB) (h http.Handler
 	// middleware
 	handler := http.Handler(mux)
 	handler = darkModeMiddleware(handler)
-	handler = sessionMiddleware(db, handler)
+	handler = sessionMiddleware(session, handler)
 	handler = robotsMiddleware(handler)
 	handler = hostMiddleware(config.Host, handler)
 	handler = newRecover(handler, internalErrorHandler(pzls.Default))
