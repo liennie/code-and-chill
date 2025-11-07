@@ -41,8 +41,9 @@ func Load(config Config) *Puzzles {
 			Puzzles: make([]Puzzle, 0, len(ec.Puzzles)),
 			Total:   0,
 		}
-		for _, puzzle := range ec.Puzzles {
+		for i, puzzle := range ec.Puzzles {
 			pz := Puzzle{
+				Index:  i + 1,
 				Name:   puzzle.Name,
 				Unlock: puzzle.Unlock,
 				Parts:  make([]Part, 0, len(puzzle.Parts)),
@@ -127,6 +128,7 @@ type Event struct {
 }
 
 type Puzzle struct {
+	Index  int
 	Name   string
 	Unlock time.Time
 	Parts  []Part
@@ -134,8 +136,8 @@ type Puzzle struct {
 }
 
 type Part struct {
-	Text string
 	ID   string
+	Text string
 }
 
 type Input struct {

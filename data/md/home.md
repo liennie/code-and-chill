@@ -16,11 +16,11 @@ Below are all the puzzles for this event.
 Locked puzzles will appear greyed out until they’re ready to play.
 You can also find all the puzzles for this event in the *menu on the right*.
 
-{{- range $idx, $puzzle := .Puzzles }}
-{{- if puzzleLocked $puzzle }}
+{{- range .Puzzles }}
+{{- if puzzleLocked . }}
 - ~~{{ .Name }}~~
 {{- else }}
-- [{{ .Name }}](/{{ $.Event.Path }}/puzzle/{{ $idx | add 1 }}){{ if $.User }}{{ repeat (.Name | len | sub $.PuzzleAlign | int) " " }}{{ puzzleHint $puzzle }}{{ end }}
+- [{{ .Name }}](/{{ $.Event.Path }}/puzzle/{{ .Index }}){{ if $.User }}{{ repeat (.Name | len | sub $.PuzzleAlign | int) " " }}{{ puzzleHint . }}{{ end }}
 {{- end }}
 {{- end }}
 

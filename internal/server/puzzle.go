@@ -55,7 +55,8 @@ func puzzlesMiddleware(event puzzles.Event, next http.Handler) http.Handler {
 		pd.Puzzles = make([]puzzleData, 0, len(event.Puzzles))
 		for _, puzzle := range event.Puzzles {
 			pzd := puzzleData{
-				Name: puzzle.Name,
+				Index: puzzle.Index,
+				Name:  puzzle.Name,
 			}
 
 			// TODO handle user solved classes
@@ -74,10 +75,10 @@ func puzzlesMiddleware(event puzzles.Event, next http.Handler) http.Handler {
 	})
 }
 
-func puzzleDataFunc(i int, puzzle puzzles.Puzzle, locked dataFunc) dataFunc {
+func puzzleDataFunc(puzzle puzzles.Puzzle, locked dataFunc) dataFunc {
 	return func(r *http.Request) (int, any) {
 		pd := pageDataFromContext(r.Context())
-		pd.Puzzle = i
+		pd.Puzzle = puzzle.Index
 		pd.Title = puzzle.Name
 
 		if puzzle.Unlock.After(pd.Now) {
@@ -118,7 +119,7 @@ func latestPuzzleRedirect(event puzzles.Event) http.Handler {
 	})
 }
 
-func puzzleInputHandler(i int, puzzle puzzles.Puzzle, locked http.Handler) http.Handler {
+func puzzleInputHandler(puzzle puzzles.Puzzle, locked http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		pd := pageDataFromContext(r.Context())
 

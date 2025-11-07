@@ -35,8 +35,8 @@
 			<aside class="leftmenu">
 				<h1 class="secondary-color">{{ $.Event.Name }}</h1>
 				<ul>
-					{{- range $idx, $_ := .Puzzles }}
-					<li class="{{ .Class }}{{ if $idx | add 1 | eq $.Puzzle }} active{{ end }}"><a href="/{{ $.Event.Path }}/puzzle/{{ $idx | add 1 }}"><span class="puzzle-label">{{ .Name }}</span><span class="hint" {{- if .Unlock }} data-unlock="{{ .Unlock | rfc3339Time }}" {{- end }}></span></a></li>
+					{{- range .Puzzles }}
+					<li class="{{ .Class }}{{ if eq .Index $.Puzzle }} active{{ end }}"><a href="/{{ $.Event.Path }}/puzzle/{{ .Index }}"><span class="puzzle-label">{{ .Name }}</span><span class="hint" {{- if .Unlock }} data-unlock="{{ .Unlock | rfc3339Time }}" {{- end }}></span></a></li>
 					{{- end }}
 				</ul>
 			</aside>

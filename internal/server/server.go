@@ -75,15 +75,11 @@ func newHandler(config Config, pzls *puzzles.Puzzles, db *db.DB) (h http.Handler
 	page := templateHandler(dataFile(fsys, "templates/page.html"))
 
 	notFoundHandler := func(event puzzles.Event) http.Handler {
-		return puzzlesMiddleware(
-			event, page(mdDataFunc(http.StatusNotFound, "404: Not Found", readFile(fsys, "md/404.md"))),
-		)
+		return puzzlesMiddleware(event, page(mdDataFunc(http.StatusNotFound, "404: Not Found", readFile(fsys, "md/404.md"))))
 	}
 
 	internalErrorHandler := func(event puzzles.Event) http.Handler {
-		return puzzlesMiddleware(
-			event, page(mdDataFunc(http.StatusInternalServerError, "500: Internal Server Error", readFile(fsys, "md/500.md"))),
-		)
+		return puzzlesMiddleware(event, page(mdDataFunc(http.StatusInternalServerError, "500: Internal Server Error", readFile(fsys, "md/500.md"))))
 	}
 
 	registerHandler("GET", "/", "md/404.md", notFoundHandler(pzls.Default))
@@ -139,11 +135,11 @@ func newHandler(config Config, pzls *puzzles.Puzzles, db *db.DB) (h http.Handler
 		// registerHandler("GET", fmt.Sprintf("/%s/profile", event), "", nil)
 		registerHandler("GET", fmt.Sprintf("/%s/latest", event.Path), "redirect", latestPuzzleRedirect(event))
 
-		for i, puzzle := range event.Puzzles {
-			registerHandler("GET", fmt.Sprintf("/%s/puzzle/%d", event.Path, i+1), fmt.Sprintf("puzzleDataFunc(%s/%d)", event.Path, i+1), wrap(page(puzzleDataFunc(i+1, puzzle, lockedDataFunc))))
-			registerHandler("GET", fmt.Sprintf("/%s/puzzle/%d/input", event.Path, i+1), fmt.Sprintf("puzzleInputHandler(%s/%d)", event.Path, i+1), wrap(puzzleInputHandler(i+1, puzzle, page(lockedDataFunc))))
-			registerHandler("GET", fmt.Sprintf("/%s/puzzle/%d/answer", event.Path, i+1), "redirect", http.RedirectHandler(fmt.Sprintf("/%s/puzzle/%d", event.Path, i+1), http.StatusTemporaryRedirect))
-			registerHandler("POST", fmt.Sprintf("/%s/puzzle/%d/answer", event.Path, i+1), fmt.Sprintf("puzzleAnswerHandler(%s/%d)", event.Path, i+1), puzzleAnswerHandler())
+		for _, puzzle := range event.Puzzles {
+			registerHandler("GET", fmt.Sprintf("/%s/puzzle/%d", event.Path, puzzle.Index), fmt.Sprintf("puzzleDataFunc(%s/%d)", event.Path, puzzle.Index), wrap(page(puzzleDataFunc(puzzle, lockedDataFunc))))
+			registerHandler("GET", fmt.Sprintf("/%s/puzzle/%d/input", event.Path, puzzle.Index), fmt.Sprintf("puzzleInputHandler(%s/%d)", event.Path, puzzle.Index), wrap(puzzleInputHandler(puzzle, page(lockedDataFunc))))
+			registerHandler("GET", fmt.Sprintf("/%s/puzzle/%d/answer", event.Path, puzzle.Index), "redirect", http.RedirectHandler(fmt.Sprintf("/%s/puzzle/%d", event.Path, puzzle.Index), http.StatusTemporaryRedirect))
+			registerHandler("POST", fmt.Sprintf("/%s/puzzle/%d/answer", event.Path, puzzle.Index), fmt.Sprintf("puzzleAnswerHandler(%s/%d)", event.Path, puzzle.Index), puzzleAnswerHandler())
 		}
 	}
 

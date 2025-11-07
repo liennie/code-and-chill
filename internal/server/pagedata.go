@@ -57,6 +57,7 @@ type partData struct {
 }
 
 type puzzleData struct {
+	Index  int
 	Name   string
 	Class  string
 	Unlock *time.Time
