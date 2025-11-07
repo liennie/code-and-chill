@@ -5,11 +5,17 @@ import (
 )
 
 type Config struct {
-	DefaultYear int            `yaml:"defaultYear"`
-	Years       map[int]string `yaml:"years"`
+	Default string            `yaml:"default"`
+	Events  []EventPathConfig `yaml:"events"`
 }
 
-type YearConfig struct {
+type EventPathConfig struct {
+	Path   string `yaml:"path"`
+	Config string `yaml:"config"`
+}
+
+type EventConfig struct {
+	Name    string         `yaml:"name"`
 	Puzzles []PuzzleConfig `yaml:"puzzles"`
 }
 

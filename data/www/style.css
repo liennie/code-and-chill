@@ -202,6 +202,10 @@ a {
 	max-height: calc(100vh - 2rem);
 }
 
+.leftmenu h1 {
+	margin-top: 0;
+}
+
 .leftmenu ul {
 	list-style: none;
 	padding: 0;
@@ -241,6 +245,10 @@ a {
 	background: var(--bg-gold);
 }
 
+.leftmenu li.solved-both .hint {
+	color: var(--color-em);
+}
+
 .leftmenu li.solved-both .hint::before {
 	content: "✔✔";
 	line-height: 1;
@@ -248,6 +256,10 @@ a {
 
 .leftmenu li.solved-one > a {
 	background: var(--bg-silver);
+}
+
+.leftmenu li.solved-one .hint {
+	color: var(--color-em);
 }
 
 .leftmenu li.solved-one .hint::before {
@@ -309,6 +321,7 @@ article ul {
 article ul li {
 	position: relative;
 	padding-left: 2ch;
+	white-space: pre-wrap;
 }
 
 article ul li:before {

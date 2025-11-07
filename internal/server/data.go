@@ -6,16 +6,20 @@ import (
 	"encoding/base64"
 	"fmt"
 	"html/template"
+	"io"
 	"io/fs"
 	"mime"
 	"net/http"
 	"path"
 	"strconv"
+	"strings"
+	ttemplate "text/template"
 	"time"
 	"woc/internal/ctxlog"
 
 	"github.com/Masterminds/sprig/v3"
 	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
 	"github.com/yuin/goldmark/renderer/html"
 )
@@ -65,9 +69,9 @@ var extraFuncs = template.FuncMap{
 	},
 	"renderMD": func(md string) (template.HTML, error) {
 		gm := goldmark.New(
-			// goldmark.WithExtensions(
-			// 	extension.Strikethrough,
-			// ),
+			goldmark.WithExtensions(
+				extension.Strikethrough,
+			),
 			goldmark.WithParserOptions(
 				parser.WithAutoHeadingID(),
 				parser.WithAttribute(),
@@ -82,6 +86,37 @@ var extraFuncs = template.FuncMap{
 		}
 		return template.HTML(buf.String()), nil
 	},
+	"puzzleLocked": func(puzzle puzzleData) bool {
+		return puzzle.Class == puzzleClassLocked
+	},
+	"alignHint": func(i int, puzzles []puzzleData) string {
+		switch puzzles[i].Class {
+		case puzzleClassSolvedOne, puzzleClassSolvedBoth:
+			maxLen := 0
+			for _, puzzle := range puzzles {
+				if len(puzzle.Name) > maxLen {
+					maxLen = len(puzzle.Name)
+				}
+			}
+
+			return strings.Repeat(" ", maxLen+2-len(puzzles[i].Name))
+
+		default:
+			return ""
+		}
+	},
+	"puzzleHint": func(puzzle puzzleData) string {
+		switch puzzle.Class {
+		case puzzleClassSolvedOne:
+			return "✔"
+
+		case puzzleClassSolvedBoth:
+			return "✔✔"
+
+		default:
+			return ""
+		}
+	},
 }
 
 type dataFunc func(r *http.Request) (int, any)
@@ -92,24 +127,40 @@ func templateHandler(content []byte, ct string) func(dataFunc) http.Handler {
 	return func(dataFunc dataFunc) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			status, data := dataFunc(r)
+
+			buf := &bytes.Buffer{}
+			if err := t.Execute(buf, data); err != nil {
+				log := ctxlog.Get(r.Context())
+				log.Error("failed to exec template", "error", err)
+				panic(err)
+			}
+
 			w.Header().Set("Content-Type", ct)
 			w.WriteHeader(status)
-			if err := t.Execute(w, data); err != nil {
-				log := ctxlog.Get(r.Context())
-				log.Error("failed to write response", "error", err)
-				return
-			}
+			io.Copy(w, buf)
 		})
 	}
 }
 
 func mdDataFunc(status int, title string, content []byte) dataFunc {
+	t, err := ttemplate.New("md").Funcs(sprig.TxtFuncMap()).Funcs(extraFuncs).Parse(string(content))
+	if err != nil {
+		panic(fmt.Errorf("title %q: %w", title, err))
+	}
+
 	return func(r *http.Request) (int, any) {
 		pd := pageDataFromContext(r.Context())
 		pd.Title = title
+
+		buf := &strings.Builder{}
+		if err := t.Execute(buf, pd); err != nil {
+			log := ctxlog.Get(r.Context())
+			log.Error("failed to exec md", "error", err)
+			panic(err)
+		}
+
 		pd.Content.Parts = []partData{{
-			MD:         string(content),
-			WantAnswer: false,
+			MD: buf.String(),
 		}}
 		return status, pd
 	}

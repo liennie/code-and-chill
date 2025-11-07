@@ -7,6 +7,9 @@ db:
   file: db/woc.db
 
 puzzles:
-  defaultYear: 2026
-  years:
-    2026: ../woc-2026/puzzles.yaml
+  default: "test"
+  events:
+    - path: test
+      config: ../woc-test/event.yaml
+    - path: test2
+      config: ../woc-test/event.yaml

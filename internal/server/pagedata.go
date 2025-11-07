@@ -15,14 +15,24 @@ const (
 )
 
 type pageData struct {
-	Now     time.Time
+	Now time.Time
+
+	Event  eventData
+	Events []eventData
+
+	Puzzle  int
+	Puzzles []puzzleData
+
+	User *userData
+
 	Dark    bool
 	Title   string
-	Year    int
-	Puzzle  int
-	User    *userData
 	Content contentData
-	Puzzles []puzzleData
+}
+
+type eventData struct {
+	Path string
+	Name string
 }
 
 type userData struct {

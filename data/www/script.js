@@ -74,6 +74,26 @@ document.addEventListener('click', function (ev) {
 		return `${hh}:${mm}:${ss}`;
 	}
 
+	function formatDHM(t) {
+		const date = new Date(t);
+		const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+		const day = days[date.getDay()];
+		const hours = String(date.getHours()).padStart(2, '0');
+		const minutes = String(date.getMinutes()).padStart(2, '0');
+		return `${day} ${hours}:${minutes}`;
+	}
+
+	function formatDMHM(t) {
+		const date = new Date(t);
+		const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+			"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+		const month = months[date.getMonth()];
+		const day = String(date.getDate()).padStart(2, '0');
+		const hours = String(date.getHours()).padStart(2, '0');
+		const minutes = String(date.getMinutes()).padStart(2, '0');
+		return `${month} ${day} ${hours}:${minutes}`;
+	}
+
 	function updateCountdown() {
 		const now = Date.now();
 		nodes.forEach(el => {
@@ -82,8 +102,10 @@ document.addEventListener('click', function (ev) {
 			let t = Date.parse(iso);
 			if (isNaN(t)) return;
 			const diff = t - now;
-			if (diff > 24 * 3600 * 1000) {
-				el.textContent = '';
+			if (diff > 7 * 24 * 3600 * 1000) {
+				el.textContent = formatDMHM(t);
+			} else if (diff > 24 * 3600 * 1000) {
+				el.textContent = formatDHM(t);
 			} else if (diff <= 0) {
 				el.textContent = '';
 				// toggle classes on closest li

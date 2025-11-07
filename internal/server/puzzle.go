@@ -6,13 +6,34 @@ import (
 	"woc/internal/puzzles"
 )
 
-func puzzlesMiddleware(year int, puzzles []puzzles.Puzzle, next http.Handler) http.Handler {
+func eventsMiddleware(puzzles puzzles.Puzzles, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		pd := pageDataFromContext(r.Context())
-		pd.Year = year
 
-		pd.Puzzles = make([]puzzleData, 0, len(puzzles))
-		for _, puzzle := range puzzles {
+		pd.Events = make([]eventData, 0, len(puzzles.Events))
+		for _, event := range puzzles.Events {
+			evd := eventData{
+				Path: event.Path,
+				Name: event.Name,
+			}
+
+			pd.Events = append(pd.Events, evd)
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func puzzlesMiddleware(event puzzles.Event, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		pd := pageDataFromContext(r.Context())
+		pd.Event = eventData{
+			Path: event.Path,
+			Name: event.Name,
+		}
+
+		pd.Puzzles = make([]puzzleData, 0, len(event.Puzzles))
+		for _, puzzle := range event.Puzzles {
 			pzd := puzzleData{
 				Name: puzzle.Name,
 			}
@@ -59,21 +80,21 @@ func puzzleDataFunc(i int, puzzle puzzles.Puzzle, locked dataFunc) dataFunc {
 	}
 }
 
-func latestPuzzleRedirect(year int, puzzles []puzzles.Puzzle) http.Handler {
+func latestPuzzleRedirect(event puzzles.Event) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		pd := pageDataFromContext(r.Context())
 
-		for i := len(puzzles) - 1; i >= 0; i-- {
-			puzzle := puzzles[i]
+		for i := len(event.Puzzles) - 1; i >= 0; i-- {
+			puzzle := event.Puzzles[i]
 			if puzzle.Unlock.After(pd.Now) {
 				continue
 			}
 
-			http.Redirect(w, r, fmt.Sprintf("/%d/puzzle/%d", year, i+1), http.StatusTemporaryRedirect)
+			http.Redirect(w, r, fmt.Sprintf("/%s/puzzle/%d", event.Path, i+1), http.StatusTemporaryRedirect)
 			return
 		}
 
-		http.Redirect(w, r, fmt.Sprintf("/%d", year), http.StatusTemporaryRedirect)
+		http.Redirect(w, r, fmt.Sprintf("/%s", event.Path), http.StatusTemporaryRedirect)
 	})
 }
 
