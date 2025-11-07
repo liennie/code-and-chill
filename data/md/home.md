@@ -13,7 +13,7 @@ You can:
 ## Puzzles
 
 Below are all the puzzles for this event.
-Locked puzzles will appear crossed out until they’re ready to play.
+Locked puzzles will appear greyed out until they’re ready to play.
 You can also find all the puzzles for this event in the *menu on the right*.
 
 {{- range $idx, $puzzle := .Puzzles }}

@@ -401,6 +401,7 @@ article strong {
 
 article del {
 	color: var(--color-inactive);
+	text-decoration: none;
 }
 
 .output {

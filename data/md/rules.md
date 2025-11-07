@@ -5,7 +5,7 @@ Before you start solving, please take a moment to read the rules.
 ## The Basics
 - Each day (or at a scheduled time), a new puzzle will unlock.
 - Solve puzzles in any order - though some may build on previous ones.
-- Locked puzzles will appear crossed out until they’re available.
+- Locked puzzles will appear greyed out until they’re available.
 
 ## Submissions
 - Each puzzle will tell you what kind of answer to submit (a number, a word, etc.).
