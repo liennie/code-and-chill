@@ -3,7 +3,8 @@ package server
 import (
 	"fmt"
 	"net/http"
-	"woc/internal/puzzles"
+
+	"cc/internal/puzzles"
 )
 
 func eventsMiddleware(events []puzzles.Event, next http.Handler) http.Handler {

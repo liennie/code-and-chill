@@ -15,7 +15,8 @@ import (
 	"strings"
 	ttemplate "text/template"
 	"time"
-	"woc/internal/ctxlog"
+
+	"cc/internal/ctxlog"
 
 	"github.com/Masterminds/sprig/v3"
 	"github.com/yuin/goldmark"

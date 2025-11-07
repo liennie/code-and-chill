@@ -6,11 +6,12 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"woc/internal/ctxlog"
-	"woc/internal/db"
-	"woc/internal/puzzles"
-	"woc/internal/rec"
-	"woc/internal/server"
+
+	"cc/internal/ctxlog"
+	"cc/internal/db"
+	"cc/internal/puzzles"
+	"cc/internal/rec"
+	"cc/internal/server"
 )
 
 func run(ctx context.Context, config string) (err error) {

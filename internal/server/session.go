@@ -2,7 +2,8 @@ package server
 
 import (
 	"net/http"
-	"woc/internal/db"
+
+	"cc/internal/db"
 )
 
 func sessionMiddleware(db *db.DB, next http.Handler) http.Handler {

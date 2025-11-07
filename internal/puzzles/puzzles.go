@@ -1,3 +1,5 @@
+// Package puzzles provides types and loading logic for puzzle events,
+// their puzzles, parts, and inputs.
 package puzzles
 
 import (
@@ -7,7 +9,8 @@ import (
 	"os"
 	"path/filepath"
 	"time"
-	"woc/internal/ctxlog"
+
+	"cc/internal/ctxlog"
 
 	"github.com/goccy/go-yaml"
 )

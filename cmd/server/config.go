@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"woc/internal/ctxlog"
-	"woc/internal/db"
-	"woc/internal/puzzles"
-	"woc/internal/server"
+
+	"cc/internal/ctxlog"
+	"cc/internal/db"
+	"cc/internal/puzzles"
+	"cc/internal/server"
 
 	"github.com/goccy/go-yaml"
 )

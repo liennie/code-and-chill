@@ -14,9 +14,10 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-	"woc/internal/ctxlog"
-	"woc/internal/db"
-	"woc/internal/puzzles"
+
+	"cc/internal/ctxlog"
+	"cc/internal/db"
+	"cc/internal/puzzles"
 
 	"golang.org/x/sync/errgroup"
 )

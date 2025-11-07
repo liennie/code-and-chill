@@ -4,13 +4,11 @@ server:
   shutdownTimeout: 30s
 
 db:
-  file: db/woc.db
+  file: db/cc.db
 
 puzzles:
   name: "Code && Chill"
   default: "test"
   events:
     - path: test
-      config: ../woc-test/event.yaml
-    - path: test2
-      config: ../woc-test/event.yaml
+      config: ../cc-test/event.yaml
