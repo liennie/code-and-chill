@@ -389,6 +389,10 @@ article em {
 	font-style: normal;
 }
 
+article del {
+	color: var(--color-inactive);
+}
+
 .output {
 	flex: 1;
 }

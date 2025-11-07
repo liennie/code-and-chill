@@ -89,22 +89,6 @@ var extraFuncs = template.FuncMap{
 	"puzzleLocked": func(puzzle puzzleData) bool {
 		return puzzle.Class == puzzleClassLocked
 	},
-	"alignHint": func(i int, puzzles []puzzleData) string {
-		switch puzzles[i].Class {
-		case puzzleClassSolvedOne, puzzleClassSolvedBoth:
-			maxLen := 0
-			for _, puzzle := range puzzles {
-				if len(puzzle.Name) > maxLen {
-					maxLen = len(puzzle.Name)
-				}
-			}
-
-			return strings.Repeat(" ", maxLen+2-len(puzzles[i].Name))
-
-		default:
-			return ""
-		}
-	},
 	"puzzleHint": func(puzzle puzzleData) string {
 		switch puzzle.Class {
 		case puzzleClassSolvedOne:

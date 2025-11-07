@@ -20,7 +20,7 @@ You can also find all the puzzles for this event in the *menu on the right*.
 {{- if puzzleLocked $puzzle }}
 - ~~{{ .Name }}~~
 {{- else }}
-- [{{ .Name }}](/{{ $.Event.Path }}/puzzle/{{ $idx | add 1 }}){{ alignHint $idx $.Puzzles }}{{ puzzleHint $puzzle }}
+- [{{ .Name }}](/{{ $.Event.Path }}/puzzle/{{ $idx | add 1 }}){{ if $.User }}{{ repeat (.Name | len | sub $.PuzzleAlign | int) " " }}{{ puzzleHint $puzzle }}{{ end }}
 {{- end }}
 {{- end }}
 

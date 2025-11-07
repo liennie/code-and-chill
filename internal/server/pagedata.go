@@ -17,11 +17,13 @@ const (
 type pageData struct {
 	Now time.Time
 
-	Event  eventData
-	Events []eventData
+	Event      eventData
+	Events     []eventData
+	EventAlign int
 
-	Puzzle  int
-	Puzzles []puzzleData
+	Puzzle      int
+	Puzzles     []puzzleData
+	PuzzleAlign int
 
 	User *userData
 
@@ -31,8 +33,10 @@ type pageData struct {
 }
 
 type eventData struct {
-	Path string
-	Name string
+	Path   string
+	Name   string
+	Solved int
+	Total  int
 }
 
 type userData struct {

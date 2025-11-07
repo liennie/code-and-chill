@@ -10,11 +10,22 @@ func eventsMiddleware(events []puzzles.Event, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		pd := pageDataFromContext(r.Context())
 
+		maxLen := 0
+		for _, event := range events {
+			if len(event.Name) > maxLen {
+				maxLen = len(event.Name)
+			}
+		}
+		pd.EventAlign = maxLen + 2
+
 		pd.Events = make([]eventData, 0, len(events))
 		for _, event := range events {
+			// TODO solved from user
+
 			evd := eventData{
-				Path: event.Path,
-				Name: event.Name,
+				Path:  event.Path,
+				Name:  event.Name,
+				Total: event.Total,
 			}
 
 			pd.Events = append(pd.Events, evd)
@@ -31,6 +42,14 @@ func puzzlesMiddleware(event puzzles.Event, next http.Handler) http.Handler {
 			Path: event.Path,
 			Name: event.Name,
 		}
+
+		maxLen := 0
+		for _, puzzle := range event.Puzzles {
+			if len(puzzle.Name) > maxLen {
+				maxLen = len(puzzle.Name)
+			}
+		}
+		pd.PuzzleAlign = maxLen + 2
 
 		pd.Puzzles = make([]puzzleData, 0, len(event.Puzzles))
 		for _, puzzle := range event.Puzzles {

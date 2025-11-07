@@ -34,6 +34,7 @@ func Load(config Config) *Puzzles {
 			Path:    event.Path,
 			Name:    ec.Name,
 			Puzzles: make([]Puzzle, 0, len(ec.Puzzles)),
+			Total:   0,
 		}
 		for _, puzzle := range ec.Puzzles {
 			pz := Puzzle{
@@ -79,6 +80,7 @@ func Load(config Config) *Puzzles {
 			}
 
 			e.Puzzles = append(e.Puzzles, pz)
+			e.Total += len(pz.Parts)
 		}
 
 		p.Events = append(p.Events, e)
@@ -116,6 +118,7 @@ type Event struct {
 	Path    string
 	Name    string
 	Puzzles []Puzzle
+	Total   int
 }
 
 type Puzzle struct {
