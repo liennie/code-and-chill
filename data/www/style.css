@@ -34,9 +34,8 @@
 	--bg-gold: linear-gradient(135deg,#fff7dc 0 60%, #ffd700 70%);
 	--bg-silver: linear-gradient(135deg,#f6f7f8 0 60%, #c8c8c8 70%);
 
-	--p-link: #0645ad;
-	--p-link-hover: #0b66ff;
-	--p-link-visited: #4b0082;
+	--p-link: #5865f2;
+	--p-link-hover: #8791f6;
 }
 
 html.dark {
@@ -54,14 +53,17 @@ html.dark {
 	--bg-gold: linear-gradient(135deg, #5a3700 0 60%, #d49f00 70%);
 	--bg-silver: linear-gradient(135deg,#2b2d30 0 60%, #6e6f72 70%);
 
-	--p-link: #7fb3ff;
-	--p-link-hover: #a7c9ff;
-	--p-link-visited: #b39ddb;
+	--p-link: #5865f2;
+	--p-link-hover: #8791f6;
 }
 
 body, div, pre, code, span, .topnav a, .leftmenu a, input, button, header, nav, aside, section, article {
 	--td: 0.2s;
 	transition: color var(--td), background-color var(--td), border-color var(--td), box-shadow var(--td);
+}
+
+.secondary-color {
+	color: #5865f2;
 }
 
 .dark-switch {
@@ -370,6 +372,7 @@ article button {
 }
 
 article a {
+	font-weight: 800;
 	color: var(--p-link);
 	text-decoration: underline dotted;
 }
@@ -378,10 +381,6 @@ article a:hover {
 	color: var(--p-link-hover);
 	text-decoration: underline;
 }
-
-/* article a:visited {
-	color: var(--p-link-visited);
-} */
 
 article em {
 	font-weight: 600;

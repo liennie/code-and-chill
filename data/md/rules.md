@@ -13,7 +13,7 @@ Before you start solving, please take a moment to read the rules.
 - You’ll immediately see whether it’s correct - no partial credit or hints are given.
 
 ## Leaderboard
-- Points are awarded based on *speed* and *number of puzzles solved*.
+- Positions are determined based on *number of puzzles solved* and *speed*.
 - The leaderboard updates automatically after each solve.
 - Ties are broken by the earliest submission time.
 

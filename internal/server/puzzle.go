@@ -6,12 +6,12 @@ import (
 	"woc/internal/puzzles"
 )
 
-func eventsMiddleware(puzzles puzzles.Puzzles, next http.Handler) http.Handler {
+func eventsMiddleware(events []puzzles.Event, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		pd := pageDataFromContext(r.Context())
 
-		pd.Events = make([]eventData, 0, len(puzzles.Events))
-		for _, event := range puzzles.Events {
+		pd.Events = make([]eventData, 0, len(events))
+		for _, event := range events {
 			evd := eventData{
 				Path: event.Path,
 				Name: event.Name,

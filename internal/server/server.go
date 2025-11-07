@@ -130,7 +130,7 @@ func newHandler(config Config, pzls *puzzles.Puzzles, db *db.DB) (h http.Handler
 
 		registerHandler("GET", fmt.Sprintf("/%s/", event.Path), "md/404.md", notFoundHandler(event))
 		registerHandler("GET", fmt.Sprintf("/%s", event.Path), "md/index.md", wrap(page(mdDataFunc(http.StatusOK, "Home", readFile(fsys, "md/index.md")))))
-		registerHandler("GET", fmt.Sprintf("/%s/events", event.Path), "md/events.md", wrap(page(mdDataFunc(http.StatusOK, "Events", readFile(fsys, "md/events.md")))))
+		registerHandler("GET", fmt.Sprintf("/%s/events", event.Path), "md/events.md", eventsMiddleware(pzls.Events, wrap(page(mdDataFunc(http.StatusOK, "Events", readFile(fsys, "md/events.md"))))))
 		registerHandler("GET", fmt.Sprintf("/%s/rules", event.Path), "md/rules.md", wrap(page(mdDataFunc(http.StatusOK, "Rules", readFile(fsys, "md/rules.md")))))
 		// registerHandler("GET", fmt.Sprintf("/%s/leaderboard", event), "", nil)
 		registerHandler("GET", fmt.Sprintf("/%s/contact", event.Path), "md/contact.md", wrap(page(mdDataFunc(http.StatusOK, "Contact", readFile(fsys, "md/contact.md")))))
@@ -148,7 +148,6 @@ func newHandler(config Config, pzls *puzzles.Puzzles, db *db.DB) (h http.Handler
 
 	// middleware
 	handler := http.Handler(mux)
-	handler = eventsMiddleware(*pzls, handler)
 	handler = darkModeMiddleware(handler)
 	handler = sessionMiddleware(db, handler)
 	handler = robotsMiddleware(handler)
