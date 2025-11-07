@@ -27,6 +27,8 @@
 	--color-em: #000;
 	--color-em-shadow: rgba(0,0,0,0.5);
 
+	--color-secondary: #5865f2;
+
 	--bg: #fff;
 	--bg-code: #f9f9f9;
 	--bg-btn: #fff;
@@ -63,7 +65,7 @@ body, div, pre, code, span, .topnav a, .leftmenu a, input, button, header, nav, 
 }
 
 .secondary-color {
-	color: #5865f2;
+	color: var(--color-secondary);
 }
 
 .dark-switch {
@@ -206,6 +208,7 @@ a {
 
 .leftmenu h1 {
 	margin-top: 0;
+	font-weight: 800;
 }
 
 .leftmenu ul {
@@ -304,10 +307,12 @@ article {
 article h1 {
 	margin: 0 0 0.25rem 0;
 	border-bottom: 1px dashed var(--line);
+	font-weight: 800;
 }
 
 article h2 {
 	margin: 0 0 0.25rem 0;
+	font-weight: 800;
 }
 
 article p {
@@ -387,6 +392,11 @@ article em {
 	color: var(--color-em);
 	text-shadow: 0 0 1px var(--color-em-shadow);
 	font-style: normal;
+}
+
+article strong {
+	font-weight: inherit;
+	color: var(--color-secondary);
 }
 
 article del {

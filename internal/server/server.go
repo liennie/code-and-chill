@@ -110,14 +110,14 @@ func newHandler(config Config, pzls *puzzles.Puzzles, db *db.DB) (h http.Handler
 	}
 
 	// redirects
-	registerHandler("GET", "/{$}", "redirect", http.RedirectHandler(fmt.Sprintf("/%s", pzls.Default), http.StatusTemporaryRedirect))
-	registerHandler("GET", "/events", "redirect", http.RedirectHandler(fmt.Sprintf("/%s/events", pzls.Default), http.StatusTemporaryRedirect))
-	registerHandler("GET", "/rules", "redirect", http.RedirectHandler(fmt.Sprintf("/%s/rules", pzls.Default), http.StatusTemporaryRedirect))
-	registerHandler("GET", "/leaderboard", "redirect", http.RedirectHandler(fmt.Sprintf("/%s/leaderboard", pzls.Default), http.StatusTemporaryRedirect))
-	registerHandler("GET", "/contact", "redirect", http.RedirectHandler(fmt.Sprintf("/%s/contact", pzls.Default), http.StatusTemporaryRedirect))
-	registerHandler("GET", "/login", "redirect", http.RedirectHandler(fmt.Sprintf("/%s/login", pzls.Default), http.StatusTemporaryRedirect))
-	registerHandler("GET", "/profile", "redirect", http.RedirectHandler(fmt.Sprintf("/%s/profile", pzls.Default), http.StatusTemporaryRedirect))
-	registerHandler("GET", "/latest", "redirect", http.RedirectHandler(fmt.Sprintf("/%s/latest", pzls.Default), http.StatusTemporaryRedirect))
+	registerHandler("GET", "/{$}", "redirect", http.RedirectHandler(fmt.Sprintf("/%s", pzls.Default.Path), http.StatusTemporaryRedirect))
+	registerHandler("GET", "/events", "redirect", http.RedirectHandler(fmt.Sprintf("/%s/events", pzls.Default.Path), http.StatusTemporaryRedirect))
+	registerHandler("GET", "/rules", "redirect", http.RedirectHandler(fmt.Sprintf("/%s/rules", pzls.Default.Path), http.StatusTemporaryRedirect))
+	registerHandler("GET", "/leaderboard", "redirect", http.RedirectHandler(fmt.Sprintf("/%s/leaderboard", pzls.Default.Path), http.StatusTemporaryRedirect))
+	registerHandler("GET", "/contact", "redirect", http.RedirectHandler(fmt.Sprintf("/%s/contact", pzls.Default.Path), http.StatusTemporaryRedirect))
+	registerHandler("GET", "/login", "redirect", http.RedirectHandler(fmt.Sprintf("/%s/login", pzls.Default.Path), http.StatusTemporaryRedirect))
+	registerHandler("GET", "/profile", "redirect", http.RedirectHandler(fmt.Sprintf("/%s/profile", pzls.Default.Path), http.StatusTemporaryRedirect))
+	registerHandler("GET", "/latest", "redirect", http.RedirectHandler(fmt.Sprintf("/%s/latest", pzls.Default.Path), http.StatusTemporaryRedirect))
 
 	// puzzles
 	lockedDataFunc := mdDataFunc(http.StatusNotFound, "Puzzle locked", readFile(fsys, "md/locked.md"))
@@ -129,7 +129,7 @@ func newHandler(config Config, pzls *puzzles.Puzzles, db *db.DB) (h http.Handler
 		}
 
 		registerHandler("GET", fmt.Sprintf("/%s/", event.Path), "md/404.md", notFoundHandler(event))
-		registerHandler("GET", fmt.Sprintf("/%s", event.Path), "md/index.md", wrap(page(mdDataFunc(http.StatusOK, "Home", readFile(fsys, "md/index.md")))))
+		registerHandler("GET", fmt.Sprintf("/%s", event.Path), "md/home.md", wrap(page(mdDataFunc(http.StatusOK, "", readFile(fsys, "md/home.md")))))
 		registerHandler("GET", fmt.Sprintf("/%s/events", event.Path), "md/events.md", eventsMiddleware(pzls.Events, wrap(page(mdDataFunc(http.StatusOK, "Events", readFile(fsys, "md/events.md"))))))
 		registerHandler("GET", fmt.Sprintf("/%s/rules", event.Path), "md/rules.md", wrap(page(mdDataFunc(http.StatusOK, "Rules", readFile(fsys, "md/rules.md")))))
 		// registerHandler("GET", fmt.Sprintf("/%s/leaderboard", event), "", nil)

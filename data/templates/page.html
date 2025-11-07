@@ -4,7 +4,7 @@
 <head>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1" />
-	<title>{{ $.Title }} - Week of Code: {{ $.Event.Name }}</title>
+	<title>{{ if $.Title }}{{ $.Title }} | {{ end }}Week of Code :: {{ $.Event.Name }}</title>
 	<link rel="stylesheet" href="/style.css">
 	<script src="/script.js" defer async></script>
 </head>
@@ -33,7 +33,7 @@
 
 		<main class="content">
 			<aside class="leftmenu">
-				<h1>{{ $.Event.Name }}</h1>
+				<h1 class="secondary-color">{{ $.Event.Name }}</h1>
 				<ul>
 					{{- range $idx, $_ := .Puzzles }}
 					<li class="{{ .Class }}{{ if $idx | add 1 | eq $.Puzzle }} active{{ end }}"><a href="/{{ $.Event.Path }}/puzzle/{{ $idx | add 1 }}"><span class="puzzle-label">{{ .Name }}</span><span class="hint" {{- if .Unlock }} data-unlock="{{ .Unlock | rfc3339Time }}" {{- end }}></span></a></li>
