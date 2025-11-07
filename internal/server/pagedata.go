@@ -15,7 +15,8 @@ const (
 )
 
 type pageData struct {
-	Now time.Time
+	Name string
+	Now  time.Time
 
 	Event      eventData
 	Events     []eventData
@@ -73,11 +74,12 @@ func pageDataFromContext(ctx context.Context) *pageData {
 	return data
 }
 
-func pageDataBaseMiddleware(next http.Handler) http.Handler {
+func pageDataBaseMiddleware(name string, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		ctx = context.WithValue(ctx, pageDataKey, &pageData{
-			Now: time.Now(),
+			Name: name,
+			Now:  time.Now(),
 		})
 		r = r.Clone(ctx)
 		next.ServeHTTP(w, r)

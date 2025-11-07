@@ -154,7 +154,7 @@ func newHandler(config Config, pzls *puzzles.Puzzles, db *db.DB) (h http.Handler
 	handler = hostMiddleware(config.Host, handler)
 	handler = newRecover(handler, internalErrorHandler(pzls.Default))
 	handler = logMiddleware(handler)
-	handler = pageDataBaseMiddleware(handler)
+	handler = pageDataBaseMiddleware(pzls.Name, handler)
 
 	return handler
 }

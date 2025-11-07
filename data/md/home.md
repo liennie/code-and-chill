@@ -1,4 +1,4 @@
-# Week of Code::**{{ $.Event.Name }}**
+# {{ $.Name }}::**{{ $.Event.Name }}** {#title}
 
 Get ready for a series of coding puzzles released one at a time!
 Each puzzle unlocks on schedule - solve them to climb the leaderboard and uncover the full story as it unfolds.

@@ -4,7 +4,7 @@
 <head>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1" />
-	<title>{{ if $.Title }}{{ $.Title }} | {{ end }}Week of Code :: {{ $.Event.Name }}</title>
+	<title>{{ if $.Title }}{{ $.Title }} | {{ end }}{{ $.Name }} :: {{ $.Event.Name }}</title>
 	<link rel="stylesheet" href="/style.css">
 	<script src="/script.js" defer async></script>
 </head>
@@ -12,7 +12,7 @@
 <body>
 	<div class="page">
 		<header class="topbar">
-			<div class="brand"><a href="/{{ $.Event.Path }}" class="brand-link"><span class="secondary-color">{</span>::<span class="secondary-color">}</span> Week of Code</a></div>
+			<div class="brand"><a href="/{{ $.Event.Path }}" class="brand-link"><span class="secondary-color">{</span>::<span class="secondary-color">}</span> {{ $.Name }}</a></div>
 			<nav class="topnav">
 				<a href="/{{ $.Event.Path }}">Home</a>
 				<a href="/{{ $.Event.Path }}/events">Events</a>

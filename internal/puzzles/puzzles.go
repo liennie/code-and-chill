@@ -13,12 +13,14 @@ import (
 )
 
 type Puzzles struct {
+	Name    string
 	Default Event
 	Events  []Event
 }
 
 func Load(config Config) *Puzzles {
 	p := &Puzzles{
+		Name:   config.Name,
 		Events: make([]Event, 0, len(config.Events)),
 	}
 

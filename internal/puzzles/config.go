@@ -5,6 +5,7 @@ import (
 )
 
 type Config struct {
+	Name    string            `yaml:"name"`
 	Default string            `yaml:"default"`
 	Events  []EventPathConfig `yaml:"events"`
 }
