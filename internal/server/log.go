@@ -21,19 +21,21 @@ func (w *statusCapturingResponseWriter) WriteHeader(status int) {
 
 func logMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		l := ctxlog.Get(r.Context())
-		l = l.With("method", r.Method, "url", r.URL.String(), "remote_addr", r.RemoteAddr)
-		r = r.WithContext(ctxlog.Store(r.Context(), l))
+		ctx := r.Context()
 
-		pd := pageDataFromContext(r.Context())
+		l := ctxlog.Get(ctx)
+		l = l.With("method", r.Method, "url", r.URL.String(), "remote_addr", r.RemoteAddr)
+
+		ctx = ctxlog.Store(r.Context(), l)
+		ctx = ctxlog.WithExtra(ctx)
+		r = r.WithContext(ctx)
 
 		cw := &statusCapturingResponseWriter{ResponseWriter: w}
+		start := time.Now()
 		next.ServeHTTP(cw, r)
-		dur := time.Since(pd.Now)
+		dur := time.Since(start)
 
-		if pd.User != nil {
-			l = l.With("user", pd.User.Name)
-		}
+		l = l.With(ctxlog.GetExtra(ctx)...)
 
 		l.Info("request completed", "status", cw.status, "duration", dur.String())
 	})

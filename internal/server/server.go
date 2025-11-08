@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -62,28 +63,35 @@ func New(config Config, puzzles *puzzles.Puzzles, db *db.DB, session *session.St
 	}
 }
 
+func handlerRegistrar(prefix string, mux *http.ServeMux) func(method, path, src string, handler http.Handler) {
+	return func(method, path, src string, handler http.Handler) {
+		slog.Info("registering handler", "method", method, "path", prefix+path, "src", src)
+		mux.Handle(method+" "+path, handler)
+	}
+}
+
 func newHandler(config Config, pzls *puzzles.Puzzles, db *db.DB, session *session.Store) (h http.Handler) {
 	fsys := os.DirFS(filepath.FromSlash(config.DataDir))
 
 	// handlers
 	mux := http.NewServeMux()
-
-	registerHandler := func(method, path, src string, handler http.Handler) {
-		slog.Info("registering handler", "method", method, "path", path, "src", src)
-		mux.Handle(method+" "+path, handler)
-	}
+	reg := handlerRegistrar("", mux)
 
 	page := templateHandler(dataFile(fsys, "templates/page.html"))
+	notFoundHandler := page(mdDataFunc(http.StatusNotFound, "404: Not Found", readFile(fsys, "md/404.md")))
+	internalErrorHandler := page(mdDataFunc(http.StatusInternalServerError, "500: Internal Server Error", readFile(fsys, "md/500.md")))
 
-	notFoundHandler := func(event puzzles.Event) http.Handler {
-		return puzzlesMiddleware(event, page(mdDataFunc(http.StatusNotFound, "404: Not Found", readFile(fsys, "md/404.md"))))
+	eventMiddleware := func(event puzzles.Event) func(http.Handler) http.Handler {
+		return func(handler http.Handler) http.Handler {
+			handler = puzzlesMiddleware(event, handler)
+			handler = sessionMiddleware(session, handler)
+			handler = darkModeMiddleware(handler)
+			handler = recoverMiddleware(handler, internalErrorHandler)
+			handler = pageDataMiddleware(pzls.Name, handler)
+			return handler
+		}
 	}
-
-	internalErrorHandler := func(event puzzles.Event) http.Handler {
-		return puzzlesMiddleware(event, page(mdDataFunc(http.StatusInternalServerError, "500: Internal Server Error", readFile(fsys, "md/500.md"))))
-	}
-
-	registerHandler("GET", "/", "md/404.md", notFoundHandler(pzls.Default))
+	rootMiddleware := eventMiddleware(pzls.Default)
 
 	// static
 	const wwwDir = "www"
@@ -100,59 +108,62 @@ func newHandler(config Config, pzls *puzzles.Puzzles, db *db.DB, session *sessio
 			panic(fmt.Errorf("%q is not a subpath of %q", p, wwwDir))
 		}
 
-		registerHandler("GET", subPath, p, cachedHandler(dataFile(fsys, p)))
+		reg("GET", subPath, p, cachedHandler(dataFile(fsys, p)))
 		return nil
 	})
 	if err != nil {
 		panic(fmt.Errorf("server: walk www directory: %w", err))
 	}
 
-	// redirects
-	registerHandler("GET", "/{$}", "redirect", http.RedirectHandler(fmt.Sprintf("/%s", pzls.Default.Path), http.StatusTemporaryRedirect))
-	registerHandler("GET", "/events", "redirect", http.RedirectHandler(fmt.Sprintf("/%s/events", pzls.Default.Path), http.StatusTemporaryRedirect))
-	registerHandler("GET", "/rules", "redirect", http.RedirectHandler(fmt.Sprintf("/%s/rules", pzls.Default.Path), http.StatusTemporaryRedirect))
-	registerHandler("GET", "/leaderboard", "redirect", http.RedirectHandler(fmt.Sprintf("/%s/leaderboard", pzls.Default.Path), http.StatusTemporaryRedirect))
-	registerHandler("GET", "/contact", "redirect", http.RedirectHandler(fmt.Sprintf("/%s/contact", pzls.Default.Path), http.StatusTemporaryRedirect))
-	registerHandler("GET", "/login", "redirect", http.RedirectHandler(fmt.Sprintf("/%s/login", pzls.Default.Path), http.StatusTemporaryRedirect))
-	registerHandler("GET", "/profile", "redirect", http.RedirectHandler(fmt.Sprintf("/%s/profile", pzls.Default.Path), http.StatusTemporaryRedirect))
-	registerHandler("GET", "/latest", "redirect", http.RedirectHandler(fmt.Sprintf("/%s/latest", pzls.Default.Path), http.StatusTemporaryRedirect))
+	// root
+	p := pzls.Default.Path
+	reg("GET", "/", "md/404.md", rootMiddleware(notFoundHandler))
+	reg("GET", "/{$}", "redirect", http.RedirectHandler("/"+p, http.StatusTemporaryRedirect))
+	reg("GET", "/events", "redirect", http.RedirectHandler("/"+p+"/events", http.StatusTemporaryRedirect))
+	reg("GET", "/rules", "redirect", http.RedirectHandler("/"+p+"/rules", http.StatusTemporaryRedirect))
+	reg("GET", "/leaderboard", "redirect", http.RedirectHandler("/"+p+"/leaderboard", http.StatusTemporaryRedirect))
+	reg("GET", "/contact", "redirect", http.RedirectHandler("/"+p+"/contact", http.StatusTemporaryRedirect))
+	reg("GET", "/login", "redirect", http.RedirectHandler("/"+p+"/login", http.StatusTemporaryRedirect))
+	reg("GET", "/profile", "redirect", http.RedirectHandler("/"+p+"/profile", http.StatusTemporaryRedirect))
+	reg("GET", "/latest", "redirect", http.RedirectHandler("/"+p+"/latest", http.StatusTemporaryRedirect))
 
-	// puzzles
+	// events
 	lockedDataFunc := mdDataFunc(http.StatusNotFound, "Puzzle locked", readFile(fsys, "md/locked.md"))
 	for _, event := range pzls.Events {
-		wrap := func(handler http.Handler) http.Handler {
-			handler = newRecover(handler, internalErrorHandler(event))
-			handler = puzzlesMiddleware(event, handler)
-			return handler
-		}
+		p = event.Path
 
-		registerHandler("GET", fmt.Sprintf("/%s/", event.Path), "md/404.md", notFoundHandler(event))
-		registerHandler("GET", fmt.Sprintf("/%s", event.Path), "md/home.md", wrap(page(mdDataFunc(http.StatusOK, "", readFile(fsys, "md/home.md")))))
-		registerHandler("GET", fmt.Sprintf("/%s/events", event.Path), "md/events.md", eventsMiddleware(pzls.Events, wrap(page(mdDataFunc(http.StatusOK, "Events", readFile(fsys, "md/events.md"))))))
-		registerHandler("GET", fmt.Sprintf("/%s/rules", event.Path), "md/rules.md", wrap(page(mdDataFunc(http.StatusOK, "Rules", readFile(fsys, "md/rules.md")))))
-		// registerHandler("GET", fmt.Sprintf("/%s/leaderboard", event), "", nil)
-		registerHandler("GET", fmt.Sprintf("/%s/contact", event.Path), "md/contact.md", wrap(page(mdDataFunc(http.StatusOK, "Contact", readFile(fsys, "md/contact.md")))))
-		// registerHandler("GET", fmt.Sprintf("/%s/login", event), "", nil)
-		// registerHandler("GET", fmt.Sprintf("/%s/profile", event), "", nil)
-		registerHandler("GET", fmt.Sprintf("/%s/latest", event.Path), "redirect", latestPuzzleRedirect(event))
+		evMux := http.NewServeMux()
+		middleware := eventMiddleware(event)
+		reg("GET", "/"+p+"/", "mux", http.StripPrefix("/"+p, middleware(evMux)))
+		reg("GET", "/"+p, "md/home.md", middleware(page(mdDataFunc(http.StatusOK, "", readFile(fsys, "md/home.md")))))
+
+		reg := handlerRegistrar("/"+p, evMux)
+
+		reg("GET", "/", "md/404.md", notFoundHandler)
+		reg("GET", "/events", "md/events.md", eventsMiddleware(pzls.Events, page(mdDataFunc(http.StatusOK, "Events", readFile(fsys, "md/events.md")))))
+		reg("GET", "/rules", "md/rules.md", page(mdDataFunc(http.StatusOK, "Rules", readFile(fsys, "md/rules.md"))))
+		// reg("GET", "/leaderboard", "", nil)
+		reg("GET", "/contact", "md/contact.md", page(mdDataFunc(http.StatusOK, "Contact", readFile(fsys, "md/contact.md"))))
+		// reg("GET", "/login", "", nil)
+		// reg("GET", "/profile", "", nil)
+		reg("GET", "/latest", "redirect", latestPuzzleRedirect(event))
 
 		for _, puzzle := range event.Puzzles {
-			registerHandler("GET", fmt.Sprintf("/%s/puzzle/%d", event.Path, puzzle.Index), fmt.Sprintf("puzzleDataFunc(%s/%d)", event.Path, puzzle.Index), wrap(page(puzzleDataFunc(puzzle, lockedDataFunc))))
-			registerHandler("GET", fmt.Sprintf("/%s/puzzle/%d/input", event.Path, puzzle.Index), fmt.Sprintf("puzzleInputHandler(%s/%d)", event.Path, puzzle.Index), wrap(puzzleInputHandler(puzzle, page(lockedDataFunc))))
-			registerHandler("GET", fmt.Sprintf("/%s/puzzle/%d/answer", event.Path, puzzle.Index), "redirect", http.RedirectHandler(fmt.Sprintf("/%s/puzzle/%d", event.Path, puzzle.Index), http.StatusTemporaryRedirect))
-			registerHandler("POST", fmt.Sprintf("/%s/puzzle/%d/answer", event.Path, puzzle.Index), fmt.Sprintf("puzzleAnswerHandler(%s/%d)", event.Path, puzzle.Index), puzzleAnswerHandler())
+			i := strconv.Itoa(puzzle.Index)
+
+			reg("GET", "/puzzle/"+i, "puzzleDataFunc", page(puzzleDataFunc(puzzle, lockedDataFunc)))
+			reg("GET", "/puzzle/"+i+"/input", "puzzleInputHandler", puzzleInputHandler(puzzle, page(lockedDataFunc)))
+			reg("GET", "/puzzle/"+i+"/answer", "redirect", http.RedirectHandler("/"+p+"/puzzle/"+i, http.StatusTemporaryRedirect))
+			reg("POST", "/puzzle/"+i+"/answer", "puzzleAnswerHandler", puzzleAnswerHandler())
 		}
 	}
 
-	// middleware
+	// global middleware
 	handler := http.Handler(mux)
-	handler = darkModeMiddleware(handler)
-	handler = sessionMiddleware(session, handler)
 	handler = robotsMiddleware(handler)
 	handler = hostMiddleware(config.Host, handler)
-	handler = newRecover(handler, internalErrorHandler(pzls.Default))
+	handler = recoverMiddleware(handler, catchAllHandler())
 	handler = logMiddleware(handler)
-	handler = pageDataBaseMiddleware(pzls.Name, handler)
 
 	return handler
 }

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"cc/internal/ctxlog"
 	"context"
 	"html/template"
 	"net/http"
@@ -75,14 +76,20 @@ func pageDataFromContext(ctx context.Context) *pageData {
 	return data
 }
 
-func pageDataBaseMiddleware(name string, next http.Handler) http.Handler {
+func pageDataMiddleware(name string, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, pageDataKey, &pageData{
+		pd := &pageData{
 			Name: name,
 			Now:  time.Now(),
-		})
-		r = r.Clone(ctx)
+		}
+
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, pageDataKey, pd)
+		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)
+
+		if pd.User != nil {
+			ctxlog.AddExtra(ctx, "user", pd.User.Name)
+		}
 	})
 }

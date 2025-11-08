@@ -6,28 +6,24 @@ import (
 	"cc/internal/ctxlog"
 )
 
-type rech struct {
-	next http.Handler
-	err  http.Handler
+func recoverMiddleware(next, err http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if e := recover(); e != nil {
+				log := ctxlog.Get(r.Context())
+				log.Error("recovered panic", "error", e)
+
+				clear(w.Header())
+				err.ServeHTTP(w, r)
+			}
+		}()
+
+		next.ServeHTTP(w, r)
+	})
 }
 
-func newRecover(next, err http.Handler) *rech {
-	return &rech{
-		next: next,
-		err:  err,
-	}
-}
-
-func (rec *rech) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	defer func() {
-		if err := recover(); err != nil {
-			log := ctxlog.Get(r.Context())
-			log.Error("recovered panic", "error", err)
-
-			clear(w.Header())
-			rec.err.ServeHTTP(w, r)
-		}
-	}()
-
-	rec.next.ServeHTTP(w, r)
+func catchAllHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "Something went very wrong", http.StatusInternalServerError)
+	})
 }

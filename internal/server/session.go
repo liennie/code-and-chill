@@ -47,7 +47,7 @@ func sessionMiddleware(session *session.Store, next http.Handler) http.Handler {
 
 		ctx := r.Context()
 		ctx = context.WithValue(ctx, sessionKey, &sess)
-		r = r.Clone(ctx)
+		r = r.WithContext(ctx)
 
 		// TODO users in a different middleware
 		pd.User = &userData{
