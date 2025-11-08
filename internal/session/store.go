@@ -5,42 +5,25 @@ package session
 import (
 	"crypto/rand"
 	"encoding/base64"
-	"errors"
-	"log/slog"
-	"sync"
+	"slices"
 	"time"
 
 	"cc/internal/db"
-
-	"github.com/hashicorp/golang-lru/v2/simplelru"
 )
 
 type Store struct {
+	expire time.Duration
 	bytes  int
-	Expire time.Duration
 
-	db    *db.DB
-	mx    sync.Mutex
-	cache *simplelru.LRU[string, Session]
+	db *db.DB
 }
 
 func NewStore(config Config, db *db.DB) *Store {
 	s := &Store{
-		db:     db,
-		Expire: config.Expire,
+		expire: config.Expire,
 		bytes:  config.Bits / 8,
-	}
 
-	var err error
-	s.cache, err = simplelru.NewLRU(config.LRU, func(key string, value Session) {
-		err := db.PutSession(value.toDB())
-		if err != nil {
-			l := slog.Default()
-			l.Error("failed to evict session", "id", shortKey(key), "error", err)
-		}
-	})
-	if err != nil {
-		panic(errors.New("session: failed to create LRU cache"))
+		db: db,
 	}
 
 	// TODO expiration goroutine
@@ -49,12 +32,42 @@ func NewStore(config Config, db *db.DB) *Store {
 }
 
 func (s *Store) Close() error {
-	s.mx.Lock()
-	defer s.mx.Unlock()
-
-	s.cache.Purge()
-
 	return nil
+}
+
+func (s *Store) Get(id string, now time.Time) (session *Session, update bool) {
+	err := s.db.Update(func(tx *db.Tx) (err error) {
+		bucket := tx.Session()
+
+		if id != "" {
+			dbs := bucket.Get(id)
+			if dbs != nil {
+				session = sessionFromDB(dbs)
+				update, err = s.updateExpire(tx, session, now)
+				if err != nil {
+					return err
+				}
+				return nil
+			}
+		}
+
+		id = s.newID()
+		for bucket.Has(id) {
+			id = s.newID()
+		}
+
+		session = &Session{ID: id}
+		err = s.newExpire(tx, session, now)
+		if err != nil {
+			return err
+		}
+		update = true
+		return bucket.Put(id, session.toDB())
+	})
+	if err != nil {
+		panic(err)
+	}
+	return
 }
 
 func (s *Store) newID() string {
@@ -63,49 +76,63 @@ func (s *Store) newID() string {
 	return base64.RawURLEncoding.EncodeToString(buf)
 }
 
-func (s *Store) has(ID string) bool {
-	ok := s.cache.Contains(ID)
-	if ok {
-		return true
+func deleteExpire(bucket *db.Bucket[db.SessionExpire], id string, expire string) error {
+	sessions := bucket.Get(expire)
+	if sessions == nil {
+		return nil
 	}
-	return s.db.HasSession(ID)
+
+	sessions.IDs = slices.DeleteFunc(sessions.IDs, func(v string) bool { return v == id })
+	if len(sessions.IDs) == 0 {
+		return bucket.Delete(expire)
+	} else {
+		return bucket.Put(expire, sessions)
+	}
 }
 
-func (s *Store) Get(ID string, now time.Time) Session {
-	s.mx.Lock()
-	defer s.mx.Unlock()
-
-	if ID != "" {
-		session, ok := s.cache.Get(ID)
-		if ok {
-			session.Expire = now.Add(s.Expire)
-			return session
+func addExpire(bucket *db.Bucket[db.SessionExpire], id string, expire string) error {
+	sessions := bucket.Get(expire)
+	if sessions == nil {
+		sessions = &db.SessionExpire{
+			IDs: []string{id},
 		}
-
-		dbs := s.db.GetSession(ID)
-		if dbs != nil {
-			session := sessionFromDB(dbs)
-			s.cache.Add(session.ID, session)
-			return session
-		}
+	} else {
+		sessions.IDs = append(sessions.IDs, id)
 	}
 
-	id := s.newID()
-	for s.has(id) {
-		id = s.newID()
-	}
-
-	session := Session{
-		ID:     id,
-		Expire: now.Add(s.Expire),
-	}
-	s.cache.Add(session.ID, session)
-	return session
+	return bucket.Put(expire, sessions)
 }
 
-func (s *Store) Update(sess Session) {
-	s.mx.Lock()
-	defer s.mx.Unlock()
+func expireKey(expire time.Time) string {
+	return expire.UTC().Format(time.RFC3339)
+}
 
-	s.cache.Add(sess.ID, sess)
+func (s *Store) newExpire(tx *db.Tx, session *Session, now time.Time) error {
+	session.Expire = now.Add(s.expire).Truncate(24 * time.Hour)
+	expire := expireKey(session.Expire)
+
+	return addExpire(tx.SessionExpire(), session.ID, expire)
+}
+
+func (s *Store) updateExpire(tx *db.Tx, session *Session, now time.Time) (bool, error) {
+	old := expireKey(session.Expire)
+	session.Expire = now.Add(s.expire).Truncate(24 * time.Hour)
+	new := expireKey(session.Expire)
+
+	if old == new {
+		return false, nil
+	}
+
+	bucket := tx.SessionExpire()
+	err := deleteExpire(bucket, session.ID, old)
+	if err != nil {
+		return false, err
+	}
+
+	err = addExpire(bucket, session.ID, new)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }

@@ -9,24 +9,24 @@ import (
 	"go.etcd.io/bbolt"
 )
 
-type bucket[V any] struct {
+type Bucket[V any] struct {
 	b *bbolt.Bucket
 }
 
-func openBucket[V any](tx *bbolt.Tx, key []byte) *bucket[V] {
+func openBucket[V any](tx *bbolt.Tx, key []byte) *Bucket[V] {
 	b := tx.Bucket(key)
 	if b == nil {
 		// this should never happen
 		panic(fmt.Errorf("db: bucket %q is missing", key))
 	}
-	return &bucket[V]{b: b}
+	return &Bucket[V]{b: b}
 }
 
-func (b *bucket[V]) has(key []byte) bool {
-	return b.b.Get(key) != nil
+func (b *Bucket[V]) Has(key string) bool {
+	return b.b.Get([]byte(key)) != nil
 }
 
-func (b *bucket[V]) decode(data []byte) *V {
+func (b *Bucket[V]) decode(data []byte) *V {
 	if data == nil {
 		return nil
 	}
@@ -37,11 +37,11 @@ func (b *bucket[V]) decode(data []byte) *V {
 	return val
 }
 
-func (b *bucket[V]) get(key []byte) *V {
-	return b.decode(b.b.Get(key))
+func (b *Bucket[V]) Get(key string) *V {
+	return b.decode(b.b.Get([]byte(key)))
 }
 
-func (b *bucket[V]) put(key []byte, val *V) error {
+func (b *Bucket[V]) Put(key string, val *V) error {
 	buf := &bytes.Buffer{}
 	err := gob.NewEncoder(buf).Encode(val)
 	if err != nil {
@@ -49,20 +49,20 @@ func (b *bucket[V]) put(key []byte, val *V) error {
 		return fmt.Errorf("marshal: %w", err)
 	}
 
-	return b.b.Put(key, buf.Bytes())
+	return b.b.Put([]byte(key), buf.Bytes())
 }
 
-func (b *bucket[V]) delete(key []byte) error {
-	return b.b.Delete(key)
+func (b *Bucket[V]) Delete(key string) error {
+	return b.b.Delete([]byte(key))
 }
 
 var errStop = fmt.Errorf("stop iteration")
 
-func (b *bucket[V]) all() iter.Seq2[[]byte, *V] {
-	return func(yield func([]byte, *V) bool) {
+func (b *Bucket[V]) All() iter.Seq2[string, *V] {
+	return func(yield func(string, *V) bool) {
 		b.b.ForEach(func(k, v []byte) error {
 			val := b.decode(v)
-			if !yield(k, val) {
+			if !yield(string(k), val) {
 				return errStop
 			}
 			return nil

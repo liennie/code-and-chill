@@ -11,14 +11,14 @@ type Session struct {
 	Expire time.Time
 }
 
-func sessionFromDB(s *db.Session) Session {
-	return Session{
+func sessionFromDB(s *db.Session) *Session {
+	return &Session{
 		ID:     s.ID,
 		Expire: s.Expire,
 	}
 }
 
-func (s Session) toDB() *db.Session {
+func (s *Session) toDB() *db.Session {
 	return &db.Session{
 		ID:     s.ID,
 		Expire: s.Expire,

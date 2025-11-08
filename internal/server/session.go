@@ -32,13 +32,13 @@ func sessionMiddleware(session *session.Store, next http.Handler) http.Handler {
 		pd := pageDataFromContext(r.Context())
 
 		ID := sessionID(r)
-		sess := session.Get(ID, pd.Now)
+		sess, update := session.Get(ID, pd.Now)
 
-		if sess.ID != ID {
+		if update {
 			http.SetCookie(w, &http.Cookie{
 				Name:     "session",
 				Value:    sess.ID,
-				Expires:  pd.Now.Add(session.Expire),
+				Expires:  sess.Expire,
 				Secure:   true,
 				HttpOnly: true,
 				SameSite: http.SameSiteLaxMode,
@@ -56,7 +56,5 @@ func sessionMiddleware(session *session.Store, next http.Handler) http.Handler {
 		}
 
 		next.ServeHTTP(w, r)
-
-		session.Update(sess)
 	})
 }
