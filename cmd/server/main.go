@@ -35,7 +35,7 @@ func run(ctx context.Context, config string) (err error) {
 	defer ctxlog.Close(ctx, "session store", sess)
 
 	logger.Info("starting auth")
-	auth := auth.New(c.Auth)
+	auth := auth.New(c.Auth, db)
 
 	logger.Info("loading puzzles")
 	puzzles := puzzles.Load(c.Puzzles)

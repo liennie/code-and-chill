@@ -14,6 +14,9 @@ var allBuckets = [][]byte{
 	bucketSession,
 	bucketSessionExpire,
 	bucketSessionData,
+
+	bucketUser,
+	bucketDiscordUser,
 }
 
 type DB struct {

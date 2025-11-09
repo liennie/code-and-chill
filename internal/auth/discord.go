@@ -2,6 +2,7 @@ package auth
 
 import (
 	"cc/internal/ctxlog"
+	"cc/internal/db"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -17,9 +18,10 @@ type DiscordAuth struct {
 	clientSecret    string
 	redirectURI     string
 	exchangeTimeout time.Duration
+	db              *db.DB
 }
 
-func newDiscordAuth(config DiscordConfig) DiscordAuth {
+func newDiscordAuth(config DiscordConfig, db *db.DB) DiscordAuth {
 	secret, err := os.ReadFile(config.ClientSecret)
 	if err != nil {
 		panic(fmt.Errorf("read discord client secret: %w", err))
@@ -30,6 +32,7 @@ func newDiscordAuth(config DiscordConfig) DiscordAuth {
 		clientSecret:    strings.TrimSpace(string(secret)),
 		redirectURI:     config.RedirectURI,
 		exchangeTimeout: config.ExchangeTimeout,
+		db:              db,
 	}
 }
 
@@ -77,7 +80,7 @@ func (a *DiscordAuth) Exchange(ctx context.Context, code string) (*User, error) 
 		return nil, fmt.Errorf("discord get user: %w", err)
 	}
 
-	return user, nil
+	return a.updateDB(user)
 }
 
 type discordError struct {
@@ -161,7 +164,7 @@ type discordUser struct {
 	Avatar        string `json:"avatar"`
 }
 
-func (a *DiscordAuth) getUser(cli *http.Client, t token) (*User, error) {
+func (a *DiscordAuth) getUser(cli *http.Client, t token) (*discordUser, error) {
 	req, err := http.NewRequest("GET", discordUserEndpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("new request: %w", err)
@@ -193,14 +196,46 @@ func (a *DiscordAuth) getUser(cli *http.Client, t token) (*User, error) {
 		return nil, fmt.Errorf("decode response: %w", err)
 	}
 
+	return &user, nil
+}
+
+func (a *DiscordAuth) updateDB(user *discordUser) (*User, error) {
 	username := user.GlobalName
 	if username == "" {
 		username = fmt.Sprintf("%s#%s", user.Username, user.Discriminator)
 	}
 
-	return &User{
-		ID:        user.ID,
-		Username:  username,
-		AvatarURL: fmt.Sprintf(discordAvatarURL, user.ID, user.Avatar),
-	}, nil
+	u := &User{}
+	err := a.db.Update(func(tx *db.Tx) error {
+		discordBucket := tx.DiscordUser()
+		userBucket := tx.User()
+
+		du := discordBucket.Get(user.ID)
+		if du != nil {
+			u.ID = du.ID
+		} else {
+			u.ID = newID()
+			for userBucket.Has(u.ID) {
+				u.ID = newID()
+			}
+
+			err := discordBucket.Put(user.ID, &db.DiscordUser{ID: u.ID})
+			if err != nil {
+				return err
+			}
+		}
+
+		u.Username = username
+		u.AvatarURL = fmt.Sprintf(discordAvatarURL, user.ID, user.Avatar)
+
+		return userBucket.Put(u.ID, &db.User{
+			Name:      u.Username,
+			AvatarURL: u.AvatarURL,
+		})
+	})
+	if err != nil {
+		return nil, fmt.Errorf("discord user db update: %w", err)
+	}
+
+	return u, nil
 }
