@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"cc/internal/auth"
 	"cc/internal/ctxlog"
 	"cc/internal/db"
 	"cc/internal/puzzles"
@@ -18,6 +19,7 @@ type Config struct {
 	Server  server.Config  `yaml:"server"`
 	DB      db.Config      `yaml:"db"`
 	Session session.Config `yaml:"session"`
+	Auth    auth.Config    `yaml:"auth"`
 	Puzzles puzzles.Config `yaml:"puzzles"`
 }
 

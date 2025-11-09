@@ -34,6 +34,7 @@ func (j *cleanupJob) Run() {
 		to := expireKey(now)
 
 		sessionBucket := tx.Session()
+		dataBucket := db.SessionData[Data](tx)
 		expireBucket := tx.SessionExpire()
 		for _, sessions := range expireBucket.Range("", to) {
 			for _, id := range sessions.IDs {
@@ -41,6 +42,12 @@ func (j *cleanupJob) Run() {
 				if err != nil {
 					return err
 				}
+
+				err = dataBucket.Delete(id)
+				if err != nil {
+					return err
+				}
+
 				count++
 			}
 		}

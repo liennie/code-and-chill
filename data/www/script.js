@@ -104,7 +104,7 @@ document.addEventListener('click', function (ev) {
 			const diff = t - now;
 			if (diff > 7 * 24 * 3600 * 1000) {
 				el.textContent = formatDMHM(t);
-			} else if (diff > 24 * 3600 * 1000) {
+			} else if (diff > 12 * 3600 * 1000) {
 				el.textContent = formatDHM(t);
 			} else if (diff <= 0) {
 				el.textContent = '';

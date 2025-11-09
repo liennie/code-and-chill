@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"cc/internal/auth"
 	"cc/internal/ctxlog"
 	"cc/internal/db"
 	"cc/internal/puzzles"
@@ -25,9 +26,6 @@ func run(ctx context.Context, config string) (err error) {
 		return fmt.Errorf("config: %w", err)
 	}
 
-	logger.Info("loading puzzles")
-	puzzles := puzzles.Load(c.Puzzles)
-
 	logger.Info("opening db")
 	db := db.Open(c.DB)
 	defer ctxlog.Close(ctx, "db", db)
@@ -36,8 +34,14 @@ func run(ctx context.Context, config string) (err error) {
 	sess := session.NewStore(c.Session, db)
 	defer ctxlog.Close(ctx, "session store", sess)
 
+	logger.Info("starting auth")
+	auth := auth.New(c.Auth)
+
+	logger.Info("loading puzzles")
+	puzzles := puzzles.Load(c.Puzzles)
+
 	logger.Info("starting server")
-	srv := server.New(c.Server, puzzles, db, sess)
+	srv := server.New(c.Server, db, sess, auth, puzzles)
 
 	return srv.Run(ctx)
 }

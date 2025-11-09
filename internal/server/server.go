@@ -16,6 +16,7 @@ import (
 	"strings"
 	"time"
 
+	"cc/internal/auth"
 	"cc/internal/ctxlog"
 	"cc/internal/db"
 	"cc/internal/puzzles"
@@ -32,7 +33,7 @@ type Server struct {
 	shutdownTimeout time.Duration
 }
 
-func New(config Config, puzzles *puzzles.Puzzles, db *db.DB, session *session.Store) *Server {
+func New(config Config, db *db.DB, session *session.Store, auth *auth.Auth, puzzles *puzzles.Puzzles) *Server {
 	if config.Port == 0 {
 		panic("server: port is required")
 	}
@@ -56,7 +57,7 @@ func New(config Config, puzzles *puzzles.Puzzles, db *db.DB, session *session.St
 
 	return &Server{
 		addr:            fmt.Sprintf("%s:%d", config.Host, config.Port),
-		handler:         newHandler(config, puzzles, db, session),
+		handler:         newHandler(config, db, session, auth, puzzles),
 		tlsLoader:       loader,
 		httpsRedirect:   config.HTTPSRedirect,
 		shutdownTimeout: config.ShutdownTimeout,
@@ -70,7 +71,7 @@ func handlerRegistrar(prefix string, mux *http.ServeMux) func(method, path, src 
 	}
 }
 
-func newHandler(config Config, pzls *puzzles.Puzzles, db *db.DB, session *session.Store) (h http.Handler) {
+func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Auth, pzls *puzzles.Puzzles) (h http.Handler) {
 	fsys := os.DirFS(filepath.FromSlash(config.DataDir))
 
 	// handlers
@@ -124,8 +125,11 @@ func newHandler(config Config, pzls *puzzles.Puzzles, db *db.DB, session *sessio
 	reg("GET", "/leaderboard", "redirect", http.RedirectHandler("/"+p+"/leaderboard", http.StatusTemporaryRedirect))
 	reg("GET", "/contact", "redirect", http.RedirectHandler("/"+p+"/contact", http.StatusTemporaryRedirect))
 	reg("GET", "/login", "redirect", http.RedirectHandler("/"+p+"/login", http.StatusTemporaryRedirect))
+	reg("GET", "/login/fail", "redirect", http.RedirectHandler("/"+p+"/login/fail", http.StatusTemporaryRedirect))
 	reg("GET", "/profile", "redirect", http.RedirectHandler("/"+p+"/profile", http.StatusTemporaryRedirect))
 	reg("GET", "/latest", "redirect", http.RedirectHandler("/"+p+"/latest", http.StatusTemporaryRedirect))
+
+	reg("GET", "/auth/discord", "discordAuthCallback", rootMiddleware(discordAuthCallback(auth)))
 
 	// events
 	lockedDataFunc := mdDataFunc(http.StatusNotFound, "Puzzle locked", readFile(fsys, "md/locked.md"))
@@ -144,9 +148,11 @@ func newHandler(config Config, pzls *puzzles.Puzzles, db *db.DB, session *sessio
 		reg("GET", "/rules", "md/rules.md", page(mdDataFunc(http.StatusOK, "Rules", readFile(fsys, "md/rules.md"))))
 		// reg("GET", "/leaderboard", "", nil)
 		reg("GET", "/contact", "md/contact.md", page(mdDataFunc(http.StatusOK, "Contact", readFile(fsys, "md/contact.md"))))
-		// reg("GET", "/login", "", nil)
+		reg("GET", "/login", "md/login.md", page(mdDataFunc(http.StatusOK, "Log in", readFile(fsys, "md/login.md"))))
+		reg("GET", "/login/discord", "discordAuthHandler", discordAuthRedirect(auth, event))
+		reg("GET", "/login/fail", "md/401.md", page(mdDataFunc(http.StatusUnauthorized, "401: Unauthorized", readFile(fsys, "md/401.md"))))
 		// reg("GET", "/profile", "", nil)
-		reg("GET", "/latest", "redirect", latestPuzzleRedirect(event))
+		reg("GET", "/latest", "latestPuzzleRedirect", latestPuzzleRedirect(event))
 
 		for _, puzzle := range event.Puzzles {
 			i := strconv.Itoa(puzzle.Index)

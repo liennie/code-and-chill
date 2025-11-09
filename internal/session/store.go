@@ -1,5 +1,3 @@
-// Package session provides session management, storage and helpers for creating,
-// retrieving and persisting session objects used by the application.
 package session
 
 import (
@@ -51,20 +49,23 @@ func (s *Store) Close() error {
 	return nil
 }
 
-func (s *Store) Init(id string, now time.Time) (session *SessionID, err error) {
+func (s *Store) Init(id string, now time.Time) (session *Session, err error) {
 	err = s.db.Update(func(tx *db.Tx) (err error) {
 		sessionBucket := tx.Session()
 
 		if id != "" {
 			dbs := sessionBucket.Get(id)
 			if dbs != nil && dbs.Expire.After(now) {
-				session = sessionFromDB(id, dbs)
-				err = s.updateExpire(tx, session, now)
+				sid := sessionFromDB(id, dbs)
+				session = &Session{id: sid, db: s.db}
+
+				err = s.updateExpire(tx, sid, now)
 				if err != nil {
 					return err
 				}
-				if session.Update {
-					return sessionBucket.Put(id, session.toDB())
+
+				if sid.Update {
+					return sessionBucket.Put(id, sid.toDB())
 				}
 				return nil
 			}
@@ -75,12 +76,21 @@ func (s *Store) Init(id string, now time.Time) (session *SessionID, err error) {
 			id = s.newID()
 		}
 
-		session = &SessionID{ID: id}
-		err = s.newExpire(tx, session, now)
+		sid := &ID{ID: id}
+		session = &Session{id: sid, db: s.db}
+
+		err = s.newExpire(tx, sid, now)
 		if err != nil {
 			return err
 		}
-		return sessionBucket.Put(id, session.toDB())
+
+		dataBucket := db.SessionData[Data](tx)
+		err = dataBucket.Put(id, &Data{})
+		if err != nil {
+			return err
+		}
+
+		return sessionBucket.Put(id, sid.toDB())
 	})
 	return
 }
@@ -122,7 +132,7 @@ func expireKey(expire time.Time) string {
 	return expire.UTC().Format(time.RFC3339)
 }
 
-func (s *Store) newExpire(tx *db.Tx, session *SessionID, now time.Time) error {
+func (s *Store) newExpire(tx *db.Tx, session *ID, now time.Time) error {
 	session.Expire = now.Add(s.expire).Truncate(s.truncate)
 	expire := expireKey(session.Expire)
 
@@ -135,7 +145,7 @@ func (s *Store) newExpire(tx *db.Tx, session *SessionID, now time.Time) error {
 	return nil
 }
 
-func (s *Store) updateExpire(tx *db.Tx, session *SessionID, now time.Time) error {
+func (s *Store) updateExpire(tx *db.Tx, session *ID, now time.Time) error {
 	old := expireKey(session.Expire)
 	session.Expire = now.Add(s.expire).Truncate(s.truncate)
 	new := expireKey(session.Expire)

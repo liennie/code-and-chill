@@ -1,7 +1,6 @@
 # {{ $.Name }}::**{{ $.Event.Name }}** {#title}
 
-Get ready for a series of coding puzzles released one at a time!
-Each puzzle unlocks on schedule - solve them to climb the leaderboard and uncover the full story as it unfolds.
+Get ready for a series of coding puzzles released one at a time! Each puzzle unlocks on schedule - solve them to climb the leaderboard and uncover the full story as it unfolds.
 
 You can:
 - Read the [rules](/{{ $.Event.Path }}/rules)
@@ -12,9 +11,7 @@ You can:
 
 ## Puzzles
 
-Below are all the puzzles for this event.
-Locked puzzles will appear greyed out until they’re ready to play.
-You can also find all the puzzles for this event in the *menu on the right*.
+Below are all the puzzles for this event. Locked puzzles will appear greyed out until they’re ready to play. You can also find all the puzzles for this event in the *menu on the right*.
 
 {{- range .Puzzles }}
 {{- if puzzleLocked . }}

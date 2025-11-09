@@ -3,6 +3,7 @@ package ctxlog
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -66,4 +67,15 @@ func Close(ctx context.Context, name string, closer io.Closer) error {
 
 func With(ctx context.Context, kv ...any) context.Context {
 	return Store(ctx, Get(ctx).With(kv...))
+}
+
+func ErrExtra(err error) (string, bool) {
+	var extra interface {
+		Extra() string
+	}
+	ok := errors.As(err, &extra)
+	if !ok {
+		return "", false
+	}
+	return extra.Extra(), true
 }

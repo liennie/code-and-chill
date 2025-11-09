@@ -12,6 +12,13 @@ session:
   truncate: 24h
   cleanupSchedule: "0 5 * * *"
 
+auth:
+  discord:
+    clientID: "1423632113676062852"
+    clientSecret: secret/discord.txt
+    redirectURI: http://localhost:8080/auth/discord
+    exchangeTimeout: 10s
+
 puzzles:
   name: "Code && Chill"
   default: "test"
