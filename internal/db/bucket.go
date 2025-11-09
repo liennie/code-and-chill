@@ -2,7 +2,7 @@ package db
 
 import (
 	"bytes"
-	"encoding/gob"
+	"encoding/json"
 	"fmt"
 	"iter"
 
@@ -32,8 +32,8 @@ func (b *Bucket[V]) decode(data []byte) *V {
 	}
 
 	val := new(V)
-	// this should never panic unless we try to gob unsuported types
-	must(gob.NewDecoder(bytes.NewReader(data)).Decode(val))
+	// this should never panic unless we try to json unsuported types
+	must(json.NewDecoder(bytes.NewReader(data)).Decode(val))
 	return val
 }
 
@@ -43,7 +43,7 @@ func (b *Bucket[V]) Get(key string) *V {
 
 func (b *Bucket[V]) Put(key string, val *V) error {
 	buf := &bytes.Buffer{}
-	err := gob.NewEncoder(buf).Encode(val)
+	err := json.NewEncoder(buf).Encode(val)
 	if err != nil {
 		// this should never happen
 		return fmt.Errorf("marshal: %w", err)
