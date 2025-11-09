@@ -5,68 +5,83 @@ package session
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"fmt"
 	"slices"
 	"time"
 
 	"cc/internal/db"
+
+	"github.com/robfig/cron/v3"
 )
 
 type Store struct {
-	expire time.Duration
-	bytes  int
+	bytes    int
+	expire   time.Duration
+	truncate time.Duration
 
-	db *db.DB
+	db      *db.DB
+	cleanup *cron.Cron
 }
 
 func NewStore(config Config, db *db.DB) *Store {
+	schedule, err := cron.ParseStandard(config.CleanupSchedule)
+	if err != nil {
+		panic(fmt.Errorf("cron schedule: %w", err))
+	}
+
 	s := &Store{
-		expire: config.Expire,
-		bytes:  config.Bits / 8,
+		bytes:    config.Bits / 8,
+		expire:   config.Expire,
+		truncate: config.Truncate,
 
 		db: db,
 	}
 
-	// TODO expiration goroutine
+	s.cleanup = cron.New(
+		cron.WithLogger(&slogLogger{}),
+	)
+	s.cleanup.Schedule(schedule, &cleanupJob{s})
+	s.cleanup.Start()
 
 	return s
 }
 
 func (s *Store) Close() error {
+	<-s.cleanup.Stop().Done()
 	return nil
 }
 
-func (s *Store) Get(id string, now time.Time) (session *Session, update bool) {
-	err := s.db.Update(func(tx *db.Tx) (err error) {
-		bucket := tx.Session()
+func (s *Store) Init(id string, now time.Time) (session *SessionID, err error) {
+	err = s.db.Update(func(tx *db.Tx) (err error) {
+		sessionBucket := tx.Session()
 
 		if id != "" {
-			dbs := bucket.Get(id)
-			if dbs != nil {
-				session = sessionFromDB(dbs)
-				update, err = s.updateExpire(tx, session, now)
+			dbs := sessionBucket.Get(id)
+			if dbs != nil && dbs.Expire.After(now) {
+				session = sessionFromDB(id, dbs)
+				err = s.updateExpire(tx, session, now)
 				if err != nil {
 					return err
+				}
+				if session.Update {
+					return sessionBucket.Put(id, session.toDB())
 				}
 				return nil
 			}
 		}
 
 		id = s.newID()
-		for bucket.Has(id) {
+		for sessionBucket.Has(id) {
 			id = s.newID()
 		}
 
-		session = &Session{ID: id}
+		session = &SessionID{ID: id}
 		err = s.newExpire(tx, session, now)
 		if err != nil {
 			return err
 		}
-		update = true
-		return bucket.Put(id, session.toDB())
+		return sessionBucket.Put(id, session.toDB())
 	})
-	if err != nil {
-		panic(err)
-	}
 	return
 }
 
@@ -76,22 +91,22 @@ func (s *Store) newID() string {
 	return base64.RawURLEncoding.EncodeToString(buf)
 }
 
-func deleteExpire(bucket *db.Bucket[db.SessionExpire], id string, expire string) error {
-	sessions := bucket.Get(expire)
+func deleteExpire(expireBucket *db.Bucket[db.SessionExpire], id string, expire string) error {
+	sessions := expireBucket.Get(expire)
 	if sessions == nil {
 		return nil
 	}
 
 	sessions.IDs = slices.DeleteFunc(sessions.IDs, func(v string) bool { return v == id })
 	if len(sessions.IDs) == 0 {
-		return bucket.Delete(expire)
+		return expireBucket.Delete(expire)
 	} else {
-		return bucket.Put(expire, sessions)
+		return expireBucket.Put(expire, sessions)
 	}
 }
 
-func addExpire(bucket *db.Bucket[db.SessionExpire], id string, expire string) error {
-	sessions := bucket.Get(expire)
+func addExpire(expireBucket *db.Bucket[db.SessionExpire], id string, expire string) error {
+	sessions := expireBucket.Get(expire)
 	if sessions == nil {
 		sessions = &db.SessionExpire{
 			IDs: []string{id},
@@ -100,39 +115,46 @@ func addExpire(bucket *db.Bucket[db.SessionExpire], id string, expire string) er
 		sessions.IDs = append(sessions.IDs, id)
 	}
 
-	return bucket.Put(expire, sessions)
+	return expireBucket.Put(expire, sessions)
 }
 
 func expireKey(expire time.Time) string {
 	return expire.UTC().Format(time.RFC3339)
 }
 
-func (s *Store) newExpire(tx *db.Tx, session *Session, now time.Time) error {
-	session.Expire = now.Add(s.expire).Truncate(24 * time.Hour)
+func (s *Store) newExpire(tx *db.Tx, session *SessionID, now time.Time) error {
+	session.Expire = now.Add(s.expire).Truncate(s.truncate)
 	expire := expireKey(session.Expire)
 
-	return addExpire(tx.SessionExpire(), session.ID, expire)
+	err := addExpire(tx.SessionExpire(), session.ID, expire)
+	if err != nil {
+		return err
+	}
+
+	session.Update = true
+	return nil
 }
 
-func (s *Store) updateExpire(tx *db.Tx, session *Session, now time.Time) (bool, error) {
+func (s *Store) updateExpire(tx *db.Tx, session *SessionID, now time.Time) error {
 	old := expireKey(session.Expire)
-	session.Expire = now.Add(s.expire).Truncate(24 * time.Hour)
+	session.Expire = now.Add(s.expire).Truncate(s.truncate)
 	new := expireKey(session.Expire)
 
 	if old == new {
-		return false, nil
+		return nil
 	}
 
-	bucket := tx.SessionExpire()
-	err := deleteExpire(bucket, session.ID, old)
+	expireBucket := tx.SessionExpire()
+	err := deleteExpire(expireBucket, session.ID, old)
 	if err != nil {
-		return false, err
+		return err
 	}
 
-	err = addExpire(bucket, session.ID, new)
+	err = addExpire(expireBucket, session.ID, new)
 	if err != nil {
-		return false, err
+		return err
 	}
 
-	return true, nil
+	session.Update = true
+	return nil
 }

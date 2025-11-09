@@ -56,16 +56,58 @@ func (b *Bucket[V]) Delete(key string) error {
 	return b.b.Delete([]byte(key))
 }
 
-var errStop = fmt.Errorf("stop iteration")
+type startFunc func(c *bbolt.Cursor) (k, v []byte)
+type contFunc func(k []byte) bool
 
-func (b *Bucket[V]) All() iter.Seq2[string, *V] {
+func rangeFuncs(from, to string) (start startFunc, cont contFunc) {
+	if from == "" {
+		start = func(c *bbolt.Cursor) (k, v []byte) {
+			return c.First()
+		}
+	} else {
+		start = func(c *bbolt.Cursor) (k, v []byte) {
+			return c.Seek([]byte(from))
+		}
+	}
+
+	if to == "" {
+		cont = func(k []byte) bool {
+			return k != nil
+		}
+	} else {
+		max := []byte(to)
+		cont = func(k []byte) bool {
+			return k != nil && bytes.Compare(k, max) <= 0
+		}
+	}
+	return
+}
+
+func (b *Bucket[V]) Range(from, to string) iter.Seq2[string, *V] {
+	start, cont := rangeFuncs(from, to)
 	return func(yield func(string, *V) bool) {
-		b.b.ForEach(func(k, v []byte) error {
+		c := b.b.Cursor()
+		for k, v := start(c); cont(k); k, v = c.Next() {
 			val := b.decode(v)
 			if !yield(string(k), val) {
-				return errStop
+				break
 			}
-			return nil
-		})
+		}
 	}
+}
+
+func (b *Bucket[V]) All() iter.Seq2[string, *V] {
+	return b.Range("", "")
+}
+
+func (b *Bucket[V]) DeleteRange(from, to string) error {
+	start, cont := rangeFuncs(from, to)
+	c := b.b.Cursor()
+	for k, _ := start(c); cont(k); k, _ = c.Next() {
+		err := c.Delete()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"cc/internal/session"
@@ -11,8 +12,8 @@ type sessionCtxKey struct{}
 
 var sessionKey sessionCtxKey
 
-func sessionFromContext(ctx context.Context) *session.Session {
-	data, ok := ctx.Value(sessionKey).(*session.Session)
+func sessionIDFromContext(ctx context.Context) string {
+	data, ok := ctx.Value(sessionKey).(string)
 	if !ok {
 		panic("session missing in context")
 	}
@@ -32,9 +33,12 @@ func sessionMiddleware(session *session.Store, next http.Handler) http.Handler {
 		pd := pageDataFromContext(r.Context())
 
 		ID := sessionID(r)
-		sess, update := session.Get(ID, pd.Now)
+		sess, err := session.Init(ID, pd.Now)
+		if err != nil {
+			panic(fmt.Errorf("get session: %w", err))
+		}
 
-		if update {
+		if sess.Update {
 			http.SetCookie(w, &http.Cookie{
 				Name:     "session",
 				Value:    sess.ID,
@@ -46,7 +50,7 @@ func sessionMiddleware(session *session.Store, next http.Handler) http.Handler {
 		}
 
 		ctx := r.Context()
-		ctx = context.WithValue(ctx, sessionKey, &sess)
+		ctx = context.WithValue(ctx, sessionKey, sess.ID)
 		r = r.WithContext(ctx)
 
 		// TODO users in a different middleware

@@ -8,8 +8,9 @@ db:
 
 session:
   bits: 512
-  lru: 100
   expire: 720h # 30 days
+  truncate: 24h
+  cleanupSchedule: "0 5 * * *"
 
 puzzles:
   name: "Code && Chill"

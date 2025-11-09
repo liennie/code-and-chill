@@ -13,6 +13,7 @@ import (
 var allBuckets = [][]byte{
 	bucketSession,
 	bucketSessionExpire,
+	bucketSessionData,
 }
 
 type DB struct {

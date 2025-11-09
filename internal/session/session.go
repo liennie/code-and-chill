@@ -6,28 +6,21 @@ import (
 	"cc/internal/db"
 )
 
-type Session struct {
+type SessionID struct {
 	ID     string
 	Expire time.Time
+	Update bool
 }
 
-func sessionFromDB(s *db.Session) *Session {
-	return &Session{
-		ID:     s.ID,
+func sessionFromDB(id string, s *db.Session) *SessionID {
+	return &SessionID{
+		ID:     id,
 		Expire: s.Expire,
 	}
 }
 
-func (s *Session) toDB() *db.Session {
+func (s *SessionID) toDB() *db.Session {
 	return &db.Session{
-		ID:     s.ID,
 		Expire: s.Expire,
 	}
-}
-
-func shortKey(id string) string {
-	if len(id) <= 16 {
-		return "..."
-	}
-	return id[:4] + "..." + id[len(id)-4:]
 }

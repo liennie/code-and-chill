@@ -7,10 +7,10 @@ import (
 var (
 	bucketSession       = []byte("session")
 	bucketSessionExpire = []byte("session_expire")
+	bucketSessionData   = []byte("session_data")
 )
 
 type Session struct {
-	ID     string
 	Expire time.Time
 }
 
@@ -24,4 +24,8 @@ type SessionExpire struct {
 
 func (tx *Tx) SessionExpire() *Bucket[SessionExpire] {
 	return openBucket[SessionExpire](tx.tx, bucketSessionExpire)
+}
+
+func SessionData[T any](tx *Tx) *Bucket[T] {
+	return openBucket[T](tx.tx, bucketSessionData)
 }
