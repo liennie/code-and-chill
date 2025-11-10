@@ -16,8 +16,9 @@ const (
 )
 
 type pageData struct {
-	Name string
-	Now  time.Time
+	Request *http.Request
+	Name    string
+	Now     time.Time
 
 	Event      eventData
 	Events     []eventData
@@ -79,8 +80,9 @@ func pageDataFromContext(ctx context.Context) *pageData {
 func pageDataMiddleware(name string, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		pd := &pageData{
-			Name: name,
-			Now:  time.Now(),
+			Request: r,
+			Name:    name,
+			Now:     time.Now(),
 		}
 
 		ctx := r.Context()

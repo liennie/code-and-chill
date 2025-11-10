@@ -102,6 +102,15 @@ var extraFuncs = template.FuncMap{
 			return ""
 		}
 	},
+	"pad": func(digits int, n any) (string, error) {
+		switch n.(type) {
+		case int, int8, int16, int32, int64,
+			uint, uint8, uint16, uint32, uint64:
+
+			return fmt.Sprintf("%0[1]*d", digits, n), nil
+		}
+		return "", fmt.Errorf("cannot pad type %T", n)
+	},
 }
 
 type dataFunc func(r *http.Request) (int, any)

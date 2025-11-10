@@ -6,12 +6,11 @@ type Data struct {
 }
 
 type Auth struct {
-	State string
-	Event string
+	State  string
+	Event  string
+	Return string
 }
 
 type User struct {
-	ID        string
-	Username  string
-	AvatarURL string
+	ID string
 }

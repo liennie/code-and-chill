@@ -7,7 +7,7 @@ db:
   file: db/cc.db
 
 session:
-  bits: 512
+  bits: 256
   expire: 720h # 30 days
   truncate: 24h
   cleanupSchedule: "0 5 * * *"

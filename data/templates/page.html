@@ -2,12 +2,15 @@
 <html lang="en" {{- if .Dark }} class="dark" {{- end }}>
 
 <head>
-	<meta charset="utf-8" />
-	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
 	<title>{{ if $.Title }}{{ $.Title }} | {{ end }}{{ $.Name }} :: {{ $.Event.Name }}</title>
 	<link rel="stylesheet" href="/style.css">
 	<script src="/script.js" defer async></script>
 </head>
+
+{{ $return := $.Request.URL.Query.Get "return" | default $.Request.URL.Path | trimPrefix "/" -}}
+{{ if $return | eq "login" }}{{ $return = "" }}{{ end -}}
 
 <body>
 	<div class="page">
@@ -22,7 +25,7 @@
 				{{- if .User }}
 				<a href="/{{ $.Event.Path }}/profile" class="profile"><img src="{{ .User.Avatar }}?size=32" alt="avatar"><span>{{ .User.Name }}</span></a>
 				{{- else }}
-				<a href="/{{ $.Event.Path }}/login">Log in</a>
+				<a href="/{{ $.Event.Path }}/login{{ if $return }}?return={{ $return }}{{ end }}">Log In</a>
 				{{- end }}
 				<label class="dark-switch" title="Toggle dark mode">
 					<input id="darkmode-toggle" type="checkbox" aria-label="Toggle dark mode">
@@ -49,11 +52,15 @@
 					{{- if .Answer }}
 					<div class="answer">
 						<p>Your answer was <code>{{ .Answer }}</code>.</p>
-						<p>You can still <a href="/{{ $.Event.Path }}/puzzle/{{ $.Puzzle }}/input" download>download your input</a>.</p>
+						<p>You can still <a href="/{{ $.Event.Path }}/puzzle/{{ $.Puzzle }}/input" download="{{ $.Event.Path }}.puzzle{{ $.Puzzle | pad 2 }}.input.txt">download your input</a>.</p>
 					</div>
 					{{- else if $.User }}
 					<form class="answer" action="/{{ $.Event.Path }}/puzzle/{{ $.Puzzle }}/answer" method="post">
-						<p><a href="/{{ $.Event.Path }}/puzzle/{{ $.Puzzle }}/input" download>Download your input</a>.</p>
+						{{- if $idx }}
+						<p>If you lost your input, you can <a href="/{{ $.Event.Path }}/puzzle/{{ $.Puzzle }}/input" download="{{ $.Event.Path }}.puzzle{{ $.Puzzle | pad 2 }}.input.txt">download it again</a>.</p>
+						{{- else }}
+						<p><a href="/{{ $.Event.Path }}/puzzle/{{ $.Puzzle }}/input" download="{{ $.Event.Path }}.puzzle{{ $.Puzzle | pad 2 }}.input.txt">Download your input</a> for this puzzle.</p>
+						{{- end }}
 						<input type="hidden" name="part" value="{{ $idx }}">
 						<label>Answer (part {{ $idx | add 1 }}):
 							<input name="answer" autocomplete="off">
@@ -62,7 +69,7 @@
 					</form>
 					{{- else }}
 					<div class="answer">
-						<p>You must <a href="/{{ $.Event.Path }}/login">log in</a> to submit an answer.</p>
+						<p>You must <a href="/{{ $.Event.Path }}/login{{ if $return }}?return={{ $return }}{{ end }}">log in</a> to submit an answer.</p>
 					</div>
 					{{- end }}
 					{{- end }}

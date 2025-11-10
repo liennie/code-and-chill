@@ -225,11 +225,11 @@ func (a *DiscordAuth) updateDB(user *discordUser) (*User, error) {
 			}
 		}
 
-		u.Username = username
+		u.Name = username
 		u.AvatarURL = fmt.Sprintf(discordAvatarURL, user.ID, user.Avatar)
 
 		return userBucket.Put(u.ID, &db.User{
-			Name:      u.Username,
+			Name:      u.Name,
 			AvatarURL: u.AvatarURL,
 		})
 	})

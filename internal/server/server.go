@@ -79,6 +79,7 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 	reg := handlerRegistrar("", mux)
 
 	page := templateHandler(dataFile(fsys, "templates/page.html"))
+	unauthorizedHandler := page(mdDataFunc(http.StatusUnauthorized, "401: Unauthorized", readFile(fsys, "md/401.md")))
 	notFoundHandler := page(mdDataFunc(http.StatusNotFound, "404: Not Found", readFile(fsys, "md/404.md")))
 	internalErrorHandler := page(mdDataFunc(http.StatusInternalServerError, "500: Internal Server Error", readFile(fsys, "md/500.md")))
 
@@ -86,7 +87,7 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 		return func(handler http.Handler) http.Handler {
 			handler = puzzlesMiddleware(event, handler)
 			handler = darkModeMiddleware(handler)
-			handler = userMiddleware(handler)
+			handler = userMiddleware(auth, handler)
 			handler = sessionMiddleware(session, handler)
 			handler = recoverMiddleware(handler, internalErrorHandler)
 			handler = pageDataMiddleware(pzls.Name, handler)
@@ -145,7 +146,7 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 		evMux := http.NewServeMux()
 		middleware := eventMiddleware(event)
 		reg("GET", "/"+p+"/", "mux", http.StripPrefix("/"+p, middleware(evMux)))
-		reg("GET", "/"+p, "md/home.md", middleware(page(mdDataFunc(http.StatusOK, "", readFile(fsys, "md/home.md")))))
+		reg("GET", "/"+p, "md/home.md", http.StripPrefix("/"+p, middleware(page(mdDataFunc(http.StatusOK, "", readFile(fsys, "md/home.md"))))))
 
 		reg := handlerRegistrar("/"+p, evMux)
 
@@ -158,15 +159,15 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 
 		reg("GET", "/login", "md/login.md", userMux(
 			http.RedirectHandler("/"+p+"/profile", http.StatusSeeOther),
-			page(mdDataFunc(http.StatusOK, "Log in", readFile(fsys, "md/login.md")))),
+			page(mdDataFunc(http.StatusOK, "Log In", readFile(fsys, "md/login.md")))),
 		)
 		reg("GET", "/login/discord", "discordAuthHandler", userMux(
 			http.RedirectHandler("/"+p+"/profile", http.StatusSeeOther),
 			discordAuthRedirect(auth, event),
 		))
-		reg("GET", "/login/fail", "md/401.md", userMux(
+		reg("GET", "/login/fail", "md/401.fail.md", userMux(
 			http.RedirectHandler("/"+p+"/profile", http.StatusSeeOther),
-			page(mdDataFunc(http.StatusUnauthorized, "401: Unauthorized", readFile(fsys, "md/401.md"))),
+			page(mdDataFunc(http.StatusUnauthorized, "401: Unauthorized", readFile(fsys, "md/401.fail.md"))),
 		))
 		reg("GET", "/profile", "md/profile.md", userMux(
 			eventsMiddleware(pzls.Events, page(mdDataFunc(http.StatusOK, "Profile", readFile(fsys, "md/profile.md")))),
@@ -174,16 +175,22 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 		))
 		reg("GET", "/logout", "logoutHandler", userMux(
 			logoutHandler(event),
-			http.RedirectHandler("/"+p+"/login", http.StatusSeeOther),
+			http.RedirectHandler("/"+p, http.StatusSeeOther),
 		))
 
 		for _, puzzle := range event.Puzzles {
 			i := strconv.Itoa(puzzle.Index)
 
 			reg("GET", "/puzzle/"+i, "puzzleDataFunc", page(puzzleDataFunc(puzzle, lockedDataFunc)))
-			reg("GET", "/puzzle/"+i+"/input", "puzzleInputHandler", puzzleInputHandler(puzzle, page(lockedDataFunc)))
+			reg("GET", "/puzzle/"+i+"/input", "puzzleInputHandler", userMux(
+				puzzleInputHandler(puzzle, page(lockedDataFunc)),
+				unauthorizedHandler,
+			))
 			reg("GET", "/puzzle/"+i+"/answer", "redirect", http.RedirectHandler("/"+p+"/puzzle/"+i, http.StatusTemporaryRedirect))
-			reg("POST", "/puzzle/"+i+"/answer", "puzzleAnswerHandler", puzzleAnswerHandler())
+			reg("POST", "/puzzle/"+i+"/answer", "puzzleAnswerHandler", userMux(
+				puzzleAnswerHandler(),
+				unauthorizedHandler,
+			))
 		}
 	}
 

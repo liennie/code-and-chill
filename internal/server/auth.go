@@ -18,8 +18,9 @@ func discordAuthRedirect(auth *auth.Auth, event puzzles.Event) http.Handler {
 		sess := sessionFromContext(r.Context())
 		err := sess.Update(func(data *session.Data) error {
 			data.Auth = &session.Auth{
-				State: state,
-				Event: event.Path,
+				State:  state,
+				Event:  event.Path,
+				Return: r.URL.Query().Get("return"),
 			}
 			return nil
 		})
@@ -35,13 +36,21 @@ func discordAuthCallback(auth *auth.Auth) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		sess := sessionFromContext(r.Context())
 
-		var state, event string
+		var state, event, ret string
 		redirect := func() {
+			var redir string
+
 			if event == "" {
-				http.Redirect(w, r, "/login/fail", http.StatusSeeOther)
+				redir = "/login/fail"
 			} else {
-				http.Redirect(w, r, "/"+event+"/login/fail", http.StatusSeeOther)
+				redir = "/" + event + "/login/fail"
 			}
+
+			if ret != "" {
+				redir += "?return=" + ret
+			}
+
+			http.Redirect(w, r, redir, http.StatusSeeOther)
 		}
 
 		err := sess.Update(func(data *session.Data) error {
@@ -51,6 +60,7 @@ func discordAuthCallback(auth *auth.Auth) http.Handler {
 
 			state = data.Auth.State
 			event = data.Auth.Event
+			ret = data.Auth.Return
 			data.Auth = nil
 
 			return nil
@@ -83,11 +93,7 @@ func discordAuthCallback(auth *auth.Auth) http.Handler {
 		}
 
 		err = sess.Update(func(data *session.Data) error {
-			data.User = &session.User{
-				ID:        user.ID,
-				Username:  user.Username,
-				AvatarURL: user.AvatarURL,
-			}
+			data.User = &session.User{ID: user.ID}
 			return nil
 		})
 		if err != nil {
@@ -97,27 +103,40 @@ func discordAuthCallback(auth *auth.Auth) http.Handler {
 			return
 		}
 
-		http.Redirect(w, r, "/"+event, http.StatusSeeOther)
+		redir := "/" + event
+		if ret != "" {
+			redir += "/" + ret
+		}
+		http.Redirect(w, r, redir, http.StatusSeeOther)
 	})
 }
 
-func userMiddleware(next http.Handler) http.Handler {
+func userMiddleware(a *auth.Auth, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		pd := pageDataFromContext(r.Context())
 		sess := sessionFromContext(r.Context())
 
-		var user *session.User
+		var su *session.User
 		err := sess.View(func(data *session.Data) error {
-			user = data.User
+			su = data.User
 			return nil
 		})
 		if err != nil {
 			panic(fmt.Errorf("view session: %w", err))
 		}
 
-		if user != nil {
+		if su != nil {
+			var user *auth.User
+			err = a.View(su.ID, func(u *auth.User) error {
+				user = u
+				return nil
+			})
+			if err != nil {
+				panic(fmt.Errorf("view user: %w", err))
+			}
+
 			pd.User = &userData{
-				Name:   user.Username,
+				Name:   user.Name,
 				Avatar: user.AvatarURL,
 			}
 		}
