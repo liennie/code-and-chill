@@ -11,7 +11,7 @@ You can:
 
 ## Puzzles
 
-Below are all the puzzles for this event. Locked puzzles will appear greyed out until they’re ready to play. You can also find all the puzzles for this event in the *menu on the right*.
+Below are all the puzzles for this event. Locked puzzles will appear greyed out until they’re ready to play. You can also find all the puzzles for this event in the *side menu*.
 
 {{- range .Puzzles }}
 {{- if puzzleLocked . }}
