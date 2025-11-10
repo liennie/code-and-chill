@@ -59,7 +59,7 @@ html.dark {
 	--p-link-hover: #8791f6;
 }
 
-body, div, pre, code, span, .topnav a, .leftmenu a, input, button, header, nav, aside, section, article {
+body, div, pre, code, span, em, .topnav a, .leftmenu a, input, button, header, nav, aside, section, article {
 	--td: 0.2s;
 	transition: color var(--td), background-color var(--td), border-color var(--td), box-shadow var(--td);
 }
