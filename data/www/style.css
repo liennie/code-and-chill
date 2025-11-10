@@ -432,10 +432,13 @@ div.answer:last-child {
 	border: 1px solid var(--line);
 }
 
-@media (max-width:900px) {
+@media (max-width:800px) {
 	html {
 		font-size: 0.8rem;
 	}
+}
+
+@media (max-width:1200px) {
 	.content {
 		flex-direction: column;
 	}
