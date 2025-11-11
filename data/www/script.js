@@ -74,8 +74,7 @@ document.addEventListener('click', function (ev) {
 		return `${hh}:${mm}:${ss}`;
 	}
 
-	function formatDHM(t) {
-		const date = new Date(t);
+	function formatDHM(date) {
 		const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 		const day = days[date.getDay()];
 		const hours = String(date.getHours()).padStart(2, '0');
@@ -83,8 +82,7 @@ document.addEventListener('click', function (ev) {
 		return `${day} ${hours}:${minutes}`;
 	}
 
-	function formatDMHM(t) {
-		const date = new Date(t);
+	function formatDMHM(date) {
 		const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
 			"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 		const month = months[date.getMonth()];
@@ -96,25 +94,41 @@ document.addEventListener('click', function (ev) {
 
 	function updateCountdown() {
 		const now = Date.now();
+		const nowDate = new Date();
+
 		nodes.forEach(el => {
 			const iso = el.getAttribute('data-unlock');
 			if (!iso) return;
-			let t = Date.parse(iso);
+
+			const t = Date.parse(iso);
 			if (isNaN(t)) return;
+
 			const diff = t - now;
-			if (diff > 7 * 24 * 3600 * 1000) {
-				el.textContent = formatDMHM(t);
-			} else if (diff > 12 * 3600 * 1000) {
-				el.textContent = formatDHM(t);
-			} else if (diff <= 0) {
+
+			if (diff <= 0) {
 				el.textContent = '';
-				// toggle classes on closest li
 				const li = el.closest('li');
 				if (li && li.classList.contains('locked')) {
 					li.classList.remove('locked');
 					li.classList.add('unlocked');
 				}
+				return;
+			}
+
+			const unlockDate = new Date(t);
+			const isFutureDay =
+				unlockDate.getFullYear() !== nowDate.getFullYear() ||
+				unlockDate.getMonth() !== nowDate.getMonth() ||
+				unlockDate.getDate() !== nowDate.getDate();
+
+			if (diff > 7 * 24 * 3600 * 1000) {
+				// More than a week away
+				el.textContent = formatDMHM(unlockDate);
+			} else if (isFutureDay) {
+				// Within a week but not today
+				el.textContent = formatDHM(unlockDate);
 			} else {
+				// Same day
 				el.textContent = formatHMS(diff);
 			}
 		});

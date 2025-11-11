@@ -6,5 +6,5 @@ In the meantime, you can:
 
 - Return to the [homepage](/{{ $.Event.Path }})
 - Visit the [latest puzzle](/{{ $.Event.Path }}/latest)
-- Explore other puzzles ->
+- Explore other puzzles
 - Take a break and come back later :)
