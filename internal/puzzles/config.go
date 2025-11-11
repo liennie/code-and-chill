@@ -16,15 +16,19 @@ type EventPathConfig struct {
 }
 
 type EventConfig struct {
+	ID      string         `yaml:"id"`
 	Name    string         `yaml:"name"`
 	Puzzles []PuzzleConfig `yaml:"puzzles"`
 }
 
 type PuzzleConfig struct {
-	Name   string        `yaml:"name"`
-	Unlock time.Time     `yaml:"unlock"`
-	Parts  []PartConfig  `yaml:"parts"`
-	Inputs []InputConfig `yaml:"inputs"`
+	ID          string        `yaml:"id"`
+	Path        string        `yaml:"path"`
+	Name        string        `yaml:"name"`
+	Unlock      time.Time     `yaml:"unlock"`
+	Parts       []PartConfig  `yaml:"parts"`
+	Inputs      []InputConfig `yaml:"inputs"`
+	InputOffset int           `yaml:"inputOffset"`
 }
 
 type PartConfig struct {

@@ -31,7 +31,7 @@ func Setup(ctx context.Context, name string) context.Context {
 
 	w := io.MultiWriter(os.Stderr, logFile)
 
-	logger := slog.New(slog.NewJSONHandler(w, nil))
+	logger := slog.New(slog.NewJSONHandler(w, &slog.HandlerOptions{ /*Level: slog.LevelDebug*/ }))
 	slog.SetDefault(logger)
 
 	setup = true

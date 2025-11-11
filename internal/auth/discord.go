@@ -205,15 +205,19 @@ func (a *DiscordAuth) updateDB(user *discordUser) (*User, error) {
 		username = fmt.Sprintf("%s#%s", user.Username, user.Discriminator)
 	}
 
-	u := &User{}
+	var u *User
 	err := a.db.Update(func(tx *db.Tx) error {
 		discordBucket := tx.DiscordUser()
 		userBucket := tx.User()
 
 		du := discordBucket.Get(user.ID)
 		if du != nil {
-			u.ID = du.ID
-		} else {
+			if foo := userBucket.Get(du.ID); foo != nil {
+				u = userFromDB(du.ID, foo)
+			}
+		}
+		if u == nil {
+			u = &User{}
 			u.ID = newID()
 			for userBucket.Has(u.ID) {
 				u.ID = newID()
@@ -223,15 +227,18 @@ func (a *DiscordAuth) updateDB(user *discordUser) (*User, error) {
 			if err != nil {
 				return err
 			}
+
+			seq, err := userBucket.NextSequence()
+			if err != nil {
+				return err
+			}
+			u.InputOffset = int(seq)
 		}
 
 		u.Name = username
 		u.AvatarURL = fmt.Sprintf(discordAvatarURL, user.ID, user.Avatar)
 
-		return userBucket.Put(u.ID, &db.User{
-			Name:      u.Name,
-			AvatarURL: u.AvatarURL,
-		})
+		return userBucket.Put(u.ID, u.toDB())
 	})
 	if err != nil {
 		return nil, fmt.Errorf("discord user db update: %w", err)

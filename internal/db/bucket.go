@@ -56,6 +56,10 @@ func (b *Bucket[V]) Delete(key string) error {
 	return b.b.Delete([]byte(key))
 }
 
+func (b *Bucket[V]) NextSequence() (uint64, error) {
+	return b.b.NextSequence()
+}
+
 type startFunc func(c *bbolt.Cursor) (k, v []byte)
 type contFunc func(k []byte) bool
 

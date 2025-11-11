@@ -55,8 +55,8 @@ func puzzlesMiddleware(event puzzles.Event, next http.Handler) http.Handler {
 		pd.Puzzles = make([]puzzleData, 0, len(event.Puzzles))
 		for _, puzzle := range event.Puzzles {
 			pzd := puzzleData{
-				Index: puzzle.Index,
-				Name:  puzzle.Name,
+				Path: puzzle.Path,
+				Name: puzzle.Name,
 			}
 
 			// TODO handle user solved classes
@@ -78,7 +78,7 @@ func puzzlesMiddleware(event puzzles.Event, next http.Handler) http.Handler {
 func puzzleDataFunc(puzzle puzzles.Puzzle, locked dataFunc) dataFunc {
 	return func(r *http.Request) (int, any) {
 		pd := pageDataFromContext(r.Context())
-		pd.Puzzle = puzzle.Index
+		pd.Puzzle = puzzle.Path
 		pd.Title = puzzle.Name
 
 		if puzzle.Unlock.After(pd.Now) {
@@ -111,7 +111,7 @@ func latestPuzzleRedirect(event puzzles.Event) http.Handler {
 				continue
 			}
 
-			http.Redirect(w, r, fmt.Sprintf("/%s/puzzle/%d", event.Path, i+1), http.StatusTemporaryRedirect)
+			http.Redirect(w, r, fmt.Sprintf("/%s/puzzle/%s", event.Path, puzzle.Path), http.StatusTemporaryRedirect)
 			return
 		}
 
@@ -119,7 +119,16 @@ func latestPuzzleRedirect(event puzzles.Event) http.Handler {
 	})
 }
 
+func inputIndex(userOffset int, puzzle puzzles.Puzzle) int {
+	return (userOffset + puzzle.InputOffset) % len(puzzle.Inputs)
+}
+
 func puzzleInputHandler(puzzle puzzles.Puzzle, locked http.Handler) http.Handler {
+	handlers := make([]http.Handler, len(puzzle.Inputs))
+	for i, input := range puzzle.Inputs {
+		handlers[i] = cachedHandler([]byte(input.Text), "text/plain; charset=utf-8")
+	}
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		pd := pageDataFromContext(r.Context())
 
@@ -128,9 +137,13 @@ func puzzleInputHandler(puzzle puzzles.Puzzle, locked http.Handler) http.Handler
 			return
 		}
 
-		// TODO if not logged in, return 404
+		if pd.User == nil {
+			http.NotFound(w, r)
+			return
+		}
 
-		// TODO return user input
+		i := inputIndex(pd.User.InputOffset, puzzle)
+		handlers[i].ServeHTTP(w, r)
 	})
 }
 

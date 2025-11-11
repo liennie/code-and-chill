@@ -136,8 +136,9 @@ func userMiddleware(a *auth.Auth, next http.Handler) http.Handler {
 			}
 
 			pd.User = &userData{
-				Name:   user.Name,
-				Avatar: user.AvatarURL,
+				Name:        user.Name,
+				Avatar:      user.AvatarURL,
+				InputOffset: user.InputOffset,
 			}
 		}
 
@@ -158,7 +159,11 @@ func logoutHandler(event puzzles.Event) http.Handler {
 			l.Error("logout", "error", err)
 		}
 
-		http.Redirect(w, r, "/"+event.Path, http.StatusSeeOther)
+		redir := "/" + event.Path
+		if ret := r.URL.Query().Get("return"); ret != "" {
+			redir += "/" + ret
+		}
+		http.Redirect(w, r, redir, http.StatusSeeOther)
 	})
 }
 

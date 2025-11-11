@@ -12,7 +12,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
@@ -119,19 +118,19 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 	}
 
 	// root
-	p := pzls.Default.Path
+	e := pzls.Default.Path
 	reg("GET", "/", "md/404.md", rootMiddleware(notFoundHandler))
-	reg("GET", "/{$}", "redirect", http.RedirectHandler("/"+p, http.StatusTemporaryRedirect))
-	reg("GET", "/events", "redirect", http.RedirectHandler("/"+p+"/events", http.StatusTemporaryRedirect))
-	reg("GET", "/rules", "redirect", http.RedirectHandler("/"+p+"/rules", http.StatusTemporaryRedirect))
-	reg("GET", "/leaderboard", "redirect", http.RedirectHandler("/"+p+"/leaderboard", http.StatusTemporaryRedirect))
-	reg("GET", "/contact", "redirect", http.RedirectHandler("/"+p+"/contact", http.StatusTemporaryRedirect))
-	reg("GET", "/latest", "redirect", http.RedirectHandler("/"+p+"/latest", http.StatusTemporaryRedirect))
+	reg("GET", "/{$}", "redirect", http.RedirectHandler("/"+e, http.StatusTemporaryRedirect))
+	reg("GET", "/events", "redirect", http.RedirectHandler("/"+e+"/events", http.StatusTemporaryRedirect))
+	reg("GET", "/rules", "redirect", http.RedirectHandler("/"+e+"/rules", http.StatusTemporaryRedirect))
+	reg("GET", "/leaderboard", "redirect", http.RedirectHandler("/"+e+"/leaderboard", http.StatusTemporaryRedirect))
+	reg("GET", "/contact", "redirect", http.RedirectHandler("/"+e+"/contact", http.StatusTemporaryRedirect))
+	reg("GET", "/latest", "redirect", http.RedirectHandler("/"+e+"/latest", http.StatusTemporaryRedirect))
 
-	reg("GET", "/login", "redirect", http.RedirectHandler("/"+p+"/login", http.StatusTemporaryRedirect))
-	reg("GET", "/login/fail", "redirect", http.RedirectHandler("/"+p+"/login/fail", http.StatusTemporaryRedirect))
-	reg("GET", "/profile", "redirect", http.RedirectHandler("/"+p+"/profile", http.StatusTemporaryRedirect))
-	reg("GET", "/logout", "redirect", http.RedirectHandler("/"+p+"/logout", http.StatusTemporaryRedirect))
+	reg("GET", "/login", "redirect", http.RedirectHandler("/"+e+"/login", http.StatusTemporaryRedirect))
+	reg("GET", "/login/fail", "redirect", http.RedirectHandler("/"+e+"/login/fail", http.StatusTemporaryRedirect))
+	reg("GET", "/profile", "redirect", http.RedirectHandler("/"+e+"/profile", http.StatusTemporaryRedirect))
+	reg("GET", "/logout", "redirect", http.RedirectHandler("/"+e+"/logout", http.StatusTemporaryRedirect))
 
 	reg("GET", "/auth/discord", "discordAuthCallback", rootMiddleware(userMux(
 		http.RedirectHandler("/", http.StatusSeeOther),
@@ -141,14 +140,14 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 	// events
 	lockedDataFunc := mdDataFunc(http.StatusNotFound, "Puzzle locked", readFile(fsys, "md/locked.md"))
 	for _, event := range pzls.Events {
-		p = event.Path
+		e = event.Path
 
 		evMux := http.NewServeMux()
 		middleware := eventMiddleware(event)
-		reg("GET", "/"+p+"/", "mux", http.StripPrefix("/"+p, middleware(evMux)))
-		reg("GET", "/"+p, "md/home.md", http.StripPrefix("/"+p, middleware(page(mdDataFunc(http.StatusOK, "", readFile(fsys, "md/home.md"))))))
+		reg("GET", "/"+e+"/", "mux", http.StripPrefix("/"+e, middleware(evMux)))
+		reg("GET", "/"+e, "md/home.md", http.StripPrefix("/"+e, middleware(page(mdDataFunc(http.StatusOK, "", readFile(fsys, "md/home.md"))))))
 
-		reg := handlerRegistrar("/"+p, evMux)
+		reg := handlerRegistrar("/"+e, evMux)
 
 		reg("GET", "/", "md/404.md", notFoundHandler)
 		reg("GET", "/events", "md/events.md", eventsMiddleware(pzls.Events, page(mdDataFunc(http.StatusOK, "Events", readFile(fsys, "md/events.md")))))
@@ -158,36 +157,36 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 		reg("GET", "/latest", "latestPuzzleRedirect", latestPuzzleRedirect(event))
 
 		reg("GET", "/login", "md/login.md", userMux(
-			http.RedirectHandler("/"+p+"/profile", http.StatusSeeOther),
+			http.RedirectHandler("/"+e+"/profile", http.StatusSeeOther),
 			page(mdDataFunc(http.StatusOK, "Log In", readFile(fsys, "md/login.md")))),
 		)
 		reg("GET", "/login/discord", "discordAuthHandler", userMux(
-			http.RedirectHandler("/"+p+"/profile", http.StatusSeeOther),
+			http.RedirectHandler("/"+e+"/profile", http.StatusSeeOther),
 			discordAuthRedirect(auth, event),
 		))
 		reg("GET", "/login/fail", "md/401.fail.md", userMux(
-			http.RedirectHandler("/"+p+"/profile", http.StatusSeeOther),
+			http.RedirectHandler("/"+e+"/profile", http.StatusSeeOther),
 			page(mdDataFunc(http.StatusUnauthorized, "401: Unauthorized", readFile(fsys, "md/401.fail.md"))),
 		))
 		reg("GET", "/profile", "md/profile.md", userMux(
 			eventsMiddleware(pzls.Events, page(mdDataFunc(http.StatusOK, "Profile", readFile(fsys, "md/profile.md")))),
-			http.RedirectHandler("/"+p+"/login", http.StatusSeeOther),
+			http.RedirectHandler("/"+e+"/login", http.StatusSeeOther),
 		))
 		reg("GET", "/logout", "logoutHandler", userMux(
 			logoutHandler(event),
-			http.RedirectHandler("/"+p, http.StatusSeeOther),
+			http.RedirectHandler("/"+e, http.StatusSeeOther),
 		))
 
 		for _, puzzle := range event.Puzzles {
-			i := strconv.Itoa(puzzle.Index)
+			p := puzzle.Path
 
-			reg("GET", "/puzzle/"+i, "puzzleDataFunc", page(puzzleDataFunc(puzzle, lockedDataFunc)))
-			reg("GET", "/puzzle/"+i+"/input", "puzzleInputHandler", userMux(
+			reg("GET", "/puzzle/"+p, "puzzleDataFunc", page(puzzleDataFunc(puzzle, lockedDataFunc)))
+			reg("GET", "/puzzle/"+p+"/input", "puzzleInputHandler", userMux(
 				puzzleInputHandler(puzzle, page(lockedDataFunc)),
 				unauthorizedHandler,
 			))
-			reg("GET", "/puzzle/"+i+"/answer", "redirect", http.RedirectHandler("/"+p+"/puzzle/"+i, http.StatusTemporaryRedirect))
-			reg("POST", "/puzzle/"+i+"/answer", "puzzleAnswerHandler", userMux(
+			reg("GET", "/puzzle/"+p+"/answer", "redirect", http.RedirectHandler("/"+e+"/puzzle/"+p, http.StatusTemporaryRedirect))
+			reg("POST", "/puzzle/"+p+"/answer", "puzzleAnswerHandler", userMux(
 				puzzleAnswerHandler(),
 				unauthorizedHandler,
 			))

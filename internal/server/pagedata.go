@@ -17,14 +17,15 @@ const (
 
 type pageData struct {
 	Request *http.Request
-	Name    string
-	Now     time.Time
+
+	Name string
+	Now  time.Time
 
 	Event      eventData
 	Events     []eventData
 	EventAlign int
 
-	Puzzle      int
+	Puzzle      string
 	Puzzles     []puzzleData
 	PuzzleAlign int
 
@@ -43,8 +44,9 @@ type eventData struct {
 }
 
 type userData struct {
-	Name   string
-	Avatar string
+	Name        string
+	Avatar      string
+	InputOffset int
 }
 
 type contentData struct {
@@ -59,7 +61,7 @@ type partData struct {
 }
 
 type puzzleData struct {
-	Index  int
+	Path   string
 	Name   string
 	Class  string
 	Unlock *time.Time

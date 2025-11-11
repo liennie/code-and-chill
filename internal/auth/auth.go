@@ -22,9 +22,10 @@ func New(config Config, db *db.DB) *Auth {
 }
 
 type User struct {
-	ID        string
-	Name      string
-	AvatarURL string
+	ID          string
+	Name        string
+	AvatarURL   string
+	InputOffset int
 }
 
 func newID() string {
@@ -36,6 +37,13 @@ func userFromDB(id string, s *db.User) *User {
 		ID:        id,
 		Name:      s.Name,
 		AvatarURL: s.AvatarURL,
+	}
+}
+
+func (u *User) toDB() *db.User {
+	return &db.User{
+		Name:      u.Name,
+		AvatarURL: u.AvatarURL,
 	}
 }
 

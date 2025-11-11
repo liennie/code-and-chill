@@ -1,3 +1,4 @@
 # Profile::**{{ $.User.Name }}** {#profile}
 
-- [Log out](/{{ $.Event.Path }}/logout)
+{{ $return := $.Request.URL.Query.Get "return" | trimPrefix "/" -}}
+- [Log out](/{{ $.Event.Path }}/logout{{ if $return }}?return={{ $return }}{{ end }})

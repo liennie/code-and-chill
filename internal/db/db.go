@@ -36,6 +36,7 @@ func Open(config Config) *DB {
 
 	db, err := bbolt.Open(config.File, 0600, &bbolt.Options{
 		Timeout: 30 * time.Second,
+		Logger:  &slogLogger{},
 	})
 	if err != nil {
 		panic(fmt.Errorf("db: open bbolt db: %w", err))

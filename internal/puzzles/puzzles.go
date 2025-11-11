@@ -27,27 +27,66 @@ func Load(config Config) *Puzzles {
 		Events: make([]Event, 0, len(config.Events)),
 	}
 
+	eventPaths := map[string]struct{}{}
+	eventIDs := map[string]struct{}{}
+
 	for _, event := range config.Events {
 		ec, err := loadEventConfig(event.Config)
 		if err != nil {
-			panic(fmt.Sprintf("puzzles: load event %q: %v", event, err))
+			panic(fmt.Sprintf("puzzles: load event %q: %v", event.Config, err))
 		}
+		if event.Path == "" {
+			panic(fmt.Sprintf("puzzles: event with config %q has empty path", event.Config))
+		}
+		if _, exists := eventPaths[event.Path]; exists {
+			panic(fmt.Sprintf("puzzles: duplicate event path %q", event.Path))
+		}
+		eventPaths[event.Path] = struct{}{}
+		if ec.ID == "" {
+			panic(fmt.Sprintf("puzzles: event with config %q has empty ID", event.Config))
+		}
+		if _, exists := eventIDs[ec.ID]; exists {
+			panic(fmt.Sprintf("puzzles: duplicate event ID %q", ec.ID))
+		}
+		eventIDs[ec.ID] = struct{}{}
 
 		fsys := os.DirFS(filepath.Dir(filepath.FromSlash(event.Config)))
 
 		e := Event{
+			ID:      ec.ID,
 			Path:    event.Path,
 			Name:    ec.Name,
 			Puzzles: make([]Puzzle, 0, len(ec.Puzzles)),
 			Total:   0,
 		}
+
+		puzzlePaths := map[string]struct{}{}
+		puzzleIDs := map[string]struct{}{}
+
 		for i, puzzle := range ec.Puzzles {
+			if puzzle.Path == "" {
+				panic(fmt.Sprintf("puzzles: event %q puzzle %d has empty path", ec.Name, i))
+			}
+			if _, exists := puzzlePaths[puzzle.Path]; exists {
+				panic(fmt.Sprintf("puzzles: event %q: duplicate puzzle path %q", ec.Name, puzzle.Path))
+			}
+			puzzlePaths[puzzle.Path] = struct{}{}
+			if puzzle.ID == "" {
+				panic(fmt.Sprintf("puzzles: event %q puzzle with path %q has empty ID", ec.Name, puzzle.Path))
+			}
+			if _, exists := puzzleIDs[puzzle.ID]; exists {
+				panic(fmt.Sprintf("puzzles: event %q: duplicate puzzle ID %q", ec.Name, puzzle.ID))
+			}
+			puzzleIDs[puzzle.ID] = struct{}{}
+
 			pz := Puzzle{
-				Index:  i + 1,
-				Name:   puzzle.Name,
-				Unlock: puzzle.Unlock,
-				Parts:  make([]Part, 0, len(puzzle.Parts)),
-				Inputs: make([]Input, 0, len(puzzle.Inputs)),
+				ID:          puzzle.ID,
+				Path:        puzzle.Path,
+				Name:        puzzle.Name,
+				Unlock:      puzzle.Unlock,
+				Parts:       make([]Part, 0, len(puzzle.Parts)),
+				Inputs:      make([]Input, 0, len(puzzle.Inputs)),
+				InputOffset: puzzle.InputOffset,
 			}
 
 			for i, part := range puzzle.Parts {
@@ -121,6 +160,7 @@ func loadEventConfig(filename string) (EventConfig, error) {
 }
 
 type Event struct {
+	ID      string
 	Path    string
 	Name    string
 	Puzzles []Puzzle
@@ -128,11 +168,13 @@ type Event struct {
 }
 
 type Puzzle struct {
-	Index  int
-	Name   string
-	Unlock time.Time
-	Parts  []Part
-	Inputs []Input
+	ID          string
+	Path        string
+	Name        string
+	Unlock      time.Time
+	Parts       []Part
+	Inputs      []Input
+	InputOffset int
 }
 
 type Part struct {
