@@ -119,7 +119,7 @@ func Load(config Config) *Puzzles {
 				}
 
 				pz.Inputs = append(pz.Inputs, Input{
-					Text:    string(content),
+					Text:    content,
 					Answers: input.Answers,
 				})
 			}
@@ -183,6 +183,6 @@ type Part struct {
 }
 
 type Input struct {
-	Text    string
+	Text    []byte
 	Answers []string
 }

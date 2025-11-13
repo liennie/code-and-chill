@@ -111,6 +111,7 @@ var extraFuncs = template.FuncMap{
 		}
 		return "", fmt.Errorf("cannot pad type %T", n)
 	},
+	"htmlescaper": template.HTMLEscaper,
 }
 
 type dataFunc func(r *http.Request) (int, any)

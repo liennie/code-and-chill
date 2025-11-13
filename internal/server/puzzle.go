@@ -126,7 +126,7 @@ func inputIndex(userOffset int, puzzle puzzles.Puzzle) int {
 func puzzleInputHandler(puzzle puzzles.Puzzle, locked http.Handler) http.Handler {
 	handlers := make([]http.Handler, len(puzzle.Inputs))
 	for i, input := range puzzle.Inputs {
-		handlers[i] = cachedHandler([]byte(input.Text), "text/plain; charset=utf-8")
+		handlers[i] = cachedHandler(input.Text, "text/plain; charset=utf-8")
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

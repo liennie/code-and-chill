@@ -145,6 +145,7 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 		evMux := http.NewServeMux()
 		middleware := eventMiddleware(event)
 		reg("GET", "/"+e+"/", "mux", http.StripPrefix("/"+e, middleware(evMux)))
+		reg("POST", "/"+e+"/", "mux", http.StripPrefix("/"+e, middleware(evMux)))
 		reg("GET", "/"+e, "md/home.md", http.StripPrefix("/"+e, middleware(page(mdDataFunc(http.StatusOK, "", readFile(fsys, "md/home.md"))))))
 
 		reg := handlerRegistrar("/"+e, evMux)
@@ -166,7 +167,7 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 		))
 		reg("GET", "/login/fail", "md/401.fail.md", userMux(
 			http.RedirectHandler("/"+e+"/profile", http.StatusSeeOther),
-			page(mdDataFunc(http.StatusUnauthorized, "401: Unauthorized", readFile(fsys, "md/401.fail.md"))),
+			page(mdDataFunc(http.StatusUnauthorized, "Login failed", readFile(fsys, "md/401.fail.md"))),
 		))
 		reg("GET", "/profile", "md/profile.md", userMux(
 			eventsMiddleware(pzls.Events, page(mdDataFunc(http.StatusOK, "Profile", readFile(fsys, "md/profile.md")))),
@@ -185,7 +186,7 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 				puzzleInputHandler(puzzle, page(lockedDataFunc)),
 				unauthorizedHandler,
 			))
-			reg("GET", "/puzzle/"+p+"/answer", "redirect", http.RedirectHandler("/"+e+"/puzzle/"+p, http.StatusTemporaryRedirect))
+			reg("GET", "/puzzle/"+p+"/answer", "redirect", http.RedirectHandler("/"+e+"/puzzle/"+p, http.StatusSeeOther))
 			reg("POST", "/puzzle/"+p+"/answer", "puzzleAnswerHandler", userMux(
 				puzzleAnswerHandler(),
 				unauthorizedHandler,

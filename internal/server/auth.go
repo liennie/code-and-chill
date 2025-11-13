@@ -135,10 +135,20 @@ func userMiddleware(a *auth.Auth, next http.Handler) http.Handler {
 				panic(fmt.Errorf("view user: %w", err))
 			}
 
-			pd.User = &userData{
-				Name:        user.Name,
-				Avatar:      user.AvatarURL,
-				InputOffset: user.InputOffset,
+			if user != nil {
+				pd.User = &userData{
+					Name:        user.Name,
+					Avatar:      user.AvatarURL,
+					InputOffset: user.InputOffset,
+				}
+			} else {
+				err := sess.Update(func(data *session.Data) error {
+					data.User = nil
+					return nil
+				})
+				if err != nil {
+					panic(fmt.Errorf("update session: %w", err))
+				}
 			}
 		}
 
