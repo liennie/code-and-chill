@@ -61,10 +61,8 @@ func puzzlesMiddleware(event puzzles.Event, next http.Handler) http.Handler {
 
 			// TODO handle user solved classes
 
-			if puzzle.Unlock.Before(pd.Now) {
-				pzd.Class = puzzleClassUnlocked
-			} else {
-				pzd.Class = puzzleClassLocked
+			if puzzle.Unlock.After(pd.Now) {
+				pzd.Locked = true
 				pzd.Unlock = &puzzle.Unlock
 			}
 

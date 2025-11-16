@@ -63,7 +63,8 @@ type partData struct {
 type puzzleData struct {
 	Path   string
 	Name   string
-	Class  string
+	Solved int
+	Locked bool
 	Unlock *time.Time
 }
 

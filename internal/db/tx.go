@@ -1,11 +1,14 @@
 package db
 
 import (
+	"errors"
+
 	"go.etcd.io/bbolt"
 )
 
 type Tx struct {
-	tx *bbolt.Tx
+	tx       *bbolt.Tx
+	modified bool
 }
 
 func newTx(tx *bbolt.Tx) *Tx {
@@ -18,8 +21,22 @@ func (db *DB) View(fn func(tx *Tx) error) error {
 	})
 }
 
+var errRollback = errors.New("rollback")
+
 func (db *DB) Update(fn func(tx *Tx) error) error {
-	return db.db.Update(func(tx *bbolt.Tx) error {
-		return fn(newTx(tx))
+	err := db.db.Update(func(btx *bbolt.Tx) error {
+		tx := newTx(btx)
+		err := fn(tx)
+		if err != nil {
+			return err
+		}
+		if !tx.modified {
+			return errRollback
+		}
+		return nil
 	})
+	if errors.Is(err, errRollback) {
+		return nil
+	}
+	return err
 }

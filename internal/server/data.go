@@ -87,20 +87,26 @@ var extraFuncs = template.FuncMap{
 		}
 		return template.HTML(buf.String()), nil
 	},
-	"puzzleLocked": func(puzzle puzzleData) bool {
-		return puzzle.Class == puzzleClassLocked
-	},
 	"puzzleHint": func(puzzle puzzleData) string {
-		switch puzzle.Class {
-		case puzzleClassSolvedOne:
+		if puzzle.Solved == 1 {
 			return "✔"
-
-		case puzzleClassSolvedBoth:
-			return "✔✔"
-
-		default:
-			return ""
 		}
+		if puzzle.Solved >= 2 {
+			return "✔✔"
+		}
+		return ""
+	},
+	"puzzleClass": func(puzzle puzzleData) string {
+		if puzzle.Locked {
+			return puzzleClassLocked
+		}
+		if puzzle.Solved == 1 {
+			return puzzleClassSolvedOne
+		}
+		if puzzle.Solved >= 2 {
+			return puzzleClassSolvedBoth
+		}
+		return puzzleClassUnlocked
 	},
 	"pad": func(digits int, n any) (string, error) {
 		switch n.(type) {

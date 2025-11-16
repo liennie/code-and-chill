@@ -15,7 +15,7 @@ type Session struct {
 }
 
 func (tx *Tx) Session() *Bucket[Session] {
-	return openBucket[Session](tx.tx, bucketSession)
+	return openBucket[Session](tx, bucketSession)
 }
 
 type SessionExpire struct {
@@ -23,9 +23,9 @@ type SessionExpire struct {
 }
 
 func (tx *Tx) SessionExpire() *Bucket[SessionExpire] {
-	return openBucket[SessionExpire](tx.tx, bucketSessionExpire)
+	return openBucket[SessionExpire](tx, bucketSessionExpire)
 }
 
 func SessionData[T any](tx *Tx) *Bucket[T] {
-	return openBucket[T](tx.tx, bucketSessionData)
+	return openBucket[T](tx, bucketSessionData)
 }

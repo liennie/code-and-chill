@@ -11,7 +11,7 @@ type User struct {
 }
 
 func (tx *Tx) User() *Bucket[User] {
-	return openBucket[User](tx.tx, bucketUser)
+	return openBucket[User](tx, bucketUser)
 }
 
 type DiscordUser struct {
@@ -19,5 +19,5 @@ type DiscordUser struct {
 }
 
 func (tx *Tx) DiscordUser() *Bucket[DiscordUser] {
-	return openBucket[DiscordUser](tx.tx, bucketDiscordUser)
+	return openBucket[DiscordUser](tx, bucketDiscordUser)
 }

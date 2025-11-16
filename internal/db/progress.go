@@ -23,5 +23,5 @@ type PartProgress struct {
 }
 
 func (tx *Tx) Progress() *Bucket[Progress] {
-	return openBucket[Progress](tx.tx, bucketProgress)
+	return openBucket[Progress](tx, bucketProgress)
 }

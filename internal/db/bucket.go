@@ -10,16 +10,17 @@ import (
 )
 
 type Bucket[V any] struct {
-	b *bbolt.Bucket
+	b  *bbolt.Bucket
+	tx *Tx
 }
 
-func openBucket[V any](tx *bbolt.Tx, key []byte) *Bucket[V] {
-	b := tx.Bucket(key)
+func openBucket[V any](tx *Tx, key []byte) *Bucket[V] {
+	b := tx.tx.Bucket(key)
 	if b == nil {
 		// this should never happen
 		panic(fmt.Errorf("db: bucket %q is missing", key))
 	}
-	return &Bucket[V]{b: b}
+	return &Bucket[V]{b: b, tx: tx}
 }
 
 func (b *Bucket[V]) Has(key string) bool {
@@ -49,15 +50,33 @@ func (b *Bucket[V]) Put(key string, val *V) error {
 		return fmt.Errorf("marshal: %w", err)
 	}
 
-	return b.b.Put([]byte(key), buf.Bytes())
+	err = b.b.Put([]byte(key), buf.Bytes())
+	if err != nil {
+		return err
+	}
+
+	b.tx.modified = true
+	return nil
 }
 
 func (b *Bucket[V]) Delete(key string) error {
-	return b.b.Delete([]byte(key))
+	err := b.b.Delete([]byte(key))
+	if err != nil {
+		return err
+	}
+
+	b.tx.modified = true
+	return nil
 }
 
 func (b *Bucket[V]) NextSequence() (uint64, error) {
-	return b.b.NextSequence()
+	seq, err := b.b.NextSequence()
+	if err != nil {
+		return seq, err
+	}
+
+	b.tx.modified = true
+	return seq, nil
 }
 
 type startFunc func(c *bbolt.Cursor) (k, v []byte)
@@ -113,5 +132,6 @@ func (b *Bucket[V]) DeleteRange(from, to string) error {
 			return err
 		}
 	}
+	b.tx.modified = true
 	return nil
 }
