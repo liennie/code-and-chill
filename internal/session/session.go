@@ -63,6 +63,7 @@ func (s *Session) Update(f func(data *Data) error) error {
 		if err := f(data); err != nil {
 			return err
 		}
+		s.data = data
 		return bucket.Put(s.id.ID, data)
 	})
 }
