@@ -117,8 +117,8 @@ func latestPuzzleRedirect(event puzzles.Event) http.Handler {
 	})
 }
 
-func inputIndex(userOffset int, puzzle puzzles.Puzzle) int {
-	return (userOffset + puzzle.InputOffset) % len(puzzle.Inputs)
+func inputIndex(userOffset uint8, puzzle puzzles.Puzzle) uint {
+	return (uint(userOffset) + puzzle.InputOffset) % uint(len(puzzle.Inputs))
 }
 
 func puzzleInputHandler(puzzle puzzles.Puzzle, locked http.Handler) http.Handler {

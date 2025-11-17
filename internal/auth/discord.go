@@ -1,8 +1,6 @@
 package auth
 
 import (
-	"cc/internal/ctxlog"
-	"cc/internal/db"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -11,6 +9,9 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"cc/internal/ctxlog"
+	"cc/internal/db"
 )
 
 type DiscordAuth struct {
@@ -18,10 +19,13 @@ type DiscordAuth struct {
 	clientSecret    string
 	redirectURI     string
 	exchangeTimeout time.Duration
-	db              *db.DB
+
+	db                *db.DB
+	bucketUser        *db.BucketKey[User]
+	bucketDiscordUser *db.BucketKey[dbDiscordUser]
 }
 
-func newDiscordAuth(config DiscordConfig, db *db.DB) DiscordAuth {
+func newDiscordAuth(config DiscordConfig, ddb *db.DB) DiscordAuth {
 	secret, err := os.ReadFile(config.ClientSecret)
 	if err != nil {
 		panic(fmt.Errorf("read discord client secret: %w", err))
@@ -32,7 +36,10 @@ func newDiscordAuth(config DiscordConfig, db *db.DB) DiscordAuth {
 		clientSecret:    strings.TrimSpace(string(secret)),
 		redirectURI:     config.RedirectURI,
 		exchangeTimeout: config.ExchangeTimeout,
-		db:              db,
+
+		db:                ddb,
+		bucketUser:        db.NewBucketKey[User](ddb, db.BucketUser),
+		bucketDiscordUser: db.NewBucketKey[dbDiscordUser](ddb, db.BucketDiscordUser),
 	}
 }
 
@@ -157,11 +164,11 @@ func (a *DiscordAuth) revoke(cli *http.Client, t token) error {
 }
 
 type discordUser struct {
-	ID            string `json:"id"`
-	Username      string `json:"username"`
-	Discriminator string `json:"discriminator"`
-	GlobalName    string `json:"global_name"`
-	Avatar        string `json:"avatar"`
+	ID            string  `json:"id"`
+	Username      string  `json:"username"`
+	Discriminator string  `json:"discriminator"`
+	GlobalName    string  `json:"global_name"`
+	Avatar        *string `json:"avatar"`
 }
 
 func (a *DiscordAuth) getUser(cli *http.Client, t token) (*discordUser, error) {
@@ -199,31 +206,34 @@ func (a *DiscordAuth) getUser(cli *http.Client, t token) (*discordUser, error) {
 	return &user, nil
 }
 
-func (a *DiscordAuth) updateDB(user *discordUser) (*User, error) {
-	username := user.GlobalName
+type dbDiscordUser struct {
+	ID string `json:"id"`
+}
+
+func (a *DiscordAuth) updateDB(discordUser *discordUser) (*User, error) {
+	username := discordUser.GlobalName
 	if username == "" {
-		username = fmt.Sprintf("%s#%s", user.Username, user.Discriminator)
+		username = fmt.Sprintf("%s#%s", discordUser.Username, discordUser.Discriminator)
 	}
 
-	var u *User
+	var user *User
 	err := a.db.Update(func(tx *db.Tx) error {
-		discordBucket := tx.DiscordUser()
-		userBucket := tx.User()
+		discordBucket := a.bucketDiscordUser.Open(tx)
+		userBucket := a.bucketUser.Open(tx)
 
-		du := discordBucket.Get(user.ID)
-		if du != nil {
-			if foo := userBucket.Get(du.ID); foo != nil {
-				u = userFromDB(du.ID, foo)
-			}
+		discordUserID := discordBucket.Get(discordUser.ID)
+		if discordUserID != nil {
+			user = userBucket.Get(discordUserID.ID)
 		}
-		if u == nil {
-			u = &User{}
-			u.ID = newID()
-			for userBucket.Has(u.ID) {
-				u.ID = newID()
+
+		if user == nil {
+			user = &User{}
+			user.ID = newID()
+			for userBucket.Has(user.ID) {
+				user.ID = newID()
 			}
 
-			err := discordBucket.Put(user.ID, &db.DiscordUser{ID: u.ID})
+			err := discordBucket.Put(discordUser.ID, &dbDiscordUser{ID: user.ID})
 			if err != nil {
 				return err
 			}
@@ -232,17 +242,21 @@ func (a *DiscordAuth) updateDB(user *discordUser) (*User, error) {
 			if err != nil {
 				return err
 			}
-			u.InputOffset = int(seq)
+			user.InputOffset = uint8(seq)
 		}
 
-		u.Name = username
-		u.AvatarURL = fmt.Sprintf(discordAvatarURL, user.ID, user.Avatar)
+		user.Name = username
+		if discordUser.Avatar != nil {
+			user.AvatarURL = fmt.Sprintf(discordAvatarURL, discordUser.ID, *discordUser.Avatar)
+		} else {
+			user.AvatarURL = "" // TODO default avatar
+		}
 
-		return userBucket.Put(u.ID, u.toDB())
+		return userBucket.Put(user.ID, user)
 	})
 	if err != nil {
 		return nil, fmt.Errorf("discord user db update: %w", err)
 	}
 
-	return u, nil
+	return user, nil
 }

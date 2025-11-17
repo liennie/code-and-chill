@@ -174,7 +174,7 @@ type Puzzle struct {
 	Unlock      time.Time
 	Parts       []Part
 	Inputs      []Input
-	InputOffset int
+	InputOffset uint
 }
 
 type Part struct {

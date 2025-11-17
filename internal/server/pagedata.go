@@ -46,7 +46,7 @@ type eventData struct {
 type userData struct {
 	Name        string
 	Avatar      string
-	InputOffset int
+	InputOffset uint8
 }
 
 type contentData struct {

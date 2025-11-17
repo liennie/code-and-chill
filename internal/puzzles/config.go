@@ -28,7 +28,7 @@ type PuzzleConfig struct {
 	Unlock      time.Time     `yaml:"unlock"`
 	Parts       []PartConfig  `yaml:"parts"`
 	Inputs      []InputConfig `yaml:"inputs"`
-	InputOffset int           `yaml:"inputOffset"`
+	InputOffset uint          `yaml:"inputOffset"`
 }
 
 type PartConfig struct {

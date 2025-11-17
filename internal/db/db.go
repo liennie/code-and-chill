@@ -10,15 +10,6 @@ import (
 	"go.etcd.io/bbolt"
 )
 
-var allBuckets = [][]byte{
-	bucketSession,
-	bucketSessionExpire,
-	bucketSessionData,
-
-	bucketUser,
-	bucketDiscordUser,
-}
-
 type DB struct {
 	db       *bbolt.DB
 	closeErr error

@@ -9,25 +9,71 @@ import (
 	"go.etcd.io/bbolt"
 )
 
+var (
+	BucketSession       = []byte("session")
+	BucketSessionExpire = []byte("session_expire")
+	BucketSessionData   = []byte("session_data")
+
+	BucketUser        = []byte("user")
+	BucketDiscordUser = []byte("discord_user")
+
+	// "progress" -> <event> -> <user> -> progress data
+	BucketProgress = []byte("progress")
+)
+
+var allBuckets = [][]byte{
+	BucketSession,
+	BucketSessionExpire,
+	BucketSessionData,
+
+	BucketUser,
+	BucketDiscordUser,
+
+	BucketProgress,
+}
+
+type BucketKey[V any] struct {
+	key []byte
+}
+
+func NewBucketKey[V any](db *DB, key []byte) *BucketKey[V] {
+	err := db.db.View(func(tx *bbolt.Tx) error {
+		b := tx.Bucket(key)
+		if b == nil {
+			return fmt.Errorf("db: bucket %q is missing", key)
+		}
+		return nil
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	return &BucketKey[V]{key: key}
+}
+
+func (f *BucketKey[V]) Open(tx *Tx) *Bucket[V] {
+	b := tx.tx.Bucket(f.key)
+	if b == nil {
+		// this should never happen
+		panic(fmt.Errorf("db: bucket %q is missing", f.key))
+	}
+	return &Bucket[V]{b: b, tx: tx}
+}
+
 type Bucket[V any] struct {
 	b  *bbolt.Bucket
 	tx *Tx
-}
-
-func openBucket[V any](tx *Tx, key []byte) *Bucket[V] {
-	b := tx.tx.Bucket(key)
-	if b == nil {
-		// this should never happen
-		panic(fmt.Errorf("db: bucket %q is missing", key))
-	}
-	return &Bucket[V]{b: b, tx: tx}
 }
 
 func (b *Bucket[V]) Has(key string) bool {
 	return b.b.Get([]byte(key)) != nil
 }
 
-func (b *Bucket[V]) decode(data []byte) *V {
+type KeySetter interface {
+	SetKey(string)
+}
+
+func (b *Bucket[V]) decode(key string, data []byte) *V {
 	if data == nil {
 		return nil
 	}
@@ -35,22 +81,26 @@ func (b *Bucket[V]) decode(data []byte) *V {
 	val := new(V)
 	// this should never panic unless we try to json unsuported types
 	must(json.NewDecoder(bytes.NewReader(data)).Decode(val))
+
+	if ks, ok := any(val).(KeySetter); ok {
+		ks.SetKey(key)
+	}
+
 	return val
 }
 
 func (b *Bucket[V]) Get(key string) *V {
-	return b.decode(b.b.Get([]byte(key)))
+	return b.decode(key, b.b.Get([]byte(key)))
 }
 
 func (b *Bucket[V]) Put(key string, val *V) error {
-	buf := &bytes.Buffer{}
-	err := json.NewEncoder(buf).Encode(val)
+	data, err := json.Marshal(val)
 	if err != nil {
 		// this should never happen
 		return fmt.Errorf("marshal: %w", err)
 	}
 
-	err = b.b.Put([]byte(key), buf.Bytes())
+	err = b.b.Put([]byte(key), data)
 	if err != nil {
 		return err
 	}
@@ -77,6 +127,38 @@ func (b *Bucket[V]) NextSequence() (uint64, error) {
 
 	b.tx.modified = true
 	return seq, nil
+}
+
+func (b *Bucket[V]) HasBucket(key string) bool {
+	return b.b.Bucket([]byte(key)) != nil
+}
+
+func (b *Bucket[V]) Bucket(key string) *Bucket[V] {
+	sub := b.b.Bucket([]byte(key))
+	if sub == nil {
+		return nil
+	}
+	return &Bucket[V]{b: sub, tx: b.tx}
+}
+
+func (b *Bucket[V]) CreateBucket(key string) (*Bucket[V], error) {
+	sub, err := b.b.CreateBucketIfNotExists([]byte(key))
+	if err != nil {
+		return nil, err
+	}
+
+	b.tx.modified = true
+	return &Bucket[V]{b: sub, tx: b.tx}, nil
+}
+
+func (b *Bucket[V]) DeleteBucket(key string) error {
+	err := b.b.DeleteBucket([]byte(key))
+	if err != nil {
+		return err
+	}
+
+	b.tx.modified = true
+	return nil
 }
 
 type startFunc func(c *bbolt.Cursor) (k, v []byte)
@@ -111,8 +193,13 @@ func (b *Bucket[V]) Range(from, to string) iter.Seq2[string, *V] {
 	return func(yield func(string, *V) bool) {
 		c := b.b.Cursor()
 		for k, v := start(c); cont(k); k, v = c.Next() {
-			val := b.decode(v)
-			if !yield(string(k), val) {
+			if v == nil {
+				continue
+			}
+
+			key := string(k)
+			val := b.decode(key, v)
+			if !yield(key, val) {
 				break
 			}
 		}
@@ -126,7 +213,11 @@ func (b *Bucket[V]) All() iter.Seq2[string, *V] {
 func (b *Bucket[V]) DeleteRange(from, to string) error {
 	start, cont := rangeFuncs(from, to)
 	c := b.b.Cursor()
-	for k, _ := start(c); cont(k); k, _ = c.Next() {
+	for k, v := start(c); cont(k); k, v = c.Next() {
+		if v == nil {
+			continue
+		}
+
 		err := c.Delete()
 		if err != nil {
 			return err

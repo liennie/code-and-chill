@@ -33,9 +33,9 @@ func (j *cleanupJob) Run() {
 	err := j.db.Update(func(tx *db.Tx) error {
 		to := expireKey(now)
 
-		sessionBucket := tx.Session()
-		dataBucket := db.SessionData[Data](tx)
-		expireBucket := tx.SessionExpire()
+		sessionBucket := j.bucketSession.Open(tx)
+		dataBucket := j.bucketSessionData.Open(tx)
+		expireBucket := j.bucketSessionExpire.Open(tx)
 		for _, sessions := range expireBucket.Range("", to) {
 			for _, id := range sessions.IDs {
 				err := sessionBucket.Delete(id)
