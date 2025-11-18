@@ -86,7 +86,7 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 		return func(handler http.Handler) http.Handler {
 			handler = puzzlesMiddleware(event, handler)
 			handler = darkModeMiddleware(handler)
-			handler = userMiddleware(auth, handler)
+			handler = userMiddleware(event, auth, handler)
 			handler = sessionMiddleware(session, handler)
 			handler = recoverMiddleware(handler, internalErrorHandler)
 			handler = pageDataMiddleware(pzls.Name, handler)
@@ -165,9 +165,9 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 			http.RedirectHandler("/"+e+"/profile", http.StatusSeeOther),
 			discordAuthRedirect(auth, event),
 		))
-		reg("GET", "/login/fail", "md/401.fail.md", userMux(
+		reg("GET", "/login/fail", "md/loginfail.md", userMux(
 			http.RedirectHandler("/"+e+"/profile", http.StatusSeeOther),
-			page(mdDataFunc(http.StatusUnauthorized, "Login failed", readFile(fsys, "md/401.fail.md"))),
+			page(mdDataFunc(http.StatusUnauthorized, "Login failed", readFile(fsys, "md/loginfail.md"))),
 		))
 		reg("GET", "/profile", "md/profile.md", userMux(
 			eventsMiddleware(pzls.Events, page(mdDataFunc(http.StatusOK, "Profile", readFile(fsys, "md/profile.md")))),

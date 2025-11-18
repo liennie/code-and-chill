@@ -17,7 +17,6 @@ var (
 	BucketUser        = []byte("user")
 	BucketDiscordUser = []byte("discord_user")
 
-	// "progress" -> <event> -> <user> -> progress data
 	BucketProgress = []byte("progress")
 )
 

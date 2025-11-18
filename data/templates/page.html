@@ -11,6 +11,7 @@
 
 {{- $return := $.Request.URL.Query.Get "return" | default $.Request.URL.Path | trimPrefix "/" }}
 {{- if $return | eq "login" }}{{ $return = "" }}{{ end }}
+{{- if $return | eq "login/fail" }}{{ $return = "" }}{{ end }}
 {{- if $return | eq "profile" }}{{ $return = "" }}{{ end }}
 
 <body>
@@ -48,7 +49,7 @@
 			<section class="center">
 				<article>
 					{{- range $idx, $_ := .Content.Parts }}
-					{{- if .MD }}{{- .MD | renderMD }}{{- else }}{{- .HTML }}{{- end }}
+					{{- .MD | renderMD }}
 					{{- if .WantAnswer }}
 					{{- if .Answer }}
 					<div class="answer">

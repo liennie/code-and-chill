@@ -52,6 +52,8 @@ func puzzlesMiddleware(event puzzles.Event, next http.Handler) http.Handler {
 		}
 		pd.PuzzleAlign = maxLen + 2
 
+		progress := progressFromContext(r.Context())
+
 		pd.Puzzles = make([]puzzleData, 0, len(event.Puzzles))
 		for _, puzzle := range event.Puzzles {
 			pzd := puzzleData{
@@ -59,11 +61,13 @@ func puzzlesMiddleware(event puzzles.Event, next http.Handler) http.Handler {
 				Name: puzzle.Name,
 			}
 
-			// TODO handle user solved classes
-
 			if puzzle.Unlock.After(pd.Now) {
 				pzd.Locked = true
 				pzd.Unlock = &puzzle.Unlock
+			}
+
+			if progress != nil {
+				pzd.Solved = len(progress.Puzzles[puzzle.ID].Parts)
 			}
 
 			pd.Puzzles = append(pd.Puzzles, pzd)
@@ -83,17 +87,35 @@ func puzzleDataFunc(puzzle puzzles.Puzzle, locked dataFunc) dataFunc {
 			return locked(r)
 		}
 
-		// TODO handle user solved parts
-
+		progress := progressFromContext(r.Context())
 		pd.Content.Parts = make([]partData, 0, len(puzzle.Parts))
-		for _, part := range puzzle.Parts {
+		for i, part := range puzzle.Parts {
+			solved := false
+			if progress != nil {
+				solved = len(progress.Puzzles[puzzle.ID].Parts) > i
+
+			}
+
+			answer := ""
+			if solved {
+				if pd.User != nil {
+					input := inputIndex(pd.User.InputOffset, puzzle)
+					answer = puzzle.Inputs[input].Answers[i]
+				}
+			}
+
 			pd.Content.Parts = append(pd.Content.Parts, partData{
 				MD:         part.Text,
+				Answer:     answer,
 				WantAnswer: true,
 			})
 
-			// TODO if not solved { break }
+			if !solved {
+				break
+			}
 		}
+
+		// TODO add a "everything solved" message if all parts are solved
 
 		return http.StatusOK, pd
 	}

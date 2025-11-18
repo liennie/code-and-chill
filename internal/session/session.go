@@ -47,8 +47,8 @@ func (s *Session) ID() ID {
 	return *s.id
 }
 
-func (s *Session) View(f func(data *Data) error) error {
-	return f(s.data)
+func (s *Session) Data() Data {
+	return *s.data
 }
 
 func (s *Session) Update(f func(data *Data) error) error {

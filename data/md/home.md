@@ -2,12 +2,12 @@
 
 Get ready for a series of coding puzzles released one at a time! Each puzzle unlocks on schedule - solve them to climb the leaderboard and uncover the full story as it unfolds.
 
-You can:
+To get started:
 - Read the [rules](/{{ $.Event.Path }}/rules)
-- Check out the [leaderboard](/{{ $.Event.Path }}/leaderboard)
+- Join the discussion (if your site has a link, e.g. Discord or forum) # TODO
 - [Log in](/{{ $.Event.Path }}/login) to start solving
 - Visit the [latest puzzle](/{{ $.Event.Path }}/latest)
-- Join the discussion (if your site has a link, e.g. Discord or forum) # TODO
+- Check out the [leaderboard](/{{ $.Event.Path }}/leaderboard)
 
 ## Puzzles
 

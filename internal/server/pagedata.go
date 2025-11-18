@@ -3,7 +3,6 @@ package server
 import (
 	"cc/internal/ctxlog"
 	"context"
-	"html/template"
 	"net/http"
 	"time"
 )
@@ -55,7 +54,6 @@ type contentData struct {
 
 type partData struct {
 	MD         string
-	HTML       template.HTML
 	Answer     string
 	WantAnswer bool
 }

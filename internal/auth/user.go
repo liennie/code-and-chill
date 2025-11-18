@@ -23,7 +23,9 @@ func (u *User) SetKey(key string) {
 }
 
 type UserProgress struct {
-	Puzzles map[string]PuzzleProgress `json:"puzzles"`
+	Incorrect uint                      `json:"incorrect"`
+	Timeout   time.Time                 `json:"timeout"`
+	Puzzles   map[string]PuzzleProgress `json:"puzzles"`
 }
 
 type PuzzleProgress struct {
@@ -31,26 +33,62 @@ type PuzzleProgress struct {
 }
 
 type PartProgress struct {
-	Time   time.Time `json:"time"`
-	Answer string    `json:"answer"`
+	Time time.Time `json:"time"`
 }
 
 func newID() string {
 	return strconv.FormatUint(rand.Uint64(), 10)
 }
 
-func (a *Auth) View(id string, f func(user *User) error) error {
-	return a.db.View(func(tx *db.Tx) error {
-		bucket := a.bucketUser.Open(tx)
+func (a *Auth) User(id string) (*User, error) {
+	var user *User
+	err := a.db.View(func(tx *db.Tx) error {
+		user = a.bucketUser.Open(tx).Get(id)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		return nil, fmt.Errorf("no user with id %q", id)
+	}
+	return user, nil
+}
 
-		user := bucket.Get(id)
-		if user == nil {
-			return fmt.Errorf("no user with id %q", id)
+func (a *Auth) Progress(event, user string) (*UserProgress, error) {
+	var progress *UserProgress
+	err := a.db.View(func(tx *db.Tx) error {
+		bucket := a.bucketProgress.Open(tx)
+		eventBucket := bucket.Bucket(event)
+		if eventBucket == nil {
+			return nil
 		}
 
-		if err := f(user); err != nil {
+		progress = eventBucket.Get(user)
+		return nil
+	})
+	return progress, err
+}
+
+func (a *Auth) UpdateProgress(event, user string, f func(*UserProgress) error) error {
+	return a.db.Update(func(tx *db.Tx) error {
+		bucket := a.bucketProgress.Open(tx)
+		eventBucket, err := bucket.CreateBucket(event)
+		if err != nil {
 			return err
 		}
-		return nil
+
+		progress := eventBucket.Get(user)
+		if progress == nil {
+			progress = &UserProgress{
+				Puzzles: map[string]PuzzleProgress{},
+			}
+		}
+
+		if err := f(progress); err != nil {
+			return err
+		}
+
+		return eventBucket.Put(user, progress)
 	})
 }

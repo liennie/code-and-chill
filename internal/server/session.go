@@ -32,8 +32,7 @@ func sessionMiddleware(session *session.Store, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		pd := pageDataFromContext(r.Context())
 
-		ID := sessionID(r)
-		sess, err := session.Init(ID, pd.Now)
+		sess, err := session.Init(sessionID(r), pd.Now)
 		if err != nil {
 			panic(fmt.Errorf("get session: %w", err))
 		}

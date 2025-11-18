@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"crypto/rand"
 	"fmt"
 	"net/http"
@@ -111,45 +112,41 @@ func discordAuthCallback(auth *auth.Auth) http.Handler {
 	})
 }
 
-func userMiddleware(a *auth.Auth, next http.Handler) http.Handler {
+type progressCtxKey struct{}
+
+var progressKey progressCtxKey
+
+func progressFromContext(ctx context.Context) *auth.UserProgress {
+	data, _ := ctx.Value(progressKey).(*auth.UserProgress)
+	return data
+}
+
+func userMiddleware(event puzzles.Event, a *auth.Auth, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		pd := pageDataFromContext(r.Context())
 		sess := sessionFromContext(r.Context())
 
-		var su *session.User
-		err := sess.View(func(data *session.Data) error {
-			su = data.User
-			return nil
-		})
-		if err != nil {
-			panic(fmt.Errorf("view session: %w", err))
-		}
-
+		su := sess.Data().User
 		if su != nil {
-			var user *auth.User
-			err = a.View(su.ID, func(u *auth.User) error {
-				user = u
-				return nil
-			})
+			user, err := a.User(su.ID)
 			if err != nil {
-				panic(fmt.Errorf("view user: %w", err))
+				panic(fmt.Errorf("get user: %w", err))
 			}
 
-			if user != nil {
-				pd.User = &userData{
-					Name:        user.Name,
-					Avatar:      user.AvatarURL,
-					InputOffset: user.InputOffset,
-				}
-			} else {
-				err := sess.Update(func(data *session.Data) error {
-					data.User = nil
-					return nil
-				})
-				if err != nil {
-					panic(fmt.Errorf("update session: %w", err))
-				}
+			pd.User = &userData{
+				Name:        user.Name,
+				Avatar:      user.AvatarURL,
+				InputOffset: user.InputOffset,
 			}
+
+			progress, err := a.Progress(event.ID, su.ID)
+			if err != nil {
+				panic(fmt.Errorf("get progress: %w", err))
+			}
+
+			ctx := r.Context()
+			ctx = context.WithValue(ctx, progressKey, progress)
+			r = r.WithContext(ctx)
 		}
 
 		next.ServeHTTP(w, r)
@@ -181,16 +178,7 @@ func userMux(loggedin http.Handler, loggedout http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		sess := sessionFromContext(r.Context())
 
-		var user *session.User
-		err := sess.View(func(data *session.Data) error {
-			user = data.User
-			return nil
-		})
-		if err != nil {
-			panic(fmt.Errorf("view session: %w", err))
-		}
-
-		if user != nil {
+		if sess.Data().User != nil {
 			loggedin.ServeHTTP(w, r)
 		} else {
 			loggedout.ServeHTTP(w, r)

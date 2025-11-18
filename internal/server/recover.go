@@ -3,6 +3,8 @@ package server
 import (
 	"io"
 	"net/http"
+	"runtime"
+	"runtime/debug"
 
 	"cc/internal/ctxlog"
 )
@@ -12,7 +14,11 @@ func recoverMiddleware(next, err http.Handler) http.Handler {
 		defer func() {
 			if e := recover(); e != nil {
 				log := ctxlog.Get(r.Context())
-				log.Error("recovered panic", "error", e)
+				if _, runtimeErr := e.(runtime.Error); runtimeErr {
+					log.Error("recovered panic", "error", e, "stack", string(debug.Stack()))
+				} else {
+					log.Error("recovered panic", "error", e)
+				}
 
 				clear(w.Header())
 				err.ServeHTTP(w, r)
@@ -32,7 +38,7 @@ const catchAllHTML = `<!DOCTYPE html>
 
 <body>
 <h1>500: Internal Server Error</h1>
-<p>Something went very wrong on our end and we couldn't render a proper error page.</p>
+<p>Something went very wrong on our end.</p>
 <p>If this keeps happening, please <a href="/contact">let us know</a> what you were doing when the error appeared.</p>
 </body>
 </html>
