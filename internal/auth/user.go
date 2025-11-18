@@ -23,8 +23,8 @@ func (u *User) SetKey(key string) {
 }
 
 type UserProgress struct {
-	Incorrect uint                      `json:"incorrect"`
-	Timeout   time.Time                 `json:"timeout"`
+	Incorrect uint                      `json:"incorrect,omitzero"`
+	Timeout   time.Time                 `json:"timeout,omitzero"`
 	Puzzles   map[string]PuzzleProgress `json:"puzzles"`
 }
 

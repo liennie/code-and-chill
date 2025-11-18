@@ -121,7 +121,7 @@ func progressFromContext(ctx context.Context) *auth.UserProgress {
 	return data
 }
 
-func userMiddleware(event puzzles.Event, a *auth.Auth, next http.Handler) http.Handler {
+func userMiddleware(a *auth.Auth, event puzzles.Event, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		pd := pageDataFromContext(r.Context())
 		sess := sessionFromContext(r.Context())
