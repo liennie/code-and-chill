@@ -19,7 +19,7 @@ func listBucket(name []byte, b *bbolt.Bucket, prefix string) error {
 			if sub == nil {
 				fmt.Printf("%s%q: <nil bucket>\n", prefix, k)
 			} else {
-				if err := listBucket(k, sub, prefix+"  "); err != nil {
+				if err := listBucket(k, sub, prefix); err != nil {
 					return err
 				}
 			}
