@@ -2,7 +2,7 @@
 
 Before you start solving, please take a moment to read the rules.
 
-## The Basics
+## The basics
 - Each day (or at a scheduled time), a new puzzle will unlock.
 - Solve puzzles in any order - though some may build on previous ones.
 - Locked puzzles will appear greyed out until they’re available.
@@ -17,7 +17,7 @@ Before you start solving, please take a moment to read the rules.
 - The leaderboard updates automatically after each solve.
 - Ties are broken by the earliest submission time.
 
-## Fair Play
+## Fair play
 - Work on your own solutions - collaboration or code sharing is not allowed unless explicitly permitted.
 - Don’t brute-force or spam the answer form.
 - Do not use large language models (LLMs) or automated solvers to generate or verify answers.

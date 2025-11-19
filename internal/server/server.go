@@ -194,6 +194,7 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 					locked:     lockedDataFunc,
 					unauth:     unauthorizedDataFunc,
 					badRequest: badRequestDataFunc,
+					empty:      mdDataFunc(http.StatusOK, puzzle.Name, readFile(fsys, "md/puzzle/empty.md")),
 					badPart:    mdDataFunc(http.StatusOK, puzzle.Name, readFile(fsys, "md/puzzle/badpart.md")),
 					timeout:    mdDataFunc(http.StatusOK, puzzle.Name, readFile(fsys, "md/puzzle/timeout.md")),
 					incorrect:  mdDataFunc(http.StatusOK, puzzle.Name, readFile(fsys, "md/puzzle/incorrect.md")),

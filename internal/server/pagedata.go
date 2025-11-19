@@ -24,7 +24,7 @@ type pageData struct {
 	Events     []eventData
 	EventAlign int
 
-	Puzzle      string
+	Puzzle      currentPuzzleData
 	Puzzles     []puzzleData
 	PuzzleAlign int
 
@@ -56,6 +56,16 @@ type partData struct {
 	MD         string
 	Answer     string
 	WantAnswer bool
+}
+
+type currentPuzzleData struct {
+	Path string
+	Name string
+
+	Part     int
+	Anchor   string
+	Timeout  time.Time
+	Finished bool
 }
 
 type puzzleData struct {

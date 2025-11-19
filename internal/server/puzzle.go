@@ -85,7 +85,10 @@ func puzzlesMiddleware(event puzzles.Event, next http.Handler) http.Handler {
 func puzzleDataFunc(puzzle puzzles.Puzzle, locked dataFunc) dataFunc {
 	return func(r *http.Request) (int, any) {
 		pd := pageDataFromContext(r.Context())
-		pd.Puzzle = puzzle.Path
+		pd.Puzzle = currentPuzzleData{
+			Path: puzzle.Path,
+			Name: puzzle.Name,
+		}
 		pd.Title = puzzle.Name
 
 		if puzzle.Unlock.After(pd.Now) {
@@ -178,6 +181,7 @@ type puzzleAnswerDataFuncs struct {
 	locked     dataFunc
 	unauth     dataFunc
 	badRequest dataFunc
+	empty      dataFunc
 	badPart    dataFunc
 	timeout    dataFunc
 	incorrect  dataFunc
@@ -187,6 +191,10 @@ type puzzleAnswerDataFuncs struct {
 func puzzleAnswerDataFunc(a *auth.Auth, event puzzles.Event, pidx int, puzzle puzzles.Puzzle, dataFuncs puzzleAnswerDataFuncs) dataFunc {
 	return func(r *http.Request) (int, any) {
 		pd := pageDataFromContext(r.Context())
+		pd.Puzzle = currentPuzzleData{
+			Path: puzzle.Path,
+			Name: puzzle.Name,
+		}
 
 		if puzzle.Unlock.After(pd.Now) {
 			return dataFuncs.locked(r)
@@ -211,7 +219,7 @@ func puzzleAnswerDataFunc(a *auth.Auth, event puzzles.Event, pidx int, puzzle pu
 		}
 
 		ii := inputIndex(pd.User.InputOffset, puzzle)
-		if part < 0 || part >= len(puzzle.Inputs[ii].Answers) {
+		if part < 0 || part >= len(puzzle.Parts) || part >= len(puzzle.Inputs[ii].Answers) {
 			return dataFuncs.badPart(r)
 		}
 
@@ -229,12 +237,20 @@ func puzzleAnswerDataFunc(a *auth.Auth, event puzzles.Event, pidx int, puzzle pu
 				return errCancelUpdate
 			}
 
+			answer := strings.TrimSpace(r.PostForm.Get("answer"))
+			if answer == "" {
+				pd.Puzzle.Anchor = puzzle.Parts[part].ID
+				df = dataFuncs.empty
+				return errCancelUpdate
+			}
+
 			if progress.Timeout.After(pd.Now) {
+				pd.Puzzle.Anchor = puzzle.Parts[part].ID
+				pd.Puzzle.Timeout = progress.Timeout
 				df = dataFuncs.timeout
 				return errCancelUpdate
 			}
 
-			answer := strings.TrimSpace(r.PostForm.Get("answer"))
 			correctAnswer := puzzle.Inputs[ii].Answers[part]
 
 			if answer != correctAnswer {
@@ -245,6 +261,7 @@ func puzzleAnswerDataFunc(a *auth.Auth, event puzzles.Event, pidx int, puzzle pu
 					progress.Timeout = pd.Now.Add(5 * time.Minute)
 				}
 
+				pd.Puzzle.Anchor = puzzle.Parts[part].ID
 				df = dataFuncs.incorrect
 				return nil
 			}
@@ -262,6 +279,13 @@ func puzzleAnswerDataFunc(a *auth.Auth, event puzzles.Event, pidx int, puzzle pu
 				pd.Puzzles[pidx].Solved++
 			}
 
+			part++
+			if part < len(puzzle.Parts) {
+				pd.Puzzle.Part = part + 1
+				pd.Puzzle.Anchor = puzzle.Parts[part].ID
+			} else {
+				pd.Puzzle.Finished = true
+			}
 			df = dataFuncs.correct
 			return nil
 		})

@@ -68,6 +68,10 @@ var extraFuncs = template.FuncMap{
 	"rfc3339Time": func(t time.Time) string {
 		return t.Format(time.RFC3339)
 	},
+	"formatDuration": func(d time.Duration) string {
+		d = d.Round(time.Second)
+		return strings.NewReplacer("h", "h ", "m", "m ").Replace(d.String())
+	},
 	"renderMD": func(md string) (template.HTML, error) {
 		gm := goldmark.New(
 			goldmark.WithExtensions(
@@ -88,13 +92,7 @@ var extraFuncs = template.FuncMap{
 		return template.HTML(buf.String()), nil
 	},
 	"puzzleHint": func(puzzle puzzleData) string {
-		if puzzle.Solved == 1 {
-			return "✔"
-		}
-		if puzzle.Solved >= 2 {
-			return "✔✔"
-		}
-		return ""
+		return strings.Repeat("✔", puzzle.Solved)
 	},
 	"puzzleClass": func(puzzle puzzleData) string {
 		if puzzle.Locked {

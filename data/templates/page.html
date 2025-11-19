@@ -27,7 +27,7 @@
 				{{- if .User }}
 				<a href="/{{ $.Event.Path }}/profile{{ if $return }}?return={{ $return }}{{ end }}" class="profile"><img src="{{ .User.Avatar }}?size=32" alt="avatar"><span>{{ .User.Name }}</span></a>
 				{{- else }}
-				<a href="/{{ $.Event.Path }}/login{{ if $return }}?return={{ $return }}{{ end }}">Log In</a>
+				<a href="/{{ $.Event.Path }}/login{{ if $return }}?return={{ $return }}{{ end }}">Log in</a>
 				{{- end }}
 				<label class="dark-switch" title="Toggle dark mode">
 					<input id="darkmode-toggle" type="checkbox" aria-label="Toggle dark mode">
@@ -41,7 +41,7 @@
 				<h1 class="secondary-color">{{ $.Event.Name }}</h1>
 				<ul>
 					{{- range .Puzzles }}
-					<li class="{{ puzzleClass . }}{{ if eq .Path $.Puzzle }} active{{ end }}"><a href="/{{ $.Event.Path }}/puzzle/{{ .Path }}"><span class="puzzle-label">{{ .Name }}</span><span class="hint" {{- if .Unlock }} data-unlock="{{ .Unlock | rfc3339Time }}" {{- end }}></span></a></li>
+					<li class="{{ puzzleClass . }}{{ if eq .Path $.Puzzle.Path }} active{{ end }}"><a href="/{{ $.Event.Path }}/puzzle/{{ .Path }}"><span class="puzzle-label">{{ .Name }}</span><span class="hint" {{- if .Unlock }} data-unlock="{{ .Unlock | rfc3339Time }}" {{- end }}></span></a></li>
 					{{- end }}
 				</ul>
 			</aside>
@@ -54,14 +54,14 @@
 					{{- if .Answer }}
 					<div class="answer">
 						<p>Your answer was <code>{{ .Answer }}</code>.</p>
-						<p>You can still <a href="/{{ $.Event.Path }}/puzzle/{{ $.Puzzle }}/input" download="{{ $.Event.Path }}.{{ $.Puzzle }}.input.txt">download your input</a>.</p>
+						<p>You can still <a href="/{{ $.Event.Path }}/puzzle/{{ $.Puzzle.Path }}/input" download="{{ $.Event.Path }}.{{ $.Puzzle.Path }}.input.txt">download your input</a>.</p>
 					</div>
 					{{- else if $.User }}
-					<form class="answer" action="/{{ $.Event.Path }}/puzzle/{{ $.Puzzle }}/answer" method="post">
+					<form class="answer" action="/{{ $.Event.Path }}/puzzle/{{ $.Puzzle.Path }}/answer" method="post">
 						{{- if $idx }}
-						<p>If you lost your input, you can <a href="/{{ $.Event.Path }}/puzzle/{{ $.Puzzle }}/input" download="{{ $.Event.Path }}.{{ $.Puzzle }}.input.txt">download it again</a>.</p>
+						<p>If you lost your input, you can <a href="/{{ $.Event.Path }}/puzzle/{{ $.Puzzle.Path }}/input" download="{{ $.Event.Path }}.{{ $.Puzzle.Path }}.input.txt">download it again</a>.</p>
 						{{- else }}
-						<p><a href="/{{ $.Event.Path }}/puzzle/{{ $.Puzzle }}/input" download="{{ $.Event.Path }}.{{ $.Puzzle }}.input.txt">Download your input</a> for this puzzle.</p>
+						<p><a href="/{{ $.Event.Path }}/puzzle/{{ $.Puzzle.Path }}/input" download="{{ $.Event.Path }}.{{ $.Puzzle.Path }}.input.txt">Download your input</a> for this puzzle.</p>
 						{{- end }}
 						<input type="hidden" name="part" value="{{ $idx }}">
 						<label>Answer (part {{ $idx | add 1 }}):
