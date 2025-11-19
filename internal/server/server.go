@@ -78,7 +78,7 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 	reg := handlerRegistrar("", mux)
 
 	page := templateHandler(dataFile(fsys, "templates/page.html"))
-	badRequestDataFunc := mdDataFunc(http.StatusOK, "400: Bad Request", readFile(fsys, "md/400.md"))
+	badRequestDataFunc := mdDataFunc(http.StatusBadRequest, "400: Bad Request", readFile(fsys, "md/400.md"))
 	unauthorizedDataFunc := mdDataFunc(http.StatusUnauthorized, "401: Unauthorized", readFile(fsys, "md/401.md"))
 	unauthorizedHandler := page(unauthorizedDataFunc)
 	notFoundHandler := page(mdDataFunc(http.StatusNotFound, "404: Not Found", readFile(fsys, "md/404.md")))
@@ -194,9 +194,9 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 					locked:     lockedDataFunc,
 					unauth:     unauthorizedDataFunc,
 					badRequest: badRequestDataFunc,
-					empty:      mdDataFunc(http.StatusOK, puzzle.Name, readFile(fsys, "md/puzzle/empty.md")),
-					badPart:    mdDataFunc(http.StatusOK, puzzle.Name, readFile(fsys, "md/puzzle/badpart.md")),
-					timeout:    mdDataFunc(http.StatusOK, puzzle.Name, readFile(fsys, "md/puzzle/timeout.md")),
+					empty:      mdDataFunc(http.StatusBadRequest, puzzle.Name, readFile(fsys, "md/puzzle/empty.md")),
+					badPart:    mdDataFunc(http.StatusBadRequest, puzzle.Name, readFile(fsys, "md/puzzle/badpart.md")),
+					timeout:    mdDataFunc(http.StatusTooManyRequests, puzzle.Name, readFile(fsys, "md/puzzle/timeout.md")),
 					incorrect:  mdDataFunc(http.StatusOK, puzzle.Name, readFile(fsys, "md/puzzle/incorrect.md")),
 					correct:    mdDataFunc(http.StatusOK, puzzle.Name, readFile(fsys, "md/puzzle/correct.md")),
 				})),
