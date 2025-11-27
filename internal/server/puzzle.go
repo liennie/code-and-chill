@@ -3,6 +3,8 @@ package server
 import (
 	"errors"
 	"fmt"
+	"hash/fnv"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -10,6 +12,7 @@ import (
 
 	"cc/internal/auth"
 	"cc/internal/puzzles"
+	"cc/internal/session"
 )
 
 func eventsMiddleware(events []puzzles.Event, next http.Handler) http.Handler {
@@ -95,6 +98,8 @@ func puzzleDataFunc(puzzle puzzles.Puzzle, locked dataFunc) dataFunc {
 			return locked(r)
 		}
 
+		sess := sessionFromContext(r.Context())
+		user := sess.Data().User
 		progress := progressFromContext(r.Context())
 		pd.Content.Parts = make([]partData, 0, len(puzzle.Parts))
 		for i, part := range puzzle.Parts {
@@ -104,11 +109,9 @@ func puzzleDataFunc(puzzle puzzles.Puzzle, locked dataFunc) dataFunc {
 			}
 
 			answer := ""
-			if solved {
-				if pd.User != nil {
-					input := inputIndex(pd.User.InputOffset, puzzle)
-					answer = puzzle.Inputs[input].Answers[i]
-				}
+			if solved && user != nil {
+				input := inputIndex(user, puzzle)
+				answer = puzzle.Inputs[input].Answers[i]
 			}
 
 			pd.Content.Parts = append(pd.Content.Parts, partData{
@@ -121,8 +124,7 @@ func puzzleDataFunc(puzzle puzzles.Puzzle, locked dataFunc) dataFunc {
 				break
 			}
 		}
-
-		// TODO add a "everything solved" message if all parts are solved
+		pd.Puzzle.Finished = len(progress.Puzzles[puzzle.ID].Parts) >= len(puzzle.Parts)
 
 		return http.StatusOK, pd
 	}
@@ -146,8 +148,11 @@ func latestPuzzleRedirect(event puzzles.Event) http.Handler {
 	})
 }
 
-func inputIndex(userOffset uint8, puzzle puzzles.Puzzle) uint {
-	return (uint(userOffset) + puzzle.InputOffset) % uint(len(puzzle.Inputs))
+func inputIndex(user *session.User, puzzle puzzles.Puzzle) uint {
+	h := fnv.New64()
+	io.WriteString(h, user.ID)
+	io.WriteString(h, puzzle.ID)
+	return uint(h.Sum64()) % uint(len(puzzle.Inputs))
 }
 
 func puzzleInputHandler(puzzle puzzles.Puzzle, locked http.Handler, unauth http.Handler) http.Handler {
@@ -164,13 +169,15 @@ func puzzleInputHandler(puzzle puzzles.Puzzle, locked http.Handler, unauth http.
 			return
 		}
 
-		if pd.User == nil {
+		sess := sessionFromContext(r.Context())
+		user := sess.Data().User
+		if user == nil {
 			// this should never happen
 			unauth.ServeHTTP(w, r)
 			return
 		}
 
-		i := inputIndex(pd.User.InputOffset, puzzle)
+		i := inputIndex(user, puzzle)
 		handlers[i].ServeHTTP(w, r)
 	})
 }
@@ -218,7 +225,7 @@ func puzzleAnswerDataFunc(a *auth.Auth, event puzzles.Event, pidx int, puzzle pu
 			return dataFuncs.badPart(r)
 		}
 
-		ii := inputIndex(pd.User.InputOffset, puzzle)
+		ii := inputIndex(user, puzzle)
 		if part < 0 || part >= len(puzzle.Parts) || part >= len(puzzle.Inputs[ii].Answers) {
 			return dataFuncs.badPart(r)
 		}

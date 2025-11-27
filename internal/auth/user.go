@@ -10,10 +10,9 @@ import (
 )
 
 type User struct {
-	ID          string `json:"-"`
-	Name        string `json:"name"`
-	AvatarURL   string `json:"avatar_url"`
-	InputOffset uint8  `json:"input_offset"`
+	ID        string `json:"-"`
+	Name      string `json:"name"`
+	AvatarURL string `json:"avatar_url"`
 }
 
 var _ db.KeySetter = (*User)(nil)

@@ -55,6 +55,15 @@
 					<div class="answer">
 						<p>Your answer was <code>{{ .Answer }}</code>.</p>
 						<p>You can still <a href="/{{ $.Event.Path }}/puzzle/{{ $.Puzzle.Path }}/input" download="{{ $.Event.Path }}.{{ $.Puzzle.Path }}.input.txt">download your input</a>.</p>
+						{{- if and $.Puzzle.Finished (ge $idx (sub (len $.Content.Parts) 1)) }}
+						<p>You have completed all parts of this puzzle.</p>
+						<ul>
+							<li>Return to the <a href="/{{ $.Event.Path }}">homepage</a></li>
+							<li>Visit the <a href="/{{ $.Event.Path }}/latest">latest puzzle</a></li>
+							<li>Explore other puzzles</li>
+							<li>Take a break and come back later :)</li>
+						</ul>
+						{{- end }}
 					</div>
 					{{- else if $.User }}
 					<form class="answer" action="/{{ $.Event.Path }}/puzzle/{{ $.Puzzle.Path }}/answer" method="post">

@@ -8,6 +8,7 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
+// TODO move to separate cron package
 type slogLogger struct{}
 
 var _ cron.Logger = (*slogLogger)(nil)

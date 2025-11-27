@@ -121,7 +121,7 @@ func (a *DiscordAuth) exchange(cli *http.Client, code string) (token, error) {
 		var dErr discordError
 		dec := json.NewDecoder(resp.Body)
 		err = dec.Decode(&dErr)
-		if err == nil {
+		if err == nil && dErr.Code != 0 {
 			return token{}, &dErr
 		}
 		return token{}, fmt.Errorf("status %d: %s", resp.StatusCode, resp.Status)
@@ -153,7 +153,7 @@ func (a *DiscordAuth) revoke(cli *http.Client, t token) error {
 		var dErr discordError
 		dec := json.NewDecoder(resp.Body)
 		err = dec.Decode(&dErr)
-		if err == nil {
+		if err == nil && dErr.Code != 0 {
 			return &dErr
 		}
 
@@ -189,7 +189,7 @@ func (a *DiscordAuth) getUser(cli *http.Client, t token) (*discordUser, error) {
 		var dErr discordError
 		dec := json.NewDecoder(resp.Body)
 		err = dec.Decode(&dErr)
-		if err == nil {
+		if err == nil && dErr.Code != 0 {
 			return nil, &dErr
 		}
 
@@ -237,12 +237,6 @@ func (a *DiscordAuth) updateDB(discordUser *discordUser) (*User, error) {
 			if err != nil {
 				return err
 			}
-
-			seq, err := userBucket.NextSequence()
-			if err != nil {
-				return err
-			}
-			user.InputOffset = uint8(seq)
 		}
 
 		user.Name = username

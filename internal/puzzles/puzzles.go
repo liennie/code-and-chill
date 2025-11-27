@@ -80,13 +80,12 @@ func Load(config Config) *Puzzles {
 			puzzleIDs[puzzle.ID] = struct{}{}
 
 			pz := Puzzle{
-				ID:          puzzle.ID,
-				Path:        puzzle.Path,
-				Name:        puzzle.Name,
-				Unlock:      puzzle.Unlock,
-				Parts:       make([]Part, 0, len(puzzle.Parts)),
-				Inputs:      make([]Input, 0, len(puzzle.Inputs)),
-				InputOffset: puzzle.InputOffset,
+				ID:     puzzle.ID,
+				Path:   puzzle.Path,
+				Name:   puzzle.Name,
+				Unlock: puzzle.Unlock,
+				Parts:  make([]Part, 0, len(puzzle.Parts)),
+				Inputs: make([]Input, 0, len(puzzle.Inputs)),
 			}
 
 			for i, part := range puzzle.Parts {
@@ -168,13 +167,12 @@ type Event struct {
 }
 
 type Puzzle struct {
-	ID          string
-	Path        string
-	Name        string
-	Unlock      time.Time
-	Parts       []Part
-	Inputs      []Input
-	InputOffset uint
+	ID     string
+	Path   string
+	Name   string
+	Unlock time.Time
+	Parts  []Part
+	Inputs []Input
 }
 
 type Part struct {

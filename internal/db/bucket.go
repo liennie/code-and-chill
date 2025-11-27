@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	BucketSession       = []byte("session")
+	BucketSession       = []byte("session") // TODO unite session and session_data
 	BucketSessionExpire = []byte("session_expire")
 	BucketSessionData   = []byte("session_data")
 

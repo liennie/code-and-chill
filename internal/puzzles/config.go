@@ -22,13 +22,12 @@ type EventConfig struct {
 }
 
 type PuzzleConfig struct {
-	ID          string        `yaml:"id"`
-	Path        string        `yaml:"path"`
-	Name        string        `yaml:"name"`
-	Unlock      time.Time     `yaml:"unlock"`
-	Parts       []PartConfig  `yaml:"parts"`
-	Inputs      []InputConfig `yaml:"inputs"`
-	InputOffset uint          `yaml:"inputOffset"`
+	ID     string        `yaml:"id"`
+	Path   string        `yaml:"path"`
+	Name   string        `yaml:"name"`
+	Unlock time.Time     `yaml:"unlock"`
+	Parts  []PartConfig  `yaml:"parts"`
+	Inputs []InputConfig `yaml:"inputs"`
 }
 
 type PartConfig struct {

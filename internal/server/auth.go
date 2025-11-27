@@ -73,6 +73,9 @@ func discordAuthCallback(auth *auth.Auth) http.Handler {
 			return
 		}
 
+		// TODO handle error parameter
+		// TODO handler user cancelation
+
 		returnedState := r.URL.Query().Get("state")
 		if returnedState != state {
 			l := ctxlog.Get(r.Context())
@@ -134,9 +137,8 @@ func userMiddleware(a *auth.Auth, event puzzles.Event, next http.Handler) http.H
 			}
 
 			pd.User = &userData{
-				Name:        user.Name,
-				Avatar:      user.AvatarURL,
-				InputOffset: user.InputOffset,
+				Name:   user.Name,
+				Avatar: user.AvatarURL,
 			}
 
 			progress, err := a.Progress(event.ID, su.ID)

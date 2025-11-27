@@ -43,9 +43,8 @@ type eventData struct {
 }
 
 type userData struct {
-	Name        string
-	Avatar      string
-	InputOffset uint8
+	Name   string
+	Avatar string
 }
 
 type contentData struct {
