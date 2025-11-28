@@ -2,6 +2,7 @@ package server
 
 import (
 	"net/http"
+	"net/url"
 	"time"
 
 	"cc/internal/ctxlog"
@@ -23,8 +24,13 @@ func logMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
+		u := *r.URL // copy
+		if u.RawQuery != "" {
+			u.RawQuery = "REDACTED"
+		}
+
 		l := ctxlog.Get(ctx)
-		l = l.With("method", r.Method, "url", r.URL.String(), "remote_addr", r.RemoteAddr)
+		l = l.With("method", r.Method, "url", u.String())
 
 		ctx = ctxlog.Store(r.Context(), l)
 		ctx = ctxlog.WithExtra(ctx)
@@ -35,8 +41,25 @@ func logMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(cw, r)
 		dur := time.Since(start)
 
+		l = l.With("status", cw.status)
+		switch cw.status {
+		case http.StatusMovedPermanently,
+			http.StatusFound,
+			http.StatusSeeOther,
+			http.StatusTemporaryRedirect,
+			http.StatusPermanentRedirect:
+
+			loc, err := url.Parse(cw.Header().Get("Location"))
+			if err == nil {
+				if loc.RawQuery != "" {
+					loc.RawQuery = "REDACTED"
+				}
+				l = l.With("location", loc.String())
+			}
+		}
+
 		l = l.With(ctxlog.GetExtra(ctx)...)
 
-		l.Info("request completed", "status", cw.status, "duration", dur.String())
+		l.Info("request completed", "remote_addr", r.RemoteAddr, "duration", dur.String())
 	})
 }
