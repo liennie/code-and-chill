@@ -30,5 +30,5 @@ type token struct {
 }
 
 func randomAvatar() string {
-	return fmt.Sprintf("https://api.dicebear.com/9.x/bottts-neutral/svg?seed=%d&backgroundType=gradientLinear", rand.Uint64())
+	return fmt.Sprintf("https://api.dicebear.com/9.x/fun-emoji/svg?seed=%d&backgroundType=gradientLinear&mouth=cute,kissHeart,lilSmile,smileLol,smileTeeth,tongueOut,wideSmile", rand.Uint64())
 }
