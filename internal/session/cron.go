@@ -8,19 +8,6 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
-// TODO move to separate cron package
-type slogLogger struct{}
-
-var _ cron.Logger = (*slogLogger)(nil)
-
-func (l *slogLogger) Info(msg string, keysAndValues ...any) {
-	slog.Info("cron: "+msg, keysAndValues...)
-}
-
-func (l *slogLogger) Error(err error, msg string, keysAndValues ...any) {
-	slog.Error("cron: "+msg, append(keysAndValues, []any{"error", err})...)
-}
-
 type cleanupJob struct {
 	*Store
 }
@@ -35,7 +22,6 @@ func (j *cleanupJob) Run() {
 		to := expireKey(now)
 
 		sessionBucket := j.bucketSession.Open(tx)
-		dataBucket := j.bucketSessionData.Open(tx)
 		expireBucket := j.bucketSessionExpire.Open(tx)
 		for _, sessions := range expireBucket.Range("", to) {
 			for _, id := range sessions.IDs {
@@ -43,12 +29,6 @@ func (j *cleanupJob) Run() {
 				if err != nil {
 					return err
 				}
-
-				err = dataBucket.Delete(id)
-				if err != nil {
-					return err
-				}
-
 				count++
 			}
 		}

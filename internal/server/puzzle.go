@@ -124,7 +124,9 @@ func puzzleDataFunc(puzzle puzzles.Puzzle, locked dataFunc) dataFunc {
 				break
 			}
 		}
-		pd.Puzzle.Finished = len(progress.Puzzles[puzzle.ID].Parts) >= len(puzzle.Parts)
+		if progress != nil {
+			pd.Puzzle.Finished = len(progress.Puzzles[puzzle.ID].Parts) >= len(puzzle.Parts)
+		}
 
 		return http.StatusOK, pd
 	}

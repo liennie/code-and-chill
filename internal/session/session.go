@@ -3,6 +3,8 @@
 package session
 
 import (
+	"encoding/json"
+	"fmt"
 	"time"
 
 	"cc/internal/db"
@@ -24,46 +26,71 @@ type User struct {
 }
 
 type ID struct {
-	ID     string    `json:"-"`
-	Expire time.Time `json:"expire"`
-	Update bool      `json:"-"`
-}
-
-var _ db.KeySetter = (*ID)(nil)
-
-func (id *ID) SetKey(key string) {
-	id.ID = key
+	ID     string
+	Expire time.Time
+	Update bool
 }
 
 type Session struct {
-	id   *ID
-	data *Data
+	id   ID
+	data Data
 
-	db                *db.DB
-	bucketSessionData *db.BucketKey[Data]
+	db            *db.DB
+	bucketSession *db.BucketKey[Session]
+}
+
+type dbSession struct {
+	Expire time.Time `json:"expire"`
+	Data   Data      `json:"data"`
+}
+
+var _ db.KeySetter = (*Session)(nil)
+var _ json.Marshaler = (*Session)(nil)
+var _ json.Unmarshaler = (*Session)(nil)
+
+func (s *Session) SetKey(key string) {
+	s.id.ID = key
+}
+
+func (s *Session) MarshalJSON() ([]byte, error) {
+	return json.Marshal(&dbSession{
+		Expire: s.id.Expire,
+		Data:   s.data,
+	})
+}
+
+func (s *Session) UnmarshalJSON(data []byte) error {
+	var ds dbSession
+	if err := json.Unmarshal(data, &ds); err != nil {
+		return err
+	}
+
+	s.id.Expire = ds.Expire
+	s.data = ds.Data
+	return nil
 }
 
 func (s *Session) ID() ID {
-	return *s.id
+	return s.id
 }
 
 func (s *Session) Data() Data {
-	return *s.data
+	return s.data
 }
 
 func (s *Session) Update(f func(data *Data) error) error {
 	return s.db.Update(func(tx *db.Tx) error {
-		bucket := s.bucketSessionData.Open(tx)
+		bucket := s.bucketSession.Open(tx)
 
-		data := bucket.Get(s.id.ID)
-		if data == nil {
-			data = s.data
+		sess := bucket.Get(s.id.ID)
+		if sess == nil {
+			return fmt.Errorf("no session with id %q", s.id.ID)
 		}
 
-		if err := f(data); err != nil {
+		if err := f(&sess.data); err != nil {
 			return err
 		}
-		s.data = data
-		return bucket.Put(s.id.ID, data)
+		s.data = sess.data
+		return bucket.Put(s.id.ID, sess)
 	})
 }

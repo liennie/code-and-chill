@@ -26,6 +26,16 @@ type DiscordAuth struct {
 }
 
 func newDiscordAuth(config DiscordConfig, ddb *db.DB) DiscordAuth {
+	if config.ClientID == "" {
+		panic("discord auth: clientID is required")
+	}
+	if config.ClientSecret == "" {
+		panic("discord auth: clientSecret is required")
+	}
+	if config.RedirectURI == "" {
+		panic("discord auth: redirectURI is required")
+	}
+
 	secret, err := os.ReadFile(config.ClientSecret)
 	if err != nil {
 		panic(fmt.Errorf("read discord client secret: %w", err))

@@ -38,7 +38,7 @@ func discordAuthCallback(auth *auth.Auth) http.Handler {
 		sess := sessionFromContext(r.Context())
 
 		var state, event, ret string
-		redirect := func() {
+		errRedirect := func() {
 			var redir string
 
 			if event == "" {
@@ -51,6 +51,13 @@ func discordAuthCallback(auth *auth.Auth) http.Handler {
 				redir += "?return=" + ret
 			}
 
+			http.Redirect(w, r, redir, http.StatusSeeOther)
+		}
+		redirect := func() {
+			redir := "/" + event
+			if ret != "" {
+				redir += "/" + ret
+			}
 			http.Redirect(w, r, redir, http.StatusSeeOther)
 		}
 
@@ -69,22 +76,28 @@ func discordAuthCallback(auth *auth.Auth) http.Handler {
 		if err != nil {
 			l := ctxlog.Get(r.Context())
 			l.Error("auth session", "error", err)
-			redirect()
+			errRedirect()
 			return
 		}
 
-		// TODO handle error parameter
-		// TODO handler user cancelation
+		query := r.URL.Query()
 
-		returnedState := r.URL.Query().Get("state")
+		returnedState := query.Get("state")
 		if returnedState != state {
 			l := ctxlog.Get(r.Context())
 			l.Error("auth state", "error", err)
+			errRedirect()
+			return
+		}
+
+		if query.Get("error") == "access_denied" {
+			l := ctxlog.Get(r.Context())
+			l.Info("auth canceled by user")
 			redirect()
 			return
 		}
 
-		code := r.URL.Query().Get("code")
+		code := query.Get("code")
 		user, err := auth.Discord.Exchange(r.Context(), code)
 		if err != nil {
 			l := ctxlog.Get(r.Context())
@@ -92,7 +105,7 @@ func discordAuthCallback(auth *auth.Auth) http.Handler {
 				l = l.With("extra", extra)
 			}
 			l.Error("exchange", "error", err)
-			redirect()
+			errRedirect()
 			return
 		}
 
@@ -103,15 +116,11 @@ func discordAuthCallback(auth *auth.Auth) http.Handler {
 		if err != nil {
 			l := ctxlog.Get(r.Context())
 			l.Error("update session", "error", err)
-			redirect()
+			errRedirect()
 			return
 		}
 
-		redir := "/" + event
-		if ret != "" {
-			redir += "/" + ret
-		}
-		http.Redirect(w, r, redir, http.StatusSeeOther)
+		redirect()
 	})
 }
 

@@ -7,6 +7,7 @@ import (
 	"slices"
 	"time"
 
+	"cc/internal/cronlog"
 	"cc/internal/db"
 
 	"github.com/robfig/cron/v3"
@@ -18,17 +19,29 @@ type Store struct {
 	truncate time.Duration
 
 	db                  *db.DB
-	bucketSession       *db.BucketKey[ID]
-	bucketSessionData   *db.BucketKey[Data]
+	bucketSession       *db.BucketKey[Session]
 	bucketSessionExpire *db.BucketKey[dbSessionExpire]
 
 	cleanup *cron.Cron
 }
 
 func NewStore(config Config, ddb *db.DB) *Store {
+	if config.Bits == 0 {
+		config.Bits = 256
+	}
+	if config.Expire == 0 {
+		config.Expire = 30 * 24 * time.Hour
+	}
+	if config.Truncate == 0 {
+		config.Truncate = 24 * time.Hour
+	}
+	if config.CleanupSchedule == "" {
+		panic("session: cleanupSchedule is required")
+	}
+
 	schedule, err := cron.ParseStandard(config.CleanupSchedule)
 	if err != nil {
-		panic(fmt.Errorf("cron schedule: %w", err))
+		panic(fmt.Errorf("session: cleanupSchedule: %w", err))
 	}
 
 	s := &Store{
@@ -37,13 +50,12 @@ func NewStore(config Config, ddb *db.DB) *Store {
 		truncate: config.Truncate,
 
 		db:                  ddb,
-		bucketSession:       db.NewBucketKey[ID](ddb, db.BucketSession),
-		bucketSessionData:   db.NewBucketKey[Data](ddb, db.BucketSessionData),
+		bucketSession:       db.NewBucketKey[Session](ddb, db.BucketSession),
 		bucketSessionExpire: db.NewBucketKey[dbSessionExpire](ddb, db.BucketSessionExpire),
 	}
 
 	s.cleanup = cron.New(
-		cron.WithLogger(&slogLogger{}),
+		cron.WithLogger(cronlog.NewSlogLogger()),
 	)
 	s.cleanup.Schedule(schedule, &cleanupJob{s})
 	s.cleanup.Start()
@@ -59,27 +71,20 @@ func (s *Store) Close() error {
 func (s *Store) Init(id string, now time.Time) (session *Session, err error) {
 	err = s.db.Update(func(tx *db.Tx) (err error) {
 		sessionBucket := s.bucketSession.Open(tx)
-		dataBucket := s.bucketSessionData.Open(tx)
 
 		if id != "" {
-			sid := sessionBucket.Get(id)
-			data := dataBucket.Get(id)
-			if sid != nil && data != nil && sid.Expire.After(now) {
-				session = &Session{
-					id:   sid,
-					data: data,
+			session = sessionBucket.Get(id)
+			if session != nil && session.id.Expire.After(now) {
+				session.db = s.db
+				session.bucketSession = s.bucketSession
 
-					db:                s.db,
-					bucketSessionData: s.bucketSessionData,
-				}
-
-				err = s.updateExpire(tx, sid, now)
+				err = s.updateExpire(tx, &session.id, now)
 				if err != nil {
 					return err
 				}
 
-				if sid.Update {
-					return sessionBucket.Put(id, sid)
+				if session.id.Update {
+					return sessionBucket.Put(id, session)
 				}
 				return nil
 			}
@@ -90,27 +95,19 @@ func (s *Store) Init(id string, now time.Time) (session *Session, err error) {
 			id = s.newID()
 		}
 
-		sid := &ID{ID: id}
-		data := &Data{}
 		session = &Session{
-			id:   sid,
-			data: data,
+			id: ID{ID: id},
 
-			db:                s.db,
-			bucketSessionData: s.bucketSessionData,
+			db:            s.db,
+			bucketSession: s.bucketSession,
 		}
 
-		err = s.newExpire(tx, sid, now)
+		err = s.newExpire(tx, &session.id, now)
 		if err != nil {
 			return err
 		}
 
-		err = dataBucket.Put(id, data)
-		if err != nil {
-			return err
-		}
-
-		return sessionBucket.Put(id, sid)
+		return sessionBucket.Put(id, session)
 	})
 	if err != nil {
 		return nil, err

@@ -1,5 +1,10 @@
 server:
+  # host:
   port: 8080
+  # tlsCertFile: /etc/letsencrypt/live/host/fullchain.pem
+  # tlsKeyFile: /etc/letsencrypt/live/host/privkey.pem
+  # tlsReloadInterval: 24h
+  # httpsRedirect: true
   dataDir: data
   shutdownTimeout: 30s
 

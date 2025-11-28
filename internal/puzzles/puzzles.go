@@ -22,6 +22,16 @@ type Puzzles struct {
 }
 
 func Load(config Config) *Puzzles {
+	if config.Name == "" {
+		panic("puzzles: name is required")
+	}
+	if len(config.Events) == 0 {
+		panic("puzzles: at least one event is required")
+	}
+	if config.Default == "" {
+		config.Default = config.Events[len(config.Events)-1].Path
+	}
+
 	p := &Puzzles{
 		Name:   config.Name,
 		Events: make([]Event, 0, len(config.Events)),
