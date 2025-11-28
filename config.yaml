@@ -10,7 +10,8 @@ server:
 
 db:
   file: db/cc.db
-  # backupSchedule: "0 * * * *" # TODO db backup
+  backupSchedule: "0 0/4 * * *"
+  backupDir: bak
 
 session:
   bits: 256

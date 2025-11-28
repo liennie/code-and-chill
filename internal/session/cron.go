@@ -15,6 +15,8 @@ type cleanupJob struct {
 var _ cron.Job = (*cleanupJob)(nil)
 
 func (j *cleanupJob) Run() {
+	slog.Info("cleaning up sessions")
+
 	now := time.Now()
 
 	count := 0

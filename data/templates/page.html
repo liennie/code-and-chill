@@ -4,6 +4,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<link rel="icon" href="/favicon.ico">
 	<title>{{ if $.Title }}{{ $.Title }} | {{ end }}{{ $.Name }} :: {{ $.Event.Name }}</title>
 	<link rel="stylesheet" href="/style.css">
 	<script src="/script.js" defer async></script>
@@ -25,7 +26,7 @@
 				<a href="/{{ $.Event.Path }}/leaderboard">Leaderboard</a>
 				<a href="/{{ $.Event.Path }}/contact">Contact</a>
 				{{- if .User }}
-				<a href="/{{ $.Event.Path }}/profile{{ if $return }}?return={{ $return }}{{ end }}" class="profile"><img src="{{ .User.Avatar }}?size=32" alt="avatar"><span>{{ .User.Name }}</span></a>
+				<a href="/{{ $.Event.Path }}/profile{{ if $return }}?return={{ $return }}{{ end }}" class="profile"><img src="{{ .User.Avatar }}" alt="avatar"><span>{{ .User.Name }}</span></a>
 				{{- else }}
 				<a href="/{{ $.Event.Path }}/login{{ if $return }}?return={{ $return }}{{ end }}">Log in</a>
 				{{- end }}

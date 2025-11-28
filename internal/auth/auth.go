@@ -3,6 +3,8 @@ package auth
 
 import (
 	"cc/internal/db"
+	"fmt"
+	"math/rand/v2"
 )
 
 type Auth struct {
@@ -21,4 +23,12 @@ func New(config Config, ddb *db.DB) *Auth {
 		bucketUser:     db.NewBucketKey[User](ddb, db.BucketUser),
 		bucketProgress: db.NewBucketKey[UserProgress](ddb, db.BucketProgress),
 	}
+}
+
+type token struct {
+	AccessToken string `json:"access_token"`
+}
+
+func randomAvatar() string {
+	return fmt.Sprintf("https://api.dicebear.com/9.x/bottts-neutral/svg?seed=%d&backgroundType=gradientLinear", rand.Uint64())
 }

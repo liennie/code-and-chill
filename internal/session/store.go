@@ -7,8 +7,8 @@ import (
 	"slices"
 	"time"
 
-	"cc/internal/cronlog"
 	"cc/internal/db"
+	"cc/internal/sched"
 
 	"github.com/robfig/cron/v3"
 )
@@ -22,7 +22,7 @@ type Store struct {
 	bucketSession       *db.BucketKey[Session]
 	bucketSessionExpire *db.BucketKey[dbSessionExpire]
 
-	cleanup *cron.Cron
+	cleanupJobID *cron.EntryID
 }
 
 func NewStore(config Config, ddb *db.DB) *Store {
@@ -53,18 +53,17 @@ func NewStore(config Config, ddb *db.DB) *Store {
 		bucketSession:       db.NewBucketKey[Session](ddb, db.BucketSession),
 		bucketSessionExpire: db.NewBucketKey[dbSessionExpire](ddb, db.BucketSessionExpire),
 	}
-
-	s.cleanup = cron.New(
-		cron.WithLogger(cronlog.NewSlogLogger()),
-	)
-	s.cleanup.Schedule(schedule, &cleanupJob{s})
-	s.cleanup.Start()
+	cleanupJobID := sched.Cron.Schedule(schedule, &cleanupJob{s})
+	s.cleanupJobID = &cleanupJobID
 
 	return s
 }
 
 func (s *Store) Close() error {
-	<-s.cleanup.Stop().Done()
+	if s.cleanupJobID != nil {
+		sched.Cron.Remove(*s.cleanupJobID)
+		s.cleanupJobID = nil
+	}
 	return nil
 }
 

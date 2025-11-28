@@ -58,7 +58,7 @@ const discordTokenURL = "https://discord.com/api/oauth2/token"
 const discordTokenRevokeURL = "https://discord.com/api/oauth2/token/revoke"
 const discordAPIBaseURL = "https://discord.com/api/v10"
 const discordUserEndpoint = discordAPIBaseURL + "/users/@me"
-const discordAvatarURL = "https://cdn.discordapp.com/avatars/%s/%s.png"
+const discordAvatarURL = "https://cdn.discordapp.com/avatars/%s/%s.png?size=32"
 
 func (a *DiscordAuth) AuthURL(state string) string {
 	v := url.Values{
@@ -252,8 +252,10 @@ func (a *DiscordAuth) updateDB(discordUser *discordUser) (*User, error) {
 		user.Name = username
 		if discordUser.Avatar != nil {
 			user.AvatarURL = fmt.Sprintf(discordAvatarURL, discordUser.ID, *discordUser.Avatar)
-		} else {
-			user.AvatarURL = "" // TODO default avatar
+			user.RandomAvatar = false
+		} else if !user.RandomAvatar {
+			user.AvatarURL = randomAvatar()
+			user.RandomAvatar = true
 		}
 
 		return userBucket.Put(user.ID, user)

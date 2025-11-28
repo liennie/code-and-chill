@@ -155,7 +155,7 @@ func loadEventConfig(filename string) (EventConfig, error) {
 	if err != nil {
 		return EventConfig{}, fmt.Errorf("open %q: %w", filename, err)
 	}
-	defer ctxlog.Close(context.Background(), filename, file)
+	defer ctxlog.CloseErr(context.Background(), filename, file)
 
 	dec := yaml.NewDecoder(file, yaml.Strict())
 

@@ -13,6 +13,7 @@ import (
 )
 
 var setup = false
+var logFile io.WriteCloser
 
 func Setup(ctx context.Context, name string) context.Context {
 	if setup {
@@ -24,7 +25,7 @@ func Setup(ctx context.Context, name string) context.Context {
 		panic(fmt.Errorf("create log dir: %w", err))
 	}
 
-	logFile, err := os.Create(filepath.Join("log", name+"-"+time.Now().Format("2006-01-02-15-04-05.log")))
+	logFile, err = os.Create(filepath.Join("log", name+"-"+time.Now().Format("2006-01-02-15-04-05.log")))
 	if err != nil {
 		panic(fmt.Errorf("create log file: %w", err))
 	}
@@ -37,6 +38,18 @@ func Setup(ctx context.Context, name string) context.Context {
 	setup = true
 
 	return Store(ctx, logger)
+}
+
+func Close(ctx context.Context) error {
+	if setup && logFile != nil {
+		defer func() {
+			setup = false
+			logFile = nil
+		}()
+
+		return CloseErr(ctx, "log file", logFile)
+	}
+	return nil
 }
 
 type ctxKey struct{}
@@ -55,7 +68,7 @@ func Get(ctx context.Context) *slog.Logger {
 	return log
 }
 
-func Close(ctx context.Context, name string, closer io.Closer) error {
+func CloseErr(ctx context.Context, name string, closer io.Closer) error {
 	logger := Get(ctx)
 	err := closer.Close()
 	if err != nil {

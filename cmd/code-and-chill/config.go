@@ -28,7 +28,7 @@ func LoadConfig(ctx context.Context, filename string) (Config, error) {
 	if err != nil {
 		return Config{}, fmt.Errorf("open %q: %w", filename, err)
 	}
-	defer ctxlog.Close(ctx, "config file", file)
+	defer ctxlog.CloseErr(ctx, "config file", file)
 
 	dec := yaml.NewDecoder(file, yaml.Strict())
 

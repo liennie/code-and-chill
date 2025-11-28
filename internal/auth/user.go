@@ -10,9 +10,10 @@ import (
 )
 
 type User struct {
-	ID        string `json:"-"`
-	Name      string `json:"name"`
-	AvatarURL string `json:"avatar_url"`
+	ID           string `json:"-"`
+	Name         string `json:"name"`
+	AvatarURL    string `json:"avatar_url"`
+	RandomAvatar bool   `json:"random_avatar"`
 }
 
 var _ db.KeySetter = (*User)(nil)

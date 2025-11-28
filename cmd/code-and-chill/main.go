@@ -12,6 +12,7 @@ import (
 	"cc/internal/db"
 	"cc/internal/puzzles"
 	"cc/internal/rec"
+	"cc/internal/sched"
 	"cc/internal/server"
 	"cc/internal/session"
 )
@@ -28,17 +29,21 @@ func run(ctx context.Context, config string) (err error) {
 
 	logger.Info("opening db")
 	db := db.Open(c.DB)
-	defer ctxlog.Close(ctx, "db", db)
+	defer ctxlog.CloseErr(ctx, "db", db)
 
 	logger.Info("starting session store")
 	sess := session.NewStore(c.Session, db)
-	defer ctxlog.Close(ctx, "session store", sess)
+	defer ctxlog.CloseErr(ctx, "session store", sess)
 
 	logger.Info("starting auth")
 	auth := auth.New(c.Auth, db)
 
 	logger.Info("loading puzzles")
 	puzzles := puzzles.Load(c.Puzzles)
+
+	logger.Info("starting cron")
+	sched.Start()
+	defer sched.Stop()
 
 	logger.Info("starting server")
 	srv := server.New(c.Server, db, sess, auth, puzzles)
@@ -51,6 +56,7 @@ func main() {
 	defer cancel()
 
 	ctx = ctxlog.Setup(ctx, "server")
+	defer ctxlog.Close(ctx)
 
 	logger := ctxlog.Get(ctx)
 

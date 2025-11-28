@@ -4,7 +4,7 @@ Get ready for a series of coding puzzles released one at a time! Each puzzle unl
 
 To get started:
 - Read the [rules](/{{ $.Event.Path }}/rules)
-- Join the discussion (if your site has a link, e.g. Discord or forum) # TODO
+- Join the discussion // TODO link to a discord channel
 - [Log in](/{{ $.Event.Path }}/login) to start solving
 - Visit the [latest puzzle](/{{ $.Event.Path }}/latest)
 - Check out the [leaderboard](/{{ $.Event.Path }}/leaderboard)
