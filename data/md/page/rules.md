@@ -26,5 +26,3 @@ Before you start solving, please take a moment to read the rules.
 
 ## Questions?
 If something seems unclear, [reach out to us](/{{ $.Event.Path }}/contact).
-
-Good luck, have fun, and happy puzzling!

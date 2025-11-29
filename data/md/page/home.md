@@ -18,11 +18,11 @@ To get started:
 Below are all the puzzles for this event. Locked puzzles will appear greyed out until they’re ready to play. You can also find all the puzzles for this event in the *side menu*.
 
 {{- range .Puzzles }}
-{{- if .Locked }}
+	{{- if .Locked }}
 - ~~{{ .Name }}~~
-{{- else }}
+	{{- else }}
 - [{{ .Name }}](/{{ $.Event.Path }}/puzzle/{{ .Path }}){{ if $.User }}{{ repeat (.Name | len | sub $.PuzzleAlign | int) " " }}{{ puzzleHint . }}{{ end }}
-{{- end }}
+	{{- end }}
 {{- end }}
 
-Good luck, and happy puzzling!
+Good luck, have fun, and happy puzzling!

@@ -3,33 +3,33 @@
 {{ if .Leaderboard -}}
 |  # | Name |  ✔ | Score |
 | -: | ---- | -: | ----: |
-
-{{- range $idx, $_ := .Leaderboard }}
-{{- if and $.User (eq .User.ID $.User.ID)}}
+	{{- range $idx, $_ := .Leaderboard }}
+		{{- if and $.User (eq .User.ID $.User.ID)}}
 | (({{ $idx | add 1 }})){.user} | ![{{ .User.Name | mdesc }} avatar]({{ .User.Avatar }}){.avatar} (({{ .User.Name | mdesc }})){.user} | (({{ .Solved }})){.user} | (({{ .Score }})){.user} |
-{{- else }}
+		{{- else }}
 | {{ $idx | add 1 }} | ![{{ .User.Name | mdesc }} avatar]({{ .User.Avatar }}){.avatar} {{ .User.Name | mdesc }} | {{ .Solved }} | {{ .Score }} |
-{{- end }}
-{{- end }}
+		{{- end }}
+	{{- end }}
 
 {{- else -}}
 
 *No entries yet* - be the first to solve a puzzle and appear on the leaderboard!
 
-{{- if .User }}
-{{- if .PuzzleUnlocked }}
+	{{- if .User }}
+		{{- if .PuzzleUnlocked }}
 
 Try the [latest puzzle](/{{ $.Event.Path }}/latest).
-{{- end }}
-{{- else }}
-{{- if .PuzzleUnlocked }}
+		{{- end }}
+
+	{{- else }}
+		{{- if .PuzzleUnlocked }}
 
 [Log in](/{{ $.Event.Path }}/login?return=leaderboard) and try the [latest puzzle](/{{ $.Event.Path }}/latest).
-{{- else }}
+		{{- else }}
 
 [Log in](/{{ $.Event.Path }}/login?return=leaderboard) to start solving.
-{{- end }}
-{{- end }}
+		{{- end }}
+	{{- end }}
 
 {{- end }}
 
