@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"cc/internal/ctxlog"
+	"cc/internal/mdext"
 
 	"github.com/Masterminds/sprig/v3"
 	"github.com/yuin/goldmark"
@@ -76,6 +77,10 @@ var extraFuncs = template.FuncMap{
 		gm := goldmark.New(
 			goldmark.WithExtensions(
 				extension.Strikethrough,
+				extension.Table,
+				&mdext.InlineAttrExtender{},
+				&mdext.RawStringExtender{},
+				&mdext.SpanExtender{},
 			),
 			goldmark.WithParserOptions(
 				parser.WithAutoHeadingID(),
@@ -115,7 +120,7 @@ var extraFuncs = template.FuncMap{
 		}
 		return "", fmt.Errorf("cannot pad type %T", n)
 	},
-	"htmlescaper": template.HTMLEscaper,
+	"mdesc": mdext.RawStringEscape,
 }
 
 type dataFunc func(r *http.Request) (int, any)

@@ -1,4 +1,4 @@
-# {{ $.Name }}::**{{ $.Event.Name }}** {#title}
+# {{ $.Name }}::(({{ $.Event.Name }})){.secondary-color} {#title}
 
 Get ready for a series of coding puzzles released one at a time! Each puzzle unlocks on schedule - solve them to climb the leaderboard and uncover the full story as it unfolds.
 

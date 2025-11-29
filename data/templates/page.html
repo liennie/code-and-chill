@@ -26,7 +26,7 @@
 				<a href="/{{ $.Event.Path }}/leaderboard">Leaderboard</a>
 				<a href="/{{ $.Event.Path }}/contact">Contact</a>
 				{{- if .User }}
-				<a href="/{{ $.Event.Path }}/profile{{ if $return }}?return={{ $return }}{{ end }}" class="profile"><img src="{{ .User.Avatar }}" alt="avatar"><span>{{ .User.Name }}</span></a>
+				<a href="/{{ $.Event.Path }}/profile{{ if $return }}?return={{ $return }}{{ end }}" class="profile"><img src="{{ .User.Avatar }}" alt="{{ .User.Name }} avatar"><span>{{ .User.Name }}</span></a>
 				{{- else }}
 				<a href="/{{ $.Event.Path }}/login{{ if $return }}?return={{ $return }}{{ end }}">Log in</a>
 				{{- end }}

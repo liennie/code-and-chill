@@ -393,14 +393,38 @@ article em {
 	font-style: normal;
 }
 
-article strong {
-	font-weight: inherit;
-	color: var(--color-secondary);
-}
-
 article del {
 	color: var(--color-inactive);
 	text-decoration: none;
+}
+
+article table {
+	border-collapse: separate;
+	border-spacing: 2ch 0;
+	margin: 1rem 0;
+}
+
+article th {
+	color: var(--color-em)
+}
+
+article th, article td {
+	border: 0;
+	padding: 0;
+}
+
+article table img {
+	vertical-align: middle;
+}
+
+article .avatar {
+	width: 2.5ch;
+	border: 1px solid var(--line);
+}
+
+article .user {
+	color: var(--color-secondary);
+	font-weight: 800;
 }
 
 .output {
