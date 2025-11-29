@@ -24,11 +24,14 @@ type pageData struct {
 	Events     []eventData
 	EventAlign int
 
-	Puzzle      currentPuzzleData
-	Puzzles     []puzzleData
-	PuzzleAlign int
+	Puzzle         currentPuzzleData
+	Puzzles        []puzzleData
+	PuzzleAlign    int
+	PuzzleUnlocked bool
 
 	User *userData
+
+	Leaderboard []leaderboardData
 
 	Dark    bool
 	Title   string
@@ -40,21 +43,6 @@ type eventData struct {
 	Name   string
 	Solved int
 	Total  int
-}
-
-type userData struct {
-	Name   string
-	Avatar string
-}
-
-type contentData struct {
-	Parts []partData
-}
-
-type partData struct {
-	MD         string
-	Answer     string
-	WantAnswer bool
 }
 
 type currentPuzzleData struct {
@@ -73,6 +61,28 @@ type puzzleData struct {
 	Solved int
 	Locked bool
 	Unlock *time.Time
+}
+
+type userData struct {
+	ID     string
+	Name   string
+	Avatar string
+}
+
+type leaderboardData struct {
+	User   userData
+	Solved int
+	Score  int
+}
+
+type contentData struct {
+	Parts []partData
+}
+
+type partData struct {
+	MD         string
+	Answer     string
+	WantAnswer bool
 }
 
 type pageDataCtxKey struct{}

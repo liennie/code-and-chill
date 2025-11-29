@@ -23,21 +23,13 @@ func Open(config Config) *DB {
 	if config.File == "" {
 		panic("db: file is required")
 	}
-	if config.BackupSchedule == "" {
-		panic("db: backupSchedule is required")
-	}
-	if config.BackupDir == "" {
-		panic("db: backupDir is required")
+	if config.BackupSchedule != "" && config.BackupDir == "" {
+		panic("db: backupDir is required if backupSchedule is set")
 	}
 
 	err := os.MkdirAll(filepath.Dir(config.File), 0755)
 	if err != nil {
 		panic(fmt.Errorf("db: create db dir: %w", err))
-	}
-
-	schedule, err := cron.ParseStandard(config.BackupSchedule)
-	if err != nil {
-		panic(fmt.Errorf("db: backupSchedule: %w", err))
 	}
 
 	db, err := bbolt.Open(config.File, 0600, &bbolt.Options{
@@ -64,12 +56,19 @@ func Open(config Config) *DB {
 	}
 
 	d := &DB{db: db}
-	backupJobID := sched.Cron.Schedule(schedule, &backupJob{
-		DB:         d,
-		backupDir:  config.BackupDir,
-		backupName: filepath.Base(config.File),
-	})
-	d.backupJobID = &backupJobID
+
+	if config.BackupSchedule != "" {
+		schedule, err := cron.ParseStandard(config.BackupSchedule)
+		if err != nil {
+			panic(fmt.Errorf("db: backupSchedule: %w", err))
+		}
+		backupJobID := sched.Cron.Schedule(schedule, &backupJob{
+			DB:         d,
+			backupDir:  config.BackupDir,
+			backupName: filepath.Base(config.File),
+		})
+		d.backupJobID = &backupJobID
+	}
 
 	return d
 }

@@ -40,6 +40,8 @@ func (j *backupJob) run() error {
 		_, err := tx.tx.WriteTo(backupFile)
 		return err
 	})
+
+	// TODO delete old backups
 }
 
 func (j *backupJob) Run() {

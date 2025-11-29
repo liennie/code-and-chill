@@ -155,7 +155,7 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 		reg("GET", "/", "md/404.md", notFoundHandler)
 		reg("GET", "/events", "md/page/events.md", eventsMiddleware(pzls.Events, page(mdDataFunc(http.StatusOK, "Events", readFile(fsys, "md/page/events.md")))))
 		reg("GET", "/rules", "md/page/rules.md", page(mdDataFunc(http.StatusOK, "Rules", readFile(fsys, "md/page/rules.md"))))
-		// reg("GET", "/leaderboard", "", nil)
+		reg("GET", "/leaderboard", "md/page/leaderboard.md", leaderboardMiddleware(auth, event, page(mdDataFunc(http.StatusOK, "Leaderboard", readFile(fsys, "md/page/leaderboard.md")))))
 		reg("GET", "/contact", "md/page/contact.md", page(mdDataFunc(http.StatusOK, "Contact", readFile(fsys, "md/page/contact.md"))))
 		reg("GET", "/latest", "latestPuzzleRedirect", latestPuzzleRedirect(event))
 

@@ -55,6 +55,32 @@ func (a *Auth) User(id string) (*User, error) {
 	return user, nil
 }
 
+func (a *Auth) AllProgress(event string) (map[*User]*UserProgress, error) {
+	allProgress := map[*User]*UserProgress{}
+	err := a.db.View(func(tx *db.Tx) error {
+		bucket := a.bucketProgress.Open(tx)
+		eventBucket := bucket.Bucket(event)
+		if eventBucket == nil {
+			return nil
+		}
+
+		userBucket := a.bucketUser.Open(tx)
+		for userID, progress := range eventBucket.All() {
+			user := userBucket.Get(userID)
+			if user == nil {
+				continue
+			}
+			allProgress[user] = progress
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return allProgress, nil
+}
+
 func (a *Auth) Progress(event, user string) (*UserProgress, error) {
 	var progress *UserProgress
 	err := a.db.View(func(tx *db.Tx) error {

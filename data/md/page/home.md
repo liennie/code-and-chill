@@ -6,7 +6,9 @@ To get started:
 - Read the [rules](/{{ $.Event.Path }}/rules)
 - Join the discussion // TODO link to a discord channel
 - [Log in](/{{ $.Event.Path }}/login) to start solving
+{{- if .PuzzleUnlocked }}
 - Visit the [latest puzzle](/{{ $.Event.Path }}/latest)
+{{- end }}
 - Check out the [leaderboard](/{{ $.Event.Path }}/leaderboard)
 
 ## Puzzles

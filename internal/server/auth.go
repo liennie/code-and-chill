@@ -146,6 +146,7 @@ func userMiddleware(a *auth.Auth, event puzzles.Event, next http.Handler) http.H
 			}
 
 			pd.User = &userData{
+				ID:     user.ID,
 				Name:   user.Name,
 				Avatar: user.AvatarURL,
 			}

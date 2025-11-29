@@ -1,11 +1,13 @@
 package server
 
 import (
+	"cmp"
 	"errors"
 	"fmt"
 	"hash/fnv"
 	"io"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -72,6 +74,8 @@ func puzzlesMiddleware(event puzzles.Event, next http.Handler) http.Handler {
 			if puzzle.Unlock.After(pd.Now) {
 				pzd.Locked = true
 				pzd.Unlock = &puzzle.Unlock
+			} else {
+				pd.PuzzleUnlocked = true
 			}
 
 			if progress != nil {
@@ -308,4 +312,103 @@ func puzzleAnswerDataFunc(a *auth.Auth, event puzzles.Event, pidx int, puzzle pu
 		}
 		return df(r)
 	}
+}
+
+type userProgress struct {
+	User      *auth.User
+	Puzzles   map[string]auth.PuzzleProgress
+	Solved    int
+	Score     int
+	LastSolve time.Time
+}
+
+func (p *userProgress) Time(puzzleID string, part int) (time.Time, bool) {
+	if puzzle, ok := p.Puzzles[puzzleID]; ok {
+		if part < len(puzzle.Parts) {
+			return puzzle.Parts[part].Time, true
+		}
+	}
+	return time.Time{}, false
+}
+
+func (p *userProgress) ComparePart(other *userProgress, puzzleID string, part int) int {
+	aTime, aOk := p.Time(puzzleID, part)
+	bTime, bOk := other.Time(puzzleID, part)
+	if aOk && bOk {
+		return aTime.Compare(bTime)
+	}
+	if aOk {
+		return -1
+	}
+	if bOk {
+		return 1
+	}
+	return 0
+}
+
+func (p *userProgress) Compare(other *userProgress) int {
+	return cmp.Or(
+		-cmp.Compare(p.Solved, other.Solved),
+		-cmp.Compare(p.Score, other.Score),
+		p.LastSolve.Compare(other.LastSolve),
+	)
+}
+
+func leaderboardMiddleware(a *auth.Auth, event puzzles.Event, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		pd := pageDataFromContext(r.Context())
+
+		progress, err := a.AllProgress(event.ID)
+		if err != nil {
+			panic(fmt.Errorf("get all progress: %w", err))
+		}
+
+		ups := make([]*userProgress, 0, len(progress))
+		for user, p := range progress {
+			ups = append(ups, &userProgress{
+				User:    user,
+				Puzzles: p.Puzzles,
+			})
+		}
+
+		for _, puzzle := range event.Puzzles {
+			for part := range puzzle.Parts {
+				slices.SortFunc(ups, func(a, b *userProgress) int {
+					return a.ComparePart(b, puzzle.ID, part)
+				})
+
+				for i, up := range ups {
+					t, ok := up.Time(puzzle.ID, part)
+					if !ok {
+						continue
+					}
+
+					up.Score += len(ups) - i
+					up.Solved++
+					if t.After(up.LastSolve) {
+						up.LastSolve = t
+					}
+				}
+			}
+		}
+
+		slices.SortFunc(ups, (*userProgress).Compare)
+		if len(ups) > 50 {
+			ups = ups[:50]
+		}
+
+		for _, up := range ups {
+			pd.Leaderboard = append(pd.Leaderboard, leaderboardData{
+				User: userData{
+					ID:     up.User.ID,
+					Name:   up.User.Name,
+					Avatar: up.User.AvatarURL,
+				},
+				Solved: up.Solved,
+				Score:  up.Score,
+			})
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }

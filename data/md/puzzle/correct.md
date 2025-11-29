@@ -1,6 +1,6 @@
 # Correct
 
-Congratulations - your answer is correct!
+*Congratulations* - your answer is correct!
 
 {{ if not $.Puzzle.Finished -}}
 [Continue to part {{ $.Puzzle.Part }}](/{{ $.Event.Path }}/puzzle/{{ $.Puzzle.Path }}#{{ $.Puzzle.Anchor }}).
