@@ -3,8 +3,9 @@
 Before you start solving, please take a moment to read the rules.
 
 ## The basics
-- Each day (or at a scheduled time), a new puzzle will unlock.
-- Solve puzzles in any order - though some may build on previous ones.
+- Puzzles unlock at scheduled times.
+- Solve puzzles in *any order*.
+- Each puzzle has *two parts*. Part 1 must be solved before part 2 is available.
 - Locked puzzles will appear greyed out until they’re available.
 
 ## Submissions
@@ -15,12 +16,12 @@ Before you start solving, please take a moment to read the rules.
 ## Leaderboard
 - Positions are determined based on *number of puzzles solved* and *speed*.
 - The leaderboard updates automatically after each solve.
-- Ties are broken by the earliest submission time.
+- Ties are broken by the last submission time.
 
 ## Fair play
-- Work on your own solutions - collaboration or code sharing is not allowed unless explicitly permitted.
+- Work on your own solutions - collaboration or code sharing is not allowed.
 - Don’t brute-force or spam the answer form.
-- Do not use large language models (LLMs) or automated solvers to generate or verify answers.
+- *Do not use large language models* (LLMs) or automated solvers to generate or verify answers.
 - Be kind and respectful in any community discussions.
 
 ## Questions?

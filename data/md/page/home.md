@@ -1,11 +1,13 @@
 # {{ $.Name }}::(({{ $.Event.Name }})){.secondary-color} {#title}
 
-Get ready for a series of coding puzzles released one at a time! Each puzzle unlocks on schedule - solve them to climb the leaderboard and uncover the full story as it unfolds.
+Get ready for a series of coding puzzles released *one at a time*! Each puzzle unlocks on schedule - solve them to climb the [leaderboard](/{{ $.Event.Path }}/leaderboard) and uncover the full story as it unfolds.
 
 To get started:
 - Read the [rules](/{{ $.Event.Path }}/rules)
 - Join the discussion // TODO link to a discord channel
+{{- if not .User }}
 - [Log in](/{{ $.Event.Path }}/login) to start solving
+{{- end }}
 {{- if .PuzzleUnlocked }}
 - Visit the [latest puzzle](/{{ $.Event.Path }}/latest)
 {{- end }}

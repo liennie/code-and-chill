@@ -14,7 +14,7 @@
 
 {{- else -}}
 
-No entries yet - be the first to solve a puzzle and appear on the leaderboard!
+*No entries yet* - be the first to solve a puzzle and appear on the leaderboard!
 
 {{- if .User }}
 {{- if .PuzzleUnlocked }}
@@ -37,7 +37,7 @@ Try the [latest puzzle](/{{ $.Event.Path }}/latest).
 
 - *Ranking:* Players are ranked first by the *number of puzzles solved*, then by *score*, then by the *time* of their last solution.
 - *Scoring:* For each correct solution you get 1 point plus 1 additional point for every other participant who solved it later or not at all.
-- *Example:* With 10 participants, the 2nd solver gets 1 + (10 − 2) = 9 points.
+- *Example:* With 10 participants, the 2nd solver gets 1 + (10 − 2) = *9 points*.
 
 ## Questions?
 
