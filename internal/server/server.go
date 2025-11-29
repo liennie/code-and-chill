@@ -123,7 +123,7 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 	e := pzls.Default.Path
 	reg("GET", "/", "md/404.md", rootMiddleware(notFoundHandler))
 	reg("GET", "/{$}", "redirect", http.RedirectHandler("/"+e, http.StatusTemporaryRedirect))
-	reg("GET", "/events", "redirect", http.RedirectHandler("/"+e+"/events", http.StatusTemporaryRedirect))
+	// reg("GET", "/events", "redirect", http.RedirectHandler("/"+e+"/events", http.StatusTemporaryRedirect))
 	reg("GET", "/rules", "redirect", http.RedirectHandler("/"+e+"/rules", http.StatusTemporaryRedirect))
 	reg("GET", "/leaderboard", "redirect", http.RedirectHandler("/"+e+"/leaderboard", http.StatusTemporaryRedirect))
 	reg("GET", "/contact", "redirect", http.RedirectHandler("/"+e+"/contact", http.StatusTemporaryRedirect))
@@ -153,7 +153,7 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 		reg := handlerRegistrar("/"+e, evMux)
 
 		reg("GET", "/", "md/404.md", notFoundHandler)
-		reg("GET", "/events", "md/page/events.md", eventsMiddleware(pzls.Events, page(mdDataFunc(http.StatusOK, "Events", readFile(fsys, "md/page/events.md")))))
+		// reg("GET", "/events", "md/page/events.md", eventsMiddleware(pzls.Events, page(mdDataFunc(http.StatusOK, "Events", readFile(fsys, "md/page/events.md")))))
 		reg("GET", "/rules", "md/page/rules.md", page(mdDataFunc(http.StatusOK, "Rules", readFile(fsys, "md/page/rules.md"))))
 		reg("GET", "/leaderboard", "md/page/leaderboard.md", leaderboardMiddleware(auth, event, page(mdDataFunc(http.StatusOK, "Leaderboard", readFile(fsys, "md/page/leaderboard.md")))))
 		reg("GET", "/contact", "md/page/contact.md", page(mdDataFunc(http.StatusOK, "Contact", readFile(fsys, "md/page/contact.md"))))

@@ -1,9 +1,10 @@
 package session
 
 import (
-	"cc/internal/db"
 	"log/slog"
 	"time"
+
+	"cc/internal/db"
 
 	"github.com/robfig/cron/v3"
 )

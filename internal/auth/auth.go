@@ -2,9 +2,10 @@
 package auth
 
 import (
-	"cc/internal/db"
 	"fmt"
 	"math/rand/v2"
+
+	"cc/internal/db"
 )
 
 type Auth struct {
