@@ -26,6 +26,9 @@ func Open(config Config) *DB {
 	if config.BackupSchedule != "" && config.BackupDir == "" {
 		panic("db: backupDir is required if backupSchedule is set")
 	}
+	if config.BackupNum == 0 {
+		config.BackupNum = 24
+	}
 
 	err := os.MkdirAll(filepath.Dir(config.File), 0755)
 	if err != nil {
@@ -66,6 +69,7 @@ func Open(config Config) *DB {
 			DB:         d,
 			backupDir:  config.BackupDir,
 			backupName: filepath.Base(config.File),
+			backupNum:  config.BackupNum,
 		})
 		d.backupJobID = &backupJobID
 	}

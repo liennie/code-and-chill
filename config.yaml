@@ -12,6 +12,7 @@ db:
   file: db/cc.db
   backupSchedule: "0 0/4 * * *"
   backupDir: bak
+  backupNum: 24
 
 session:
   bits: 256

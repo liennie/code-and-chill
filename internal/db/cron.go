@@ -1,13 +1,16 @@
 package db
 
 import (
-	"cc/internal/ctxlog"
 	"context"
 	"fmt"
 	"log/slog"
 	"os"
 	"path/filepath"
+	"slices"
+	"strings"
 	"time"
+
+	"cc/internal/ctxlog"
 
 	"github.com/robfig/cron/v3"
 )
@@ -17,43 +20,82 @@ type backupJob struct {
 
 	backupDir  string
 	backupName string
+	backupNum  int
 }
 
 var _ cron.Job = (*backupJob)(nil)
 
-func (j *backupJob) run() error {
+func (j *backupJob) run() (string, error) {
 	err := os.MkdirAll(j.backupDir, 0755)
 	if err != nil {
-		return fmt.Errorf("create backup dir: %w", err)
+		return "", fmt.Errorf("create backup dir: %w", err)
 	}
 
-	backupFile, err := os.Create(filepath.Join(
+	backupPath := filepath.Join(
 		j.backupDir,
 		j.backupName+"-"+time.Now().Format("2006-01-02-15-04-05.bak"),
-	))
+	)
+	backupFile, err := os.Create(backupPath)
 	if err != nil {
-		return fmt.Errorf("create backup file: %w", err)
+		return "", fmt.Errorf("create backup file: %w", err)
 	}
 	defer ctxlog.CloseErr(context.Background(), "backup file", backupFile)
 
-	return j.View(func(tx *Tx) error {
+	err = j.View(func(tx *Tx) error {
 		_, err := tx.tx.WriteTo(backupFile)
 		return err
 	})
+	if err != nil {
+		return "", fmt.Errorf("write backup file: %w", err)
+	}
 
-	// TODO delete old backups
+	entries, err := os.ReadDir(j.backupDir)
+	if err != nil {
+		return "", fmt.Errorf("read backup dir: %w", err)
+	}
+
+	prefix := j.backupName + "-"
+	var backups []os.DirEntry
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		name := e.Name()
+		if strings.HasPrefix(name, prefix) && strings.HasSuffix(name, ".bak") {
+			backups = append(backups, e)
+		}
+	}
+
+	if len(backups) <= j.backupNum {
+		return backupPath, nil
+	}
+
+	slices.SortFunc(backups, func(a, b os.DirEntry) int {
+		return strings.Compare(a.Name(), b.Name())
+	})
+
+	for _, e := range backups[:len(backups)-j.backupNum] {
+		p := filepath.Join(j.backupDir, e.Name())
+		slog.Info("removing old backup", "path", p)
+		err = os.Remove(p)
+		if err != nil {
+			return "", fmt.Errorf("remove %q: %w", p, err)
+		}
+	}
+
+	return backupPath, nil
 }
 
 func (j *backupJob) Run() {
 	slog.Info("backing up db")
 
 	now := time.Now()
-	err := j.run()
+	path, err := j.run()
 	dur := time.Since(now)
 
 	if err != nil {
 		slog.Error("backup failed", "error", err, "duration", dur.String())
 	} else {
-		slog.Info("backup", "duration", dur.String())
+		slog.Info("backup", "path", path, "duration", dur.String())
 	}
 }
