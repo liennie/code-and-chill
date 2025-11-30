@@ -76,7 +76,7 @@ func (j *backupJob) run() (string, error) {
 
 	for _, e := range backups[:len(backups)-j.backupNum] {
 		p := filepath.Join(j.backupDir, e.Name())
-		slog.Info("removing old backup", "path", p)
+		slog.Info("removing old db backup", "path", p)
 		err = os.Remove(p)
 		if err != nil {
 			return "", fmt.Errorf("remove %q: %w", p, err)
@@ -94,8 +94,8 @@ func (j *backupJob) Run() {
 	dur := time.Since(now)
 
 	if err != nil {
-		slog.Error("backup failed", "error", err, "duration", dur.String())
+		slog.Error("db backup failed", "error", err, "duration", dur.String())
 	} else {
-		slog.Info("backup", "path", path, "duration", dur.String())
+		slog.Info("db backed up", "path", path, "duration", dur.String())
 	}
 }

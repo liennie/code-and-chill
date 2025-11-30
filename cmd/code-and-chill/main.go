@@ -47,6 +47,7 @@ func run(ctx context.Context, config string) (err error) {
 
 	logger.Info("starting server")
 	srv := server.New(c.Server, db, sess, auth, puzzles)
+	defer ctxlog.CloseErr(ctx, "server", srv)
 
 	return srv.Run(ctx)
 }

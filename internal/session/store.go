@@ -35,14 +35,6 @@ func NewStore(config Config, ddb *db.DB) *Store {
 	if config.Truncate == 0 {
 		config.Truncate = 24 * time.Hour
 	}
-	if config.CleanupSchedule == "" {
-		panic("session: cleanupSchedule is required")
-	}
-
-	schedule, err := cron.ParseStandard(config.CleanupSchedule)
-	if err != nil {
-		panic(fmt.Errorf("session: cleanupSchedule: %w", err))
-	}
 
 	s := &Store{
 		bytes:    config.Bits / 8,
@@ -53,8 +45,16 @@ func NewStore(config Config, ddb *db.DB) *Store {
 		bucketSession:       db.NewBucketKey[Session](ddb, db.BucketSession),
 		bucketSessionExpire: db.NewBucketKey[dbSessionExpire](ddb, db.BucketSessionExpire),
 	}
-	cleanupJobID := sched.Cron.Schedule(schedule, &cleanupJob{s})
-	s.cleanupJobID = &cleanupJobID
+
+	if config.CleanupSchedule != "" {
+		schedule, err := cron.ParseStandard(config.CleanupSchedule)
+		if err != nil {
+			panic(fmt.Errorf("session: cleanupSchedule: %w", err))
+		}
+
+		cleanupJobID := sched.Cron.Schedule(schedule, &cleanupJob{s})
+		s.cleanupJobID = &cleanupJobID
+	}
 
 	return s
 }

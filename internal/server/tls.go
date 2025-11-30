@@ -1,28 +1,29 @@
 package server
 
 import (
-	"context"
 	"crypto/tls"
 	"fmt"
+	"log/slog"
 	"sync/atomic"
-	"time"
 
-	"cc/internal/ctxlog"
+	"cc/internal/sched"
+
+	"github.com/robfig/cron/v3"
 )
 
 type tlsLoader struct {
 	certFile string
 	keyFile  string
-	interval time.Duration
 
 	cert atomic.Pointer[tls.Certificate]
+
+	reloadJobID *cron.EntryID
 }
 
-func newTLSLoader(certFile, keyFile string, interval time.Duration) *tlsLoader {
+func newTLSLoader(certFile, keyFile string, reloadSchedule string) *tlsLoader {
 	t := &tlsLoader{
 		certFile: certFile,
 		keyFile:  keyFile,
-		interval: interval,
 	}
 
 	err := t.load()
@@ -30,7 +31,24 @@ func newTLSLoader(certFile, keyFile string, interval time.Duration) *tlsLoader {
 		panic(err)
 	}
 
+	if reloadSchedule != "" {
+		schedule, err := cron.ParseStandard(reloadSchedule)
+		if err != nil {
+			panic(fmt.Errorf("tls: reloadSchedule: %w", err))
+		}
+		reloadJobID := sched.Cron.Schedule(schedule, cron.FuncJob(t.reload))
+		t.reloadJobID = &reloadJobID
+	}
+
 	return t
+}
+
+func (l *tlsLoader) Close() error {
+	if l.reloadJobID != nil {
+		sched.Cron.Remove(*l.reloadJobID)
+		l.reloadJobID = nil
+	}
+	return nil
 }
 
 func (l *tlsLoader) load() error {
@@ -47,24 +65,11 @@ func (l *tlsLoader) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certi
 	return l.cert.Load(), nil
 }
 
-func (l *tlsLoader) reloadLoop(ctx context.Context) {
-	logger := ctxlog.Get(ctx)
-
-	ticker := time.NewTicker(l.interval)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ctx.Done():
-			return
-
-		case <-ticker.C:
-			err := l.load()
-			if err != nil {
-				logger.Error("reload tls cert", "error", err)
-			} else {
-				logger.Info("reloaded tls cert")
-			}
-		}
+func (l *tlsLoader) reload() {
+	err := l.load()
+	if err != nil {
+		slog.Error("tls reload failed", "error", err)
+	} else {
+		slog.Info("tls cert reloaded")
 	}
 }

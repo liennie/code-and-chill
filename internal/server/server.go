@@ -45,11 +45,7 @@ func New(config Config, db *db.DB, session *session.Store, auth *auth.Auth, puzz
 
 	var loader *tlsLoader
 	if config.TLSCertFile != "" && config.TLSKeyFile != "" {
-		if config.TLSReloadInterval <= 0 {
-			config.TLSReloadInterval = 24 * time.Hour
-		}
-
-		loader = newTLSLoader(config.TLSCertFile, config.TLSKeyFile, config.TLSReloadInterval)
+		loader = newTLSLoader(config.TLSCertFile, config.TLSKeyFile, config.TLSReloadSchedule)
 	} else if config.TLSCertFile != "" || config.TLSKeyFile != "" {
 		panic("server: both tlsCertFile and tlsKeyFile must be set to enable TLS")
 	}
@@ -61,6 +57,15 @@ func New(config Config, db *db.DB, session *session.Store, auth *auth.Auth, puzz
 		httpsRedirect:   config.HTTPSRedirect,
 		shutdownTimeout: config.ShutdownTimeout,
 	}
+}
+
+func (s *Server) Close() error {
+	if s.tlsLoader != nil {
+		err := s.tlsLoader.Close()
+		s.tlsLoader = nil
+		return err
+	}
+	return nil
 }
 
 func handlerRegistrar(prefix string, mux *http.ServeMux) func(method, path, src string, handler http.Handler) {
@@ -270,7 +275,6 @@ func (s *Server) Run(ctx context.Context) error {
 		srv.TLSConfig = &tls.Config{
 			GetCertificate: s.tlsLoader.getCertificate,
 		}
-		go s.tlsLoader.reloadLoop(ctx)
 	}
 	group.Go(func() error {
 		return s.runServer(ctx, cancel, srv)

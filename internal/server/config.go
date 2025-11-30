@@ -9,7 +9,7 @@ type Config struct {
 	Port              int           `yaml:"port"`
 	TLSCertFile       string        `yaml:"tlsCertFile"`
 	TLSKeyFile        string        `yaml:"tlsKeyFile"`
-	TLSReloadInterval time.Duration `yaml:"tlsReloadInterval"`
+	TLSReloadSchedule string        `yaml:"tlsReloadSchedule"`
 	HTTPSRedirect     bool          `yaml:"httpsRedirect"`
 	DataDir           string        `yaml:"dataDir"`
 	ShutdownTimeout   time.Duration `yaml:"shutdownTimeout"`

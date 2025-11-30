@@ -41,8 +41,8 @@ func (j *cleanupJob) Run() {
 	dur := time.Since(now)
 
 	if err != nil {
-		slog.Error("cleanup failed", "error", err, "duration", dur.String())
+		slog.Error("session cleanup failed", "error", err, "duration", dur.String())
 	} else {
-		slog.Info("cleanup", "count", count, "duration", dur.String())
+		slog.Info("cleaned up sessions", "count", count, "duration", dur.String())
 	}
 }
