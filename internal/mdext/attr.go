@@ -1,5 +1,3 @@
-// Package mdext provides a Goldmark extension to parse and apply inline attributes
-// to preceding AST nodes using a {key=value} syntax.
 package mdext
 
 import (

@@ -18,20 +18,6 @@ func (e *RawStringExtender) Extend(m goldmark.Markdown) {
 	)
 }
 
-var kindRawString = ast.NewNodeKind("RawString")
-
-type rawString struct {
-	ast.BaseInline
-}
-
-func (n *rawString) Dump(source []byte, level int) {
-	ast.DumpHelper(n, source, level, nil, nil)
-}
-
-func (n *rawString) Kind() ast.NodeKind {
-	return kindRawString
-}
-
 const rawStringDelimiter = '='
 
 type rawStringParser struct{}
@@ -75,9 +61,7 @@ text:
 				block.Advance(1)
 			}
 
-			node := &rawString{}
-			node.AppendChild(node, ast.NewTextSegment(start.WithStop(end.Start)))
-			return node
+			return ast.NewTextSegment(start.WithStop(end.Start))
 
 		default:
 			block.Advance(1)

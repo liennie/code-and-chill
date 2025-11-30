@@ -21,18 +21,18 @@ func (e *SpanExtender) Extend(m goldmark.Markdown) {
 	)
 }
 
-var KindSpan = ast.NewNodeKind("Span")
+var kindSpan = ast.NewNodeKind("Span")
 
-type Span struct {
+type span struct {
 	ast.BaseInline
 }
 
-func (s *Span) Dump(source []byte, level int) {
+func (s *span) Dump(source []byte, level int) {
 	ast.DumpHelper(s, source, level, nil, nil)
 }
 
-func (s *Span) Kind() ast.NodeKind {
-	return KindSpan
+func (s *span) Kind() ast.NodeKind {
+	return kindSpan
 }
 
 type spanParser struct{}
@@ -69,13 +69,13 @@ func (p *spanDelimiterProcessor) CanOpenCloser(opener, closer *parser.Delimiter)
 }
 
 func (p *spanDelimiterProcessor) OnMatch(consumes int) ast.Node {
-	return &Span{}
+	return &span{}
 }
 
 type spanRenderer struct{}
 
 func (r *spanRenderer) RegisterFuncs(reg renderer.NodeRendererFuncRegisterer) {
-	reg.Register(KindSpan, r.render)
+	reg.Register(kindSpan, r.render)
 }
 
 func (r *spanRenderer) render(writer util.BufWriter, source []byte, n ast.Node, entering bool) (ast.WalkStatus, error) {

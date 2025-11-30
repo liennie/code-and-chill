@@ -1,4 +1,5 @@
-// Package server provides HTTP server setup and lifecycle management for the application.
+// Package server implements the web server, routes and middleware for the
+// code-and-chill application.
 package server
 
 import (
