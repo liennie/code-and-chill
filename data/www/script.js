@@ -1,7 +1,6 @@
 (function () {
 	const KEY = 'darkmode';
 	const html = document.documentElement;
-	const toggle = document.getElementById('darkmode-toggle');
 
 	// small cookie helpers (name/value, days expiry)
 	function getCookie(name) {
@@ -17,28 +16,48 @@
 	}
 
 	function applyDark(dark) {
-		html.classList.toggle('dark', !!dark);
-		if (toggle) toggle.checked = !!dark;
+		html.classList.toggle('dark', dark);
 		const icon = document.querySelector('.dark-switch .icon');
 		if (icon) icon.textContent = dark ? '🌙' : '☀️';
 		// persist in a cookie for ~1 year
 		setCookie(KEY, dark ? '1' : '0', 365);
 	}
 
-	const saved = getCookie(KEY);
-	if (saved !== null) {
-		applyDark(saved === '1');
-	} else {
-		const prefers = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-		applyDark(prefers);
+	function init() {
+		const toggle = document.getElementById('darkmode-toggle');
+
+		const saved = getCookie(KEY);
+		if (saved !== null) {
+			const on = (saved === '1');
+			if (toggle) toggle.checked = on;
+			applyDark(on);
+		} else {
+			const prefers = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+			if (toggle) toggle.checked = prefers;
+			applyDark(prefers);
+		}
+
+		if (toggle) {
+			if (toggle.getAttribute('data-init')) return;
+			toggle.setAttribute('data-init', '1');
+			toggle.addEventListener('change', function () {
+				const on = !!toggle.checked;
+				applyDark(on);
+			});
+		}
 	}
 
-	if (toggle) {
-		toggle.addEventListener('change', function () {
-			const on = !!toggle.checked;
-			applyDark(on);
-		});
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', init);
+	} else {
+		init();
 	}
+
+	window.addEventListener('pageshow', function (ev) {
+		if (ev.persisted) {
+			init();
+		}
+	});
 })();
 
 document.addEventListener('click', function (ev) {
@@ -61,79 +80,96 @@ document.addEventListener('click', function (ev) {
 }, true);
 
 (function () {
-	const HINT_SEL = '.leftmenu .hint[data-unlock]';
-	const nodes = Array.from(document.querySelectorAll(HINT_SEL));
-	if (!nodes.length) return;
+	let intervalId = null;
 
-	function formatHMS(ms) {
-		if (ms <= 0) return '00:00:00';
-		const s = Math.ceil(ms / 1000);
-		const hh = String(Math.floor(s / 3600)).padStart(2, '0');
-		const mm = String(Math.floor((s % 3600) / 60)).padStart(2, '0');
-		const ss = String(s % 60).padStart(2, '0');
-		return `${hh}:${mm}:${ss}`;
-	}
+	function start() {
+		const HINT_SEL = '.leftmenu .hint[data-unlock]';
+		const nodes = Array.from(document.querySelectorAll(HINT_SEL));
+		if (!nodes.length) return;
 
-	function formatDHM(date) {
-		const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-		const day = days[date.getDay()];
-		const hours = String(date.getHours()).padStart(2, '0');
-		const minutes = String(date.getMinutes()).padStart(2, '0');
-		return `${day} ${hours}:${minutes}`;
-	}
+		function formatHMS(ms) {
+			if (ms <= 0) return '00:00:00';
+			const s = Math.ceil(ms / 1000);
+			const hh = String(Math.floor(s / 3600)).padStart(2, '0');
+			const mm = String(Math.floor((s % 3600) / 60)).padStart(2, '0');
+			const ss = String(s % 60).padStart(2, '0');
+			return `${hh}:${mm}:${ss}`;
+		}
 
-	function formatDMHM(date) {
-		const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
-			"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-		const month = months[date.getMonth()];
-		const day = String(date.getDate()).padStart(2, '0');
-		const hours = String(date.getHours()).padStart(2, '0');
-		const minutes = String(date.getMinutes()).padStart(2, '0');
-		return `${month} ${day} ${hours}:${minutes}`;
-	}
+		function formatDHM(date) {
+			const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+			const day = days[date.getDay()];
+			const hours = String(date.getHours()).padStart(2, '0');
+			const minutes = String(date.getMinutes()).padStart(2, '0');
+			return `${day} ${hours}:${minutes}`;
+		}
 
-	function updateCountdown() {
-		const now = Date.now();
-		const nowDate = new Date();
+		function formatDMHM(date) {
+			const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+				"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+			const month = months[date.getMonth()];
+			const day = String(date.getDate()).padStart(2, '0');
+			const hours = String(date.getHours()).padStart(2, '0');
+			const minutes = String(date.getMinutes()).padStart(2, '0');
+			return `${month} ${day} ${hours}:${minutes}`;
+		}
 
-		nodes.forEach(el => {
-			const iso = el.getAttribute('data-unlock');
-			if (!iso) return;
+		function updateCountdown() {
+			const now = Date.now();
+			const nowDate = new Date();
 
-			const t = Date.parse(iso);
-			if (isNaN(t)) return;
+			nodes.forEach(el => {
+				const iso = el.getAttribute('data-unlock');
+				if (!iso) return;
 
-			const diff = t - now;
+				const t = Date.parse(iso);
+				if (isNaN(t)) return;
 
-			if (diff <= 0) {
-				el.textContent = '';
-				const li = el.closest('li');
-				if (li && li.classList.contains('locked')) {
-					li.classList.remove('locked');
-					li.classList.add('unlocked');
+				const diff = t - now;
+
+				if (diff <= 0) {
+					el.textContent = '';
+					const li = el.closest('li');
+					if (li && li.classList.contains('locked')) {
+						li.classList.remove('locked');
+						li.classList.add('unlocked');
+					}
+					return;
 				}
-				return;
-			}
 
-			const unlockDate = new Date(t);
-			const isFutureDay =
-				unlockDate.getFullYear() !== nowDate.getFullYear() ||
-				unlockDate.getMonth() !== nowDate.getMonth() ||
-				unlockDate.getDate() !== nowDate.getDate();
+				const unlockDate = new Date(t);
+				const isFutureDay =
+					unlockDate.getFullYear() !== nowDate.getFullYear() ||
+					unlockDate.getMonth() !== nowDate.getMonth() ||
+					unlockDate.getDate() !== nowDate.getDate();
 
-			if (diff > 7 * 24 * 3600 * 1000) {
-				// More than a week away
-				el.textContent = formatDMHM(unlockDate);
-			} else if (isFutureDay) {
-				// Within a week but not today
-				el.textContent = formatDHM(unlockDate);
-			} else {
-				// Same day
-				el.textContent = formatHMS(diff);
-			}
-		});
+				if (diff > 7 * 24 * 3600 * 1000) {
+					// More than a week away
+					el.textContent = formatDMHM(unlockDate);
+				} else if (isFutureDay) {
+					// Within a week but not today
+					el.textContent = formatDHM(unlockDate);
+				} else {
+					// Same day
+					el.textContent = formatHMS(diff);
+				}
+			});
+		}
+
+		if (intervalId) clearInterval(intervalId);
+		updateCountdown();
+		intervalId = setInterval(updateCountdown, 1000);
 	}
 
-	updateCountdown();
-	setInterval(updateCountdown, 1000);
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', start);
+	} else {
+		start();
+	}
+
+	window.addEventListener('pageshow', function (ev) {
+		if (ev.persisted) {
+			start();
+		}
+	});
 })();
