@@ -49,6 +49,8 @@ func (p *spanParser) Parse(parent ast.Node, block text.Reader, pc parser.Context
 		return nil
 	}
 
+	node.CanOpen = true
+	node.CanClose = true
 	node.Segment = segment.WithStop(segment.Start + node.OriginalLength)
 	block.Advance(node.OriginalLength)
 	pc.PushDelimiter(node)
