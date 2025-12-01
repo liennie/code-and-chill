@@ -14,12 +14,7 @@ Before you start solving, please take a moment to read the rules.
 - You’ll immediately see whether it’s correct - no partial credit or hints are given.
 
 ## Leaderboard
-- Your *rank* is determined by:
-	1. How many *puzzle parts* you’ve solved,
-	2. Your total *score*, and
-	3. The time of your *most recent* correct solution (for tie-breaking).
-- The leaderboard updates automatically whenever a participant submits a correct solution.
-- Each puzzle has *two parts*, and every part counts as one solved item.
+- See the [leaderboard page](/{{ $.Event.Path }}/leaderboard#how-it-works) for a detailed breakdown of how positions are calculated.
 
 ## Fair play
 - Work on your own solutions - collaboration or code sharing is not allowed.

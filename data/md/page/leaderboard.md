@@ -35,33 +35,28 @@ Try the [latest puzzle](/{{ $.Event.Path }}/latest).
 
 ## How it works
 
-### Rank
-Players are ranked using the following criteria, in order:
+Your *position* is determined using the following criteria, in order:
+1. How many *puzzle parts* you’ve solved,
+2. Your *total score*, and
+3. The time of your *most recent* correct solution (for tie-breaking).
 
-1. Number of puzzle parts solved
-2. Total score
-3. Time of the most recent correct solution (earlier is better)
-
-### Score
-For every puzzle part you solve, you earn:
-
+Your *score* for each puzzle part is:
 - *1 base point*, plus
-- *1 bonus point* for every participant who submits that part *after* you (or never submits it).
+- *1 bonus point* for *every* participant who submits that part *after* you (or never submits it).
 
-The faster you solve a part relative to others, the more points you earn.
-
-### Example
-With 10 participants, for each part:
-
-- The *first* solver earns:
-	1 + (10 - 1) = *10 points*
-- The *second* solver earns:
-	1 + (10 - 2) = *9 points*
+For example, with *10* participants, for each puzzle part:
+- The *first* solver earns: 1 + (10 - 1) = *10 points*
+- The *second* solver earns: 1 + (10 - 2) = *9 points*
 
 ...and so on.
 
-### Scope
-The leaderboard is *global*, combining all puzzle parts from the entire event.
+## Additional details
+
+- The leaderboard updates automatically whenever a participant submits a solution.
+- Participants appear on the leaderboard as soon as they submit *any* solution, correct or incorrect.
+- Scores are calculated using all participants who have submitted at least one solution; participants without any submissions are not included.
+- Each puzzle has *two parts*, and every part counts as one solved item.
+- The leaderboard is *global* and combines all puzzle parts from the *entire event*.
 
 ## Questions?
 
