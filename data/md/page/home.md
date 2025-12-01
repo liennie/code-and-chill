@@ -21,7 +21,7 @@ Below are all the puzzles for this event. Locked puzzles will appear greyed out 
 	{{- if .Locked }}
 - ~~{{ .Name }}~~
 	{{- else }}
-- [{{ .Name }}](/{{ $.Event.Path }}/puzzle/{{ .Path }}){{ if $.User }}{{ repeat (.Name | len | sub $.PuzzleAlign | int) " " }}{{ puzzleHint . }}{{ end }}
+- [{{ .Name }}](/{{ $.Event.Path }}/puzzle/{{ .Path }}){{ if $.User }}(({{ repeat (.Name | len | sub $.PuzzleAlign | int) " " }}{{ puzzleHint . }})){.pre-wrap}{{ end }}
 	{{- end }}
 {{- end }}
 

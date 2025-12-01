@@ -307,11 +307,19 @@ article h1 {
 	margin: 0 0 0.25rem 0;
 	border-bottom: 1px dashed var(--line);
 	font-weight: 800;
+	color: var(--color-em);
 }
 
 article h2 {
 	margin: 0 0 0.25rem 0;
 	font-weight: 800;
+	color: var(--color-em);
+}
+
+article h3 {
+	margin: 0 0 0.25rem 0;
+	font-weight: 800;
+	color: var(--color-em);
 }
 
 article p {
@@ -324,17 +332,21 @@ article ul {
 	padding-left: 2ch;
 }
 
-article ul li {
+article ul>li {
 	position: relative;
 	padding-left: 2ch;
-	white-space: pre-wrap;
 }
 
-article ul li:before {
+article ul>li:before {
 	content: "-";
 	position: absolute;
 	left: 0;
 	top: 0;
+}
+
+article ol {
+	margin-left: 0;
+	padding-left: 4ch;
 }
 
 article pre {
@@ -425,6 +437,10 @@ article .avatar {
 article .user {
 	color: var(--color-secondary);
 	font-weight: 800;
+}
+
+article .pre-wrap {
+	white-space: pre-wrap;
 }
 
 .output {

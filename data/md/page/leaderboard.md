@@ -35,9 +35,33 @@ Try the [latest puzzle](/{{ $.Event.Path }}/latest).
 
 ## How it works
 
-- *Ranking:* Players are ranked first by the *number of puzzles solved*, then by *score*, then by the *time* of their last solution.
-- *Scoring:* For each correct solution you get 1 point plus 1 additional point for every other participant who solved it later or not at all.
-- *Example:* With 10 participants, the 2nd solver gets 1 + (10 − 2) = *9 points*.
+### Rank
+Players are ranked using the following criteria, in order:
+
+1. Number of puzzle parts solved
+2. Total score
+3. Time of the most recent correct solution (earlier is better)
+
+### Score
+For every puzzle part you solve, you earn:
+
+- *1 base point*, plus
+- *1 bonus point* for every participant who submits that part *after* you (or never submits it).
+
+The faster you solve a part relative to others, the more points you earn.
+
+### Example
+With 10 participants, for each part:
+
+- The *first* solver earns:
+	1 + (10 - 1) = *10 points*
+- The *second* solver earns:
+	1 + (10 - 2) = *9 points*
+
+...and so on.
+
+### Scope
+The leaderboard is *global*, combining all puzzle parts from the entire event.
 
 ## Questions?
 
