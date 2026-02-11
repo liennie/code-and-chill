@@ -17,6 +17,7 @@
 	--bg: #fff;
 	--bg-code: #f9f9f9;
 	--bg-btn: #fff;
+	--bg-btn-hover: #eee;
 	--bg-inactive: #e6e6e6;
 	--bg-gold: linear-gradient(135deg,#fff7dc 0 60%, #ffd700 70%);
 	--bg-silver: linear-gradient(135deg,#f6f7f8 0 60%, #c8c8c8 70%);
@@ -36,6 +37,7 @@ html.dark {
 	--bg: #1b1e22;
 	--bg-code: #161718;
 	--bg-btn: #141617;
+	--bg-btn-hover: #313638;
 	--bg-inactive: #171717;
 	--bg-gold: linear-gradient(135deg, #5a3700 0 60%, #d49f00 70%);
 	--bg-silver: linear-gradient(135deg,#2b2d30 0 60%, #6e6f72 70%);
@@ -68,7 +70,6 @@ body, div, pre, code, span, em, .topnav a, .leftmenu a, input, button, header, n
 	text-decoration: none;
 	padding: 0.35rem 0.6rem;
 	border: 1px solid var(--line);
-	background: var(--bg-btn);
 	display: inline-flex;
 	align-items: center;
 	height: 2rem;
@@ -152,6 +153,10 @@ a {
 	display: inline-flex;
 	align-items: center;
 	height: 2rem;
+
+	&:hover, &:focus {
+		background: var(--bg-btn-hover);
+	}
 }
 
 .topnav a:hover {
@@ -258,6 +263,10 @@ a {
 
 .leftmenu li.unlocked > a {
 	background: var(--bg-btn);
+
+	&:hover, &:focus {
+		background: var(--bg-btn-hover);
+	}
 }
 
 .leftmenu li.locked > a {
@@ -455,6 +464,14 @@ div.answer:last-child {
 	background: var(--bg-btn);
 	padding: 0.4rem;
 	border: 1px solid var(--line);
+
+	&:hover, &:focus {
+		background: var(--bg-btn-hover);
+	}
+}
+
+.answer button {
+	cursor: pointer;
 }
 
 @media (max-width:700px) {
