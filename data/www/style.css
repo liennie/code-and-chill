@@ -383,7 +383,7 @@ article a:hover {
 	text-decoration: underline;
 }
 
-article em {
+article em, .leftmenu li > a em {
 	font-weight: 600;
 	color: var(--color-em);
 	text-shadow: 0 0 1px var(--color-em-shadow);
