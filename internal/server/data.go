@@ -88,6 +88,7 @@ var extraFuncs = template.FuncMap{
 			),
 			goldmark.WithRendererOptions(
 				html.WithHardWraps(),
+				html.WithUnsafe(),
 			),
 		)
 		var buf bytes.Buffer

@@ -181,7 +181,7 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 			page(mdDataFunc(http.StatusOK, "Profile", readFile(fsys, "md/page/profile.md"))),
 			http.RedirectHandler("/"+e+"/login", http.StatusSeeOther),
 		))
-		reg("GET", "/logout", "logoutHandler", userMux(
+		reg("POST", "/logout", "logoutHandler", userMux(
 			logoutHandler(event),
 			http.RedirectHandler("/"+e, http.StatusSeeOther),
 		))
