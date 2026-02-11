@@ -98,7 +98,7 @@ func discordAuthCallback(auth *auth.Auth) http.Handler {
 		}
 
 		code := query.Get("code")
-		user, err := auth.Discord.Exchange(r.Context(), code)
+		user, err := auth.Discord.Exchange(r.Context(), code, sess.ID().ID)
 		if err != nil {
 			l := ctxlog.Get(r.Context())
 			if extra, ok := ctxlog.ErrExtra(err); ok {
@@ -145,20 +145,30 @@ func userMiddleware(a *auth.Auth, event puzzles.Event, next http.Handler) http.H
 				panic(fmt.Errorf("get user: %w", err))
 			}
 
-			pd.User = &userData{
-				ID:     user.ID,
-				Name:   user.Name,
-				Avatar: user.AvatarURL,
-			}
+			if user.Token != sess.ID().ID {
+				err := sess.Update(func(data *session.Data) error {
+					data.User = nil
+					return nil
+				})
+				if err != nil {
+					panic(fmt.Errorf("update session: %w", err))
+				}
+			} else {
+				pd.User = &userData{
+					ID:     user.ID,
+					Name:   user.Name,
+					Avatar: user.AvatarURL,
+				}
 
-			progress, err := a.Progress(event.ID, su.ID)
-			if err != nil {
-				panic(fmt.Errorf("get progress: %w", err))
-			}
+				progress, err := a.Progress(event.ID, su.ID)
+				if err != nil {
+					panic(fmt.Errorf("get progress: %w", err))
+				}
 
-			ctx := r.Context()
-			ctx = context.WithValue(ctx, progressKey, progress)
-			r = r.WithContext(ctx)
+				ctx := r.Context()
+				ctx = context.WithValue(ctx, progressKey, progress)
+				r = r.WithContext(ctx)
+			}
 		}
 
 		next.ServeHTTP(w, r)

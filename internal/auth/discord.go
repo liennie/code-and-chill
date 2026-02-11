@@ -71,7 +71,7 @@ func (a *DiscordAuth) AuthURL(state string) string {
 	return discordAuthURL + "?" + v.Encode()
 }
 
-func (a *DiscordAuth) Exchange(ctx context.Context, code string) (*User, error) {
+func (a *DiscordAuth) Exchange(ctx context.Context, code string, token string) (*User, error) {
 	cli := &http.Client{
 		Timeout: a.exchangeTimeout,
 	}
@@ -97,7 +97,7 @@ func (a *DiscordAuth) Exchange(ctx context.Context, code string) (*User, error) 
 		return nil, fmt.Errorf("discord get user: %w", err)
 	}
 
-	return a.updateDB(user)
+	return a.updateDB(user, token)
 }
 
 type discordError struct {
@@ -220,7 +220,7 @@ type dbDiscordUser struct {
 	ID string `json:"id"`
 }
 
-func (a *DiscordAuth) updateDB(discordUser *discordUser) (*User, error) {
+func (a *DiscordAuth) updateDB(discordUser *discordUser, token string) (*User, error) {
 	username := discordUser.GlobalName
 	if username == "" {
 		username = fmt.Sprintf("%s#%s", discordUser.Username, discordUser.Discriminator)
@@ -257,6 +257,7 @@ func (a *DiscordAuth) updateDB(discordUser *discordUser) (*User, error) {
 			user.AvatarURL = randomAvatar()
 			user.RandomAvatar = true
 		}
+		user.Token = token
 
 		return userBucket.Put(user.ID, user)
 	})
