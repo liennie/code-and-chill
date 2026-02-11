@@ -69,6 +69,9 @@ var extraFuncs = template.FuncMap{
 	"rfc3339Time": func(t time.Time) string {
 		return t.Format(time.RFC3339)
 	},
+	"humanTime": func(t time.Time) string {
+		return t.Format("Mon, Jan 02, 15:04")
+	},
 	"formatDuration": func(d time.Duration) string {
 		d = d.Round(time.Second)
 		return strings.NewReplacer("h", "h ", "m", "m ").Replace(d.String())
@@ -119,6 +122,18 @@ var extraFuncs = template.FuncMap{
 		return "", fmt.Errorf("cannot pad type %T", n)
 	},
 	"mdesc": mdext.RawStringEscape,
+	"choose": func(cond bool, t, f any) any {
+		if cond {
+			return t
+		}
+		return f
+	},
+	"opentag": func(tag string) template.HTML {
+		return template.HTML("<" + tag)
+	},
+	"closetag": func(tag string) template.HTML {
+		return template.HTML("</" + tag + ">")
+	},
 }
 
 type dataFunc func(r *http.Request) (int, any)

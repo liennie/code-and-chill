@@ -232,7 +232,7 @@ a {
 	text-decoration: underline;
 }
 
-.leftmenu li.active > a span.puzzle-label {
+.leftmenu li.active span.puzzle-label {
 	text-decoration: underline;
 }
 
@@ -260,16 +260,23 @@ a {
 	}
 }
 
-.leftmenu li.locked > a {
+.leftmenu li.locked > span {
 	background: var(--bg-inactive);
 	color: var(--color-inactive);
 	border-style: dashed;
 	cursor: default;
-	pointer-events: none;
 }
 
-.leftmenu li.locked > a:hover span.puzzle-label {
-	text-decoration: none;
+.leftmenu li.locked span.part.hint {
+	display: none;
+}
+
+.leftmenu li span.time.hint {
+	display: none;
+}
+
+.leftmenu li.locked span.time.hint {
+	display: inline;
 }
 
 .center {

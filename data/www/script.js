@@ -83,7 +83,7 @@ document.addEventListener('click', function (ev) {
 	let intervalId = null;
 
 	function start() {
-		const HINT_SEL = '.leftmenu .hint[data-unlock]';
+		const HINT_SEL = '.leftmenu .time.hint[data-unlock]';
 		const nodes = Array.from(document.querySelectorAll(HINT_SEL));
 		if (!nodes.length) return;
 
@@ -118,22 +118,43 @@ document.addEventListener('click', function (ev) {
 			const now = Date.now();
 			const nowDate = new Date();
 
-			nodes.forEach(el => {
+			for (let idx = nodes.length - 1; idx >= 0; idx--) {
+				const el = nodes[idx];
+
 				const iso = el.getAttribute('data-unlock');
-				if (!iso) return;
+				if (!iso) {
+					nodes.splice(idx, 1);
+					return;
+				}
 
 				const t = Date.parse(iso);
-				if (isNaN(t)) return;
+				if (isNaN(t)) {
+					nodes.splice(idx, 1);
+					return;
+				}
 
 				const diff = t - now;
 
 				if (diff <= 0) {
-					el.textContent = '';
 					const li = el.closest('li');
 					if (li && li.classList.contains('locked')) {
 						li.classList.remove('locked');
 						li.classList.add('unlocked');
 					}
+
+					const span = el.parentElement.closest('span');
+					const link = document.createElement('a');
+					for (const attr of span.attributes) {
+						link.setAttribute(attr.name, attr.value);
+					}
+					while (span.childNodes.length) {
+						link.appendChild(span.childNodes[0]);
+					}
+					span.parentNode.replaceChild(link, span);
+
+					el.parentNode.removeChild(el);
+
+					nodes.splice(idx, 1);
 					return;
 				}
 
@@ -153,7 +174,11 @@ document.addEventListener('click', function (ev) {
 					// Same day
 					el.textContent = formatHMS(diff);
 				}
-			});
+			};
+
+			if (!nodes.length && intervalId) {
+				clearInterval(intervalId);
+			}
 		}
 
 		if (intervalId) clearInterval(intervalId);

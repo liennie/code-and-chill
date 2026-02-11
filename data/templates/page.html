@@ -46,7 +46,14 @@
 				<h1 class="secondary-color">{{ $.Event.Name }}</h1>
 				<ul>
 					{{- range .Puzzles }}
-					<li class="{{ puzzleClass . }}{{ if eq .Path $.Puzzle.Path }} active{{ end }}"><a href="/{{ $.Event.Path }}/puzzle/{{ .Path }}"><span class="puzzle-label">{{ .Name }}</span><span class="hint" {{- if .Unlock }} data-unlock="{{ .Unlock | rfc3339Time }}" {{- end }}>{{ if $.User | and (not .Locked) }}<em>{{ .Solved }}</em> / {{ .Total }}{{ end }}</span></a></li>
+					{{- $tag := choose .Locked "span" "a" }}
+					<li class="{{ puzzleClass . }}{{ if eq .Path $.Puzzle.Path }} active{{ end }}">
+						{{ opentag $tag }} href="/{{ $.Event.Path }}/puzzle/{{ .Path }}">
+						<span class="puzzle-label">{{ .Name }}</span>
+						{{- if .Unlock }}<span class="time hint" data-unlock="{{ .Unlock | rfc3339Time }}" title="{{ .Unlock | humanTime }}"></span>{{ end }}
+						{{- if $.User }}<span class="part hint"><em>{{ .Solved }}</em> / {{ .Total }}</span>{{ end }}
+						{{ closetag $tag }}
+					</li>
 					{{- end }}
 				</ul>
 			</aside>
