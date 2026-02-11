@@ -46,7 +46,7 @@
 				<h1 class="secondary-color">{{ $.Event.Name }}</h1>
 				<ul>
 					{{- range .Puzzles }}
-					<li class="{{ puzzleClass . }}{{ if eq .Path $.Puzzle.Path }} active{{ end }}"><a href="/{{ $.Event.Path }}/puzzle/{{ .Path }}"><span class="puzzle-label">{{ .Name }}</span><span class="hint" {{- if .Unlock }} data-unlock="{{ .Unlock | rfc3339Time }}" {{- end }}></span></a></li>
+					<li class="{{ puzzleClass . }}{{ if eq .Path $.Puzzle.Path }} active{{ end }}"><a href="/{{ $.Event.Path }}/puzzle/{{ .Path }}"><span class="puzzle-label">{{ .Name }}</span><span class="hint" {{- if .Unlock }} data-unlock="{{ .Unlock | rfc3339Time }}" {{- end }}>{{ puzzleHint . }}</span></a></li>
 					{{- end }}
 				</ul>
 			</aside>

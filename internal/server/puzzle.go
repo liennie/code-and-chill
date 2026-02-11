@@ -67,8 +67,9 @@ func puzzlesMiddleware(event puzzles.Event, next http.Handler) http.Handler {
 		pd.Puzzles = make([]puzzleData, 0, len(event.Puzzles))
 		for _, puzzle := range event.Puzzles {
 			pzd := puzzleData{
-				Path: puzzle.Path,
-				Name: puzzle.Name,
+				Path:  puzzle.Path,
+				Name:  puzzle.Name,
+				Total: len(puzzle.Parts),
 			}
 
 			if puzzle.Unlock.After(pd.Now) {

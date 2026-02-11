@@ -97,7 +97,10 @@ var extraFuncs = template.FuncMap{
 		return template.HTML(buf.String()), nil
 	},
 	"puzzleHint": func(puzzle puzzleData) string {
-		return strings.Repeat("✔", puzzle.Solved)
+		if puzzle.Locked {
+			return ""
+		}
+		return fmt.Sprintf("%d / %d", puzzle.Solved, puzzle.Total)
 	},
 	"puzzleClass": func(puzzle puzzleData) string {
 		if puzzle.Locked {

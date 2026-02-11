@@ -102,6 +102,7 @@ body {
 	font-family: "JetBrains Mono", "Courier New", ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
 	background: var(--bg);
 	color: var(--color);
+	overflow-y: scroll;
 }
 
 a {
@@ -243,22 +244,12 @@ a {
 	color: var(--color-em);
 }
 
-.leftmenu li.solved-both .hint::before {
-	content: "✔✔";
-	line-height: 1;
-}
-
 .leftmenu li.solved-one > a {
 	background: var(--bg-silver);
 }
 
 .leftmenu li.solved-one .hint {
 	color: var(--color-em);
-}
-
-.leftmenu li.solved-one .hint::before {
-	content: "✔";
-	line-height: 1;
 }
 
 .leftmenu li.unlocked > a {

@@ -60,6 +60,7 @@ type puzzleData struct {
 	Path   string
 	Name   string
 	Solved int
+	Total  int
 	Locked bool
 	Unlock *time.Time
 }

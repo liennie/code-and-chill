@@ -1,7 +1,7 @@
 # Leaderboard
 
 {{ if .Leaderboard -}}
-|  # | Name |  ✔ | Score |
+|  # | Name |  Parts | Score |
 | -: | ---- | -: | ----: |
 	{{- range $idx, $_ := .Leaderboard }}
 		{{- if and $.User (eq .User.ID $.User.ID)}}
