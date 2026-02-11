@@ -192,14 +192,15 @@ func puzzleInputHandler(puzzle puzzles.Puzzle, locked http.Handler, unauth http.
 var errCancelUpdate = fmt.Errorf("cancel progress update")
 
 type puzzleAnswerDataFuncs struct {
-	locked     dataFunc
-	unauth     dataFunc
-	badRequest dataFunc
-	empty      dataFunc
-	badPart    dataFunc
-	timeout    dataFunc
-	incorrect  dataFunc
-	correct    dataFunc
+	locked        dataFunc
+	unauth        dataFunc
+	badRequest    dataFunc
+	empty         dataFunc
+	alreadySolved dataFunc
+	badPart       dataFunc
+	timeout       dataFunc
+	incorrect     dataFunc
+	correct       dataFunc
 }
 
 func puzzleAnswerDataFunc(a *auth.Auth, event puzzles.Event, pidx int, puzzle puzzles.Puzzle, dataFuncs puzzleAnswerDataFuncs) dataFunc {
@@ -245,11 +246,24 @@ func puzzleAnswerDataFunc(a *auth.Auth, event puzzles.Event, pidx int, puzzle pu
 
 		var df dataFunc
 		err = a.UpdateProgress(event.ID, user.ID, func(progress *auth.UserProgress) error {
-			if part != len(progress.Puzzles[puzzle.ID].Parts) {
-				// second check with up to date data
+			pp := progress.Puzzles[puzzle.ID]
+			// second check with up to date data
+			if part < len(pp.Parts) {
+				part++
+				if part < len(puzzle.Parts) {
+					pd.Puzzle.Part = part + 1
+					pd.Puzzle.Anchor = puzzle.Parts[part].ID
+				} else {
+					pd.Puzzle.Finished = true
+				}
+				df = dataFuncs.alreadySolved
+				return errCancelUpdate
+
+			} else if part > len(pp.Parts) {
 				df = dataFuncs.badPart
 				return errCancelUpdate
 			}
+			// part == len(pp.Parts)
 
 			answer := strings.TrimSpace(r.PostForm.Get("answer"))
 			if answer == "" {
@@ -282,7 +296,6 @@ func puzzleAnswerDataFunc(a *auth.Auth, event puzzles.Event, pidx int, puzzle pu
 
 			progress.Incorrect = 0
 			progress.Timeout = time.Time{}
-			pp := progress.Puzzles[puzzle.ID]
 			// append is fine because we check that part == len(pp.Parts) above
 			pp.Parts = append(pp.Parts, auth.PartProgress{
 				Time: pd.Now,

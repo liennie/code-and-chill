@@ -197,14 +197,15 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 			reg("GET", "/puzzle/"+p+"/answer", "redirect", http.RedirectHandler("/"+e+"/puzzle/"+p, http.StatusSeeOther))
 			reg("POST", "/puzzle/"+p+"/answer", "puzzleAnswerHandler", userMux(
 				page(puzzleAnswerDataFunc(auth, event, pidx, puzzle, puzzleAnswerDataFuncs{
-					locked:     lockedDataFunc,
-					unauth:     unauthorizedDataFunc,
-					badRequest: badRequestDataFunc,
-					empty:      mdDataFunc(http.StatusBadRequest, puzzle.Name, readFile(fsys, "md/puzzle/empty.md")),
-					badPart:    mdDataFunc(http.StatusBadRequest, puzzle.Name, readFile(fsys, "md/puzzle/badpart.md")),
-					timeout:    mdDataFunc(http.StatusTooManyRequests, puzzle.Name, readFile(fsys, "md/puzzle/timeout.md")),
-					incorrect:  mdDataFunc(http.StatusOK, puzzle.Name, readFile(fsys, "md/puzzle/incorrect.md")),
-					correct:    mdDataFunc(http.StatusOK, puzzle.Name, readFile(fsys, "md/puzzle/correct.md")),
+					locked:        lockedDataFunc,
+					unauth:        unauthorizedDataFunc,
+					badRequest:    badRequestDataFunc,
+					empty:         mdDataFunc(http.StatusBadRequest, puzzle.Name, readFile(fsys, "md/puzzle/empty.md")),
+					alreadySolved: mdDataFunc(http.StatusBadRequest, puzzle.Name, readFile(fsys, "md/puzzle/alreadysolved.md")),
+					badPart:       mdDataFunc(http.StatusBadRequest, puzzle.Name, readFile(fsys, "md/puzzle/badpart.md")),
+					timeout:       mdDataFunc(http.StatusTooManyRequests, puzzle.Name, readFile(fsys, "md/puzzle/timeout.md")),
+					incorrect:     mdDataFunc(http.StatusOK, puzzle.Name, readFile(fsys, "md/puzzle/incorrect.md")),
+					correct:       mdDataFunc(http.StatusOK, puzzle.Name, readFile(fsys, "md/puzzle/correct.md")),
 				})),
 				unauthorizedHandler,
 			))
