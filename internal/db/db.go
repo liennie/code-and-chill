@@ -2,11 +2,13 @@
 package db
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 	"time"
 
+	"cc/internal/ctxlog"
 	"cc/internal/sched"
 
 	"github.com/robfig/cron/v3"
@@ -55,7 +57,7 @@ func Open(config Config) *DB {
 		return nil
 	})
 	if err != nil {
-		db.Close()
+		ctxlog.CloseErr(context.Background(), "db", db)
 		panic(fmt.Errorf("db: initialize buckets: %w", err))
 	}
 
@@ -64,6 +66,7 @@ func Open(config Config) *DB {
 	if config.BackupSchedule != "" {
 		schedule, err := cron.ParseStandard(config.BackupSchedule)
 		if err != nil {
+			ctxlog.CloseErr(context.Background(), "db", db)
 			panic(fmt.Errorf("db: backupSchedule: %w", err))
 		}
 		backupJobID := sched.Cron.Schedule(schedule, &backupJob{

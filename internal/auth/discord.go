@@ -76,13 +76,13 @@ func (a *DiscordAuth) Exchange(ctx context.Context, code string, token string) (
 		Timeout: a.exchangeTimeout,
 	}
 
-	t, err := a.exchange(cli, code)
+	t, err := a.exchange(ctx, cli, code)
 	if err != nil {
 		return nil, fmt.Errorf("discord token exchange: %w", err)
 	}
 
 	defer func() {
-		revokeErr := a.revoke(cli, t)
+		revokeErr := a.revoke(ctx, cli, t)
 		if revokeErr != nil {
 			l := ctxlog.Get(ctx)
 			if extra, ok := ctxlog.ErrExtra(err); ok {
@@ -92,7 +92,7 @@ func (a *DiscordAuth) Exchange(ctx context.Context, code string, token string) (
 		}
 	}()
 
-	user, err := a.getUser(cli, t)
+	user, err := a.getUser(ctx, cli, t)
 	if err != nil {
 		return nil, fmt.Errorf("discord get user: %w", err)
 	}
@@ -114,7 +114,7 @@ func (e *discordError) Extra() string {
 	return string(e.Errors)
 }
 
-func (a *DiscordAuth) exchange(cli *http.Client, code string) (token, error) {
+func (a *DiscordAuth) exchange(ctx context.Context, cli *http.Client, code string) (token, error) {
 	resp, err := cli.PostForm(discordTokenURL, url.Values{
 		"client_id":     {a.clientID},
 		"client_secret": {a.clientSecret},
@@ -125,7 +125,7 @@ func (a *DiscordAuth) exchange(cli *http.Client, code string) (token, error) {
 	if err != nil {
 		return token{}, fmt.Errorf("client: %w", err)
 	}
-	defer resp.Body.Close()
+	defer ctxlog.CloseErr(ctx, "discord exchange body", resp.Body)
 
 	if resp.StatusCode != http.StatusOK {
 		var dErr discordError
@@ -147,7 +147,7 @@ func (a *DiscordAuth) exchange(cli *http.Client, code string) (token, error) {
 	return t, nil
 }
 
-func (a *DiscordAuth) revoke(cli *http.Client, t token) error {
+func (a *DiscordAuth) revoke(ctx context.Context, cli *http.Client, t token) error {
 	resp, err := cli.PostForm(discordTokenRevokeURL, url.Values{
 		"client_id":       {a.clientID},
 		"client_secret":   {a.clientSecret},
@@ -157,7 +157,7 @@ func (a *DiscordAuth) revoke(cli *http.Client, t token) error {
 	if err != nil {
 		return fmt.Errorf("client: %w", err)
 	}
-	defer resp.Body.Close()
+	defer ctxlog.CloseErr(ctx, "discord revoke body", resp.Body)
 
 	if resp.StatusCode != http.StatusOK {
 		var dErr discordError
@@ -181,7 +181,7 @@ type discordUser struct {
 	Avatar        *string `json:"avatar"`
 }
 
-func (a *DiscordAuth) getUser(cli *http.Client, t token) (*discordUser, error) {
+func (a *DiscordAuth) getUser(ctx context.Context, cli *http.Client, t token) (*discordUser, error) {
 	req, err := http.NewRequest("GET", discordUserEndpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("new request: %w", err)
@@ -193,7 +193,7 @@ func (a *DiscordAuth) getUser(cli *http.Client, t token) (*discordUser, error) {
 	if err != nil {
 		return nil, fmt.Errorf("client: %w", err)
 	}
-	defer resp.Body.Close()
+	defer ctxlog.CloseErr(ctx, "discord user body", resp.Body)
 
 	if resp.StatusCode != http.StatusOK {
 		var dErr discordError
