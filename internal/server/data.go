@@ -70,7 +70,10 @@ var extraFuncs = template.FuncMap{
 		return t.Format(time.RFC3339)
 	},
 	"humanTime": func(t time.Time) string {
-		return t.Format("Mon, Jan 02, 15:04")
+		if t.Second() == 0 {
+			return t.Format("Mon, Jan 02, 15:04")
+		}
+		return t.Format("Mon, Jan 02, 15:04:05")
 	},
 	"formatDuration": func(d time.Duration) string {
 		d = d.Round(time.Second)

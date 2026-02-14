@@ -198,3 +198,77 @@ document.addEventListener('click', function (ev) {
 		}
 	});
 })();
+
+(function () {
+	let intervalId = null;
+
+	function start() {
+		const HINT_SEL = 'em[data-timeout]';
+		const nodes = Array.from(document.querySelectorAll(HINT_SEL));
+		if (!nodes.length) return;
+
+		function formatTimeout(ms) {
+			if (ms <= 0) return '0s';
+			const s = Math.ceil(ms / 1000);
+			const hh = String(Math.floor(s / 3600));
+			const mm = String(Math.floor((s % 3600) / 60));
+			const ss = String(s % 60);
+
+			if (hh > 0) {
+				return `${hh}h ${mm}m ${ss}s`;
+			}
+			if (mm > 0) {
+				return `${mm}m ${ss}s`;
+			}
+			return `${ss}s`;
+		}
+
+		function updateCountdown() {
+			const now = Date.now();
+			const nowDate = new Date();
+
+			for (let idx = nodes.length - 1; idx >= 0; idx--) {
+				const el = nodes[idx];
+
+				const iso = el.getAttribute('data-timeout');
+				if (!iso) {
+					nodes.splice(idx, 1);
+					return;
+				}
+
+				const t = Date.parse(iso);
+				if (isNaN(t)) {
+					nodes.splice(idx, 1);
+					return;
+				}
+
+				const diff = t - now;
+				el.textContent = formatTimeout(diff);
+
+				if (diff <= 0) {
+					nodes.splice(idx, 1);
+				}
+			};
+
+			if (!nodes.length && intervalId) {
+				clearInterval(intervalId);
+			}
+		}
+
+		if (intervalId) clearInterval(intervalId);
+		updateCountdown();
+		intervalId = setInterval(updateCountdown, 1000);
+	}
+
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', start);
+	} else {
+		start();
+	}
+
+	window.addEventListener('pageshow', function (ev) {
+		if (ev.persisted) {
+			start();
+		}
+	});
+})();
