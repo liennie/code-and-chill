@@ -50,10 +50,11 @@ type currentPuzzleData struct {
 	Path string
 	Name string
 
-	Part     int
-	Anchor   string
-	Timeout  time.Time
-	Finished bool
+	Submitted string
+	Part      int
+	Anchor    string
+	Timeout   time.Time
+	Finished  bool
 }
 
 type puzzleData struct {

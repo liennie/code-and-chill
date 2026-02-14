@@ -147,7 +147,8 @@ var extraFuncs = template.FuncMap{
 		}
 		return "", fmt.Errorf("cannot pad type %T", n)
 	},
-	"mdesc": mdext.RawStringEscape,
+	"mdesc":   mdext.RawStringEscape,
+	"codeesc": mdext.CodeStringEscape,
 	"choose": func(cond bool, t, f any) any {
 		if cond {
 			return t

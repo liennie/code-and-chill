@@ -1,6 +1,6 @@
 # Incorrect
 
-That answer is not correct. Don't give up - [return to the puzzle](/{{ $.Event.Path }}/puzzle/{{ $.Puzzle.Path }}#{{ $.Puzzle.Anchor }}) and try again!
+Your answer {{ $.Puzzle.Submitted | codeesc }} is not correct. Don't give up - [return to the puzzle](/{{ $.Event.Path }}/puzzle/{{ $.Puzzle.Path }}#{{ $.Puzzle.Anchor }}) and try again!
 
 Tips:
 - Re-read the puzzle carefully and check formatting

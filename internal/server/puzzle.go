@@ -265,12 +265,15 @@ func puzzleAnswerDataFunc(a *auth.Auth, event puzzles.Event, pidx int, puzzle pu
 			}
 			// part == len(pp.Parts)
 
-			answer := strings.TrimSpace(r.PostForm.Get("answer"))
+			answer := r.PostForm.Get("answer")
+			answer = strings.TrimSpace(answer)
+			answer = strings.NewReplacer("\t", " ", "\n", " ", "\v", " ", "\f", " ", "\r", "").Replace(answer)
 			if answer == "" {
 				pd.Puzzle.Anchor = puzzle.Parts[part].ID
 				df = dataFuncs.empty
 				return errCancelUpdate
 			}
+			pd.Puzzle.Submitted = answer
 
 			if progress.Timeout.After(pd.Now) {
 				pd.Puzzle.Anchor = puzzle.Parts[part].ID

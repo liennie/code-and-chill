@@ -72,3 +72,28 @@ text:
 func RawStringEscape(s string) string {
 	return "===" + strings.ReplaceAll(s, "=", "\\=") + "==="
 }
+
+func CodeStringEscape(s string) string {
+	backticks := map[int]struct{}{}
+
+	run := 0
+	for _, c := range s {
+		if c == '`' {
+			run++
+		} else {
+			backticks[run] = struct{}{}
+			run = 0
+		}
+	}
+	backticks[run] = struct{}{}
+
+	var delim string
+	for i := 1; ; i++ {
+		if _, present := backticks[i]; !present {
+			delim = strings.Repeat("`", i)
+			break
+		}
+	}
+
+	return delim + " " + s + " " + delim
+}
