@@ -35,8 +35,8 @@
 				<a href="/{{ $.Event.Path }}/login{{ if $return }}?return={{ $return }}{{ end }}">Log in</a>
 				{{- end }}
 				<label class="dark-switch" title="Toggle dark mode">
-					<input id="darkmode-toggle" type="checkbox" aria-label="Toggle dark mode">
-					<span class="switch" aria-hidden="true"><span class="icon"></span></span>
+					<input id="darkmode-toggle" type="checkbox" aria-label="Toggle dark mode" {{- if .Dark }} checked{{ end }}>
+					<span class="switch" aria-hidden="true"><span class="icon">{{ choose .Dark "🌙" "☀️" }}</span></span>
 				</label>
 			</nav>
 		</header>
