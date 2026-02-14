@@ -34,10 +34,29 @@ func readFile(fsys fs.FS, file string) []byte {
 	return content
 }
 
+var contentType = map[string]string{
+	".css": "text/css; charset=utf-8",
+	".ico": "image/x-icon",
+	".js":  "text/javascript; charset=utf-8",
+	".ttf": "font/ttf",
+	".txt": "text/plain; charset=utf-8",
+}
+
 func dataFile(fsys fs.FS, file string) ([]byte, string) {
 	content := readFile(fsys, file)
-	ct := mime.TypeByExtension(path.Ext(file))
-	return content, ct
+
+	ext := path.Ext(file)
+	if ct, ok := contentType[ext]; ok {
+		return content, ct
+	}
+	return content, mime.TypeByExtension(ext)
+}
+
+var maxAge = map[string]int{
+	"font/ttf":                       14 * 24 * 60 * 60,
+	"image/x-icon":                   14 * 24 * 60 * 60,
+	"text/css; charset=utf-8":        1 * 24 * 60 * 60,
+	"text/javascript; charset=utf-8": 1 * 24 * 60 * 60,
 }
 
 func cachedHandler(content []byte, ct string) http.Handler {
@@ -46,14 +65,18 @@ func cachedHandler(content []byte, ct string) http.Handler {
 	etag := base64.RawURLEncoding.EncodeToString(h.Sum(nil))
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if ct != "" {
+			w.Header().Set("Content-Type", ct)
+
+			if maxAge, ok := maxAge[ct]; ok {
+				w.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d", maxAge))
+			}
+		}
 		if r.Header.Get("If-None-Match") == etag {
 			w.WriteHeader(http.StatusNotModified)
 			return
 		}
 
-		if ct != "" {
-			w.Header().Set("Content-Type", ct)
-		}
 		w.Header().Set("Content-Length", strconv.Itoa(len(content)))
 		w.Header().Set("ETag", etag)
 		w.WriteHeader(http.StatusOK)
