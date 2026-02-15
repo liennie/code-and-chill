@@ -13,11 +13,11 @@ func recoverMiddleware(next, err http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if e := recover(); e != nil {
-				log := ctxlog.Get(r.Context())
+				logger := ctxlog.Get(r.Context())
 				if _, runtimeErr := e.(runtime.Error); runtimeErr {
-					log.Error("recovered panic", "error", e, "stack", string(debug.Stack()))
+					logger.Error("recovered panic", "error", e, "stack", string(debug.Stack()))
 				} else {
-					log.Error("recovered panic", "error", e)
+					logger.Error("recovered panic", "error", e)
 				}
 
 				clear(w.Header())

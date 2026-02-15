@@ -74,8 +74,8 @@ func discordAuthCallback(auth *auth.Auth) http.Handler {
 			return nil
 		})
 		if err != nil {
-			l := ctxlog.Get(r.Context())
-			l.Error("auth session", "error", err)
+			logger := ctxlog.Get(r.Context())
+			logger.Error("auth session", "error", err)
 			errRedirect()
 			return
 		}
@@ -84,15 +84,15 @@ func discordAuthCallback(auth *auth.Auth) http.Handler {
 
 		returnedState := query.Get("state")
 		if returnedState != state {
-			l := ctxlog.Get(r.Context())
-			l.Error("auth state", "error", err)
+			logger := ctxlog.Get(r.Context())
+			logger.Error("auth state", "error", err)
 			errRedirect()
 			return
 		}
 
 		if query.Get("error") == "access_denied" {
-			l := ctxlog.Get(r.Context())
-			l.Info("auth canceled by user")
+			logger := ctxlog.Get(r.Context())
+			logger.Info("auth canceled by user")
 			redirect()
 			return
 		}
@@ -100,11 +100,11 @@ func discordAuthCallback(auth *auth.Auth) http.Handler {
 		code := query.Get("code")
 		user, err := auth.Discord.Exchange(r.Context(), code, sess.ID().ID)
 		if err != nil {
-			l := ctxlog.Get(r.Context())
+			logger := ctxlog.Get(r.Context())
 			if extra, ok := ctxlog.ErrExtra(err); ok {
-				l = l.With("extra", extra)
+				logger = logger.With("extra", extra)
 			}
-			l.Error("exchange", "error", err)
+			logger.Error("exchange", "error", err)
 			errRedirect()
 			return
 		}
@@ -114,8 +114,8 @@ func discordAuthCallback(auth *auth.Auth) http.Handler {
 			return nil
 		})
 		if err != nil {
-			l := ctxlog.Get(r.Context())
-			l.Error("update session", "error", err)
+			logger := ctxlog.Get(r.Context())
+			logger.Error("update session", "error", err)
 			errRedirect()
 			return
 		}
@@ -184,8 +184,8 @@ func logoutHandler(event puzzles.Event) http.Handler {
 			return nil
 		})
 		if err != nil {
-			l := ctxlog.Get(r.Context())
-			l.Error("logout", "error", err)
+			logger := ctxlog.Get(r.Context())
+			logger.Error("logout", "error", err)
 		}
 
 		redir := "/" + event.Path

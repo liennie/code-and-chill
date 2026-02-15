@@ -38,7 +38,7 @@ func newDiscordAuth(config DiscordConfig, ddb *db.DB) DiscordAuth {
 
 	secret, err := os.ReadFile(config.ClientSecret)
 	if err != nil {
-		panic(fmt.Errorf("read discord client secret: %w", err))
+		panic(fmt.Errorf("discord auth: read discord client secret: %w", err))
 	}
 
 	return DiscordAuth{
@@ -84,11 +84,11 @@ func (a *DiscordAuth) Exchange(ctx context.Context, code string, token string) (
 	defer func() {
 		revokeErr := a.revoke(ctx, cli, t)
 		if revokeErr != nil {
-			l := ctxlog.Get(ctx)
+			logger := ctxlog.Get(ctx)
 			if extra, ok := ctxlog.ErrExtra(err); ok {
-				l = l.With("extra", extra)
+				logger = logger.With("extra", extra)
 			}
-			l.Error("discord token revoke", "error", revokeErr)
+			logger.Error("discord token revoke", "error", revokeErr)
 		}
 	}()
 

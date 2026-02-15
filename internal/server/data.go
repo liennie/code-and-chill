@@ -81,8 +81,8 @@ func cachedHandler(content []byte, ct string) http.Handler {
 		w.Header().Set("ETag", etag)
 		w.WriteHeader(http.StatusOK)
 		if _, err := w.Write(content); err != nil {
-			log := ctxlog.Get(r.Context())
-			log.Error("failed to write response", "error", err)
+			logger := ctxlog.Get(r.Context())
+			logger.Error("failed to write response", "error", err)
 			return
 		}
 	})
@@ -174,8 +174,8 @@ func templateHandler(content []byte, ct string) func(dataFunc) http.Handler {
 
 			buf := &bytes.Buffer{}
 			if err := t.Execute(buf, data); err != nil {
-				log := ctxlog.Get(r.Context())
-				log.Error("failed to exec template", "error", err)
+				logger := ctxlog.Get(r.Context())
+				logger.Error("failed to exec template", "error", err)
 				panic(err)
 			}
 
@@ -198,8 +198,8 @@ func mdDataFunc(status int, title string, content []byte) dataFunc {
 
 		buf := &strings.Builder{}
 		if err := t.Execute(buf, pd); err != nil {
-			log := ctxlog.Get(r.Context())
-			log.Error("failed to exec md", "error", err)
+			logger := ctxlog.Get(r.Context())
+			logger.Error("failed to exec md", "error", err)
 			panic(err)
 		}
 
