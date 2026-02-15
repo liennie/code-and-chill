@@ -39,6 +39,10 @@ func New(config Config) *Notifier {
 }
 
 func (n *Notifier) Notify(ctx context.Context, pzls *puzzles.Puzzles, event puzzles.Event, puzzle puzzles.Puzzle) error {
+	if n == nil {
+		return fmt.Errorf("notifier is not configured")
+	}
+
 	errs := []error{}
 
 	title := fmt.Sprintf("%s | %s :: %s", puzzle.Name, pzls.Name, event.Name)
@@ -77,6 +81,10 @@ type schedule struct {
 }
 
 func (n *Notifier) Schedule(ctx context.Context, pzls *puzzles.Puzzles) {
+	if n == nil {
+		return
+	}
+
 	ctx, cancel := context.WithCancel(ctx)
 
 	now := time.Now()
@@ -118,7 +126,10 @@ func (n *Notifier) Schedule(ctx context.Context, pzls *puzzles.Puzzles) {
 			select {
 			case <-t.C:
 				logger.Info("notifying", "puzzle", s.name)
-				s.closure()
+				err := s.closure()
+				if err != nil {
+					logger.Error("notification", "error", err)
+				}
 
 			case <-ctx.Done():
 				return
@@ -128,6 +139,10 @@ func (n *Notifier) Schedule(ctx context.Context, pzls *puzzles.Puzzles) {
 }
 
 func (n *Notifier) Stop() {
+	if n == nil {
+		return
+	}
+
 	n.cancel()
 	n.wg.Wait()
 }
