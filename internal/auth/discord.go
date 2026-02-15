@@ -75,6 +75,7 @@ func (a *DiscordAuth) Exchange(ctx context.Context, code string, token string) (
 	cli := &http.Client{
 		Timeout: a.exchangeTimeout,
 	}
+	// TODO https://docs.discord.com/developers/reference#user-agent
 
 	t, err := a.exchange(ctx, cli, code)
 	if err != nil {

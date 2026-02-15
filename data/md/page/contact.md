@@ -4,4 +4,4 @@ We’d love to hear from you! Whether you have *questions*, *feedback*, or found
 
 ## Discord
 
-// TODO discord link (or just name + pfp)
+<!-- TODO discord link (or just name + pfp) -->
