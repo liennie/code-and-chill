@@ -10,6 +10,7 @@ import (
 	"cc/internal/auth"
 	"cc/internal/ctxlog"
 	"cc/internal/db"
+	"cc/internal/notifier"
 	"cc/internal/puzzles"
 	"cc/internal/rec"
 	"cc/internal/sched"
@@ -40,6 +41,11 @@ func run(ctx context.Context, config string) (err error) {
 
 	logger.Info("loading puzzles")
 	puzzles := puzzles.Load(c.Puzzles)
+
+	logger.Info("starting notifier")
+	notifier := notifier.New(c.Notifier)
+	notifier.Schedule(ctx, puzzles)
+	defer notifier.Stop()
 
 	logger.Info("starting cron")
 	sched.Start()

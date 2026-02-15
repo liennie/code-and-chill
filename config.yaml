@@ -23,9 +23,18 @@ session:
 auth:
   discord:
     clientID: "1423632113676062852"
-    clientSecret: secret/discord.txt
+    clientSecret: secret/discord.clientsecret.txt
     redirectURI: http://localhost:8080/auth/discord
     exchangeTimeout: 10s
+
+notifier:
+  baseURI: http://localhost:8080/
+  discord:
+    token: secret/discord.token.txt
+    channels:
+      test:
+        notifications: "1472419290568331458"
+        forum: "1472400581229547621"
 
 puzzles:
   name: "Code && Chill"

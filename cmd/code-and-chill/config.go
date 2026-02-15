@@ -8,6 +8,7 @@ import (
 	"cc/internal/auth"
 	"cc/internal/ctxlog"
 	"cc/internal/db"
+	"cc/internal/notifier"
 	"cc/internal/puzzles"
 	"cc/internal/server"
 	"cc/internal/session"
@@ -16,11 +17,12 @@ import (
 )
 
 type Config struct {
-	Server  server.Config  `yaml:"server"`
-	DB      db.Config      `yaml:"db"`
-	Session session.Config `yaml:"session"`
-	Auth    auth.Config    `yaml:"auth"`
-	Puzzles puzzles.Config `yaml:"puzzles"`
+	Server   server.Config   `yaml:"server"`
+	DB       db.Config       `yaml:"db"`
+	Session  session.Config  `yaml:"session"`
+	Auth     auth.Config     `yaml:"auth"`
+	Notifier notifier.Config `yaml:"notifier"`
+	Puzzles  puzzles.Config  `yaml:"puzzles"`
 }
 
 func LoadConfig(ctx context.Context, filename string) (Config, error) {
