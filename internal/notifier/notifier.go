@@ -76,9 +76,9 @@ func snippetFromMD(md string) string {
 }
 
 type schedule struct {
-	time    time.Time
-	name    string
-	closure func() error
+	time  time.Time
+	name  string
+	notif func() error
 }
 
 func (n *Notifier) Schedule(ctx context.Context, pzls *puzzles.Puzzles) {
@@ -100,7 +100,7 @@ func (n *Notifier) Schedule(ctx context.Context, pzls *puzzles.Puzzles) {
 			sched = append(sched, schedule{
 				time: puzzle.Unlock,
 				name: fmt.Sprintf("%s::%s::%s", pzls.Name, event.Name, puzzle.Name),
-				closure: func() error {
+				notif: func() error {
 					return n.Notify(ctx, pzls, event, puzzle)
 				},
 			})
@@ -127,7 +127,7 @@ func (n *Notifier) Schedule(ctx context.Context, pzls *puzzles.Puzzles) {
 			select {
 			case <-t.C:
 				logger.Info("notifying", "puzzle", s.name)
-				err := s.closure()
+				err := s.notif()
 				if err != nil {
 					logger.Error("notification", "error", err)
 				}
