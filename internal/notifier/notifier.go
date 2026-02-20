@@ -1,3 +1,4 @@
+// Package notifier provides functionality to send and schedule notifications for puzzle events.
 package notifier
 
 import (
