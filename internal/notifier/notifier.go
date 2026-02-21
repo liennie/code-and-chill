@@ -19,7 +19,7 @@ type Notifier struct {
 	BaseURI url.URL
 	Discord *DiscordNotifier
 
-	cancel context.CancelFunc
+	cancel []context.CancelFunc
 	wg     sync.WaitGroup
 }
 
@@ -111,7 +111,7 @@ func (n *Notifier) Schedule(ctx context.Context, pzls *puzzles.Puzzles) {
 		return a.time.Compare(b.time)
 	})
 
-	n.cancel = cancel
+	n.cancel = append(n.cancel, cancel)
 	n.wg.Add(1)
 	go func() {
 		defer n.wg.Done()
@@ -144,6 +144,8 @@ func (n *Notifier) Stop() {
 		return
 	}
 
-	n.cancel()
+	for _, cancel := range n.cancel {
+		cancel()
+	}
 	n.wg.Wait()
 }
