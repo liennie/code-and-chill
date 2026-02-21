@@ -31,6 +31,7 @@ func run(ctx context.Context, config string) (err error) {
 	logger.Info("opening db")
 	db := db.Open(c.DB)
 	defer ctxlog.CloseErr(ctx, "db", db)
+	defer db.Backup()
 
 	logger.Info("starting session store")
 	sess := session.NewStore(c.Session, db)
