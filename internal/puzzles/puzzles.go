@@ -42,110 +42,16 @@ func Load(config Config) *Puzzles {
 	eventIDs := map[string]struct{}{}
 
 	for _, event := range config.Events {
-		ec, err := loadEventConfig(event.Config)
-		if err != nil {
-			panic(fmt.Errorf("puzzles: load event %q: %w", event.Config, err))
-		}
-		if event.Path == "" {
-			panic(fmt.Errorf("puzzles: event %q has empty path", event.Config))
-		}
 		if _, exists := eventPaths[event.Path]; exists {
 			panic(fmt.Errorf("puzzles: duplicate event path %q", event.Path))
 		}
 		eventPaths[event.Path] = struct{}{}
-		if ec.ID == "" {
-			panic(fmt.Errorf("puzzles: event %q has empty ID", event.Config))
+
+		e := LoadEvent(event)
+		if _, exists := eventIDs[e.ID]; exists {
+			panic(fmt.Errorf("puzzles: duplicate event ID %q", e.ID))
 		}
-		if _, exists := eventIDs[ec.ID]; exists {
-			panic(fmt.Errorf("puzzles: duplicate event ID %q", ec.ID))
-		}
-		eventIDs[ec.ID] = struct{}{}
-
-		fsys := os.DirFS(filepath.Dir(filepath.FromSlash(event.Config)))
-
-		e := Event{
-			ID:      ec.ID,
-			Path:    event.Path,
-			Name:    ec.Name,
-			Puzzles: make([]Puzzle, 0, len(ec.Puzzles)),
-			Total:   0,
-		}
-
-		puzzlePaths := map[string]struct{}{}
-		puzzleIDs := map[string]struct{}{}
-
-		for _, puzzle := range ec.Puzzles {
-			pc, err := loadPuzzleConfig(fsys, puzzle.Config)
-			if err != nil {
-				panic(fmt.Errorf("puzzles: event %q load puzzle %q: %w", event.Config, puzzle.Config, err))
-			}
-			if pc.Path == "" {
-				panic(fmt.Errorf("puzzles: event %q puzzle %q has empty path", event.Config, puzzle.Config))
-			}
-			if _, exists := puzzlePaths[pc.Path]; exists {
-				panic(fmt.Errorf("puzzles: event %q duplicate puzzle path %q", event.Config, pc.Path))
-			}
-			puzzlePaths[pc.Path] = struct{}{}
-			if pc.ID == "" {
-				panic(fmt.Errorf("puzzles: event %q puzzle %q has empty ID", event.Config, puzzle.Config))
-			}
-			if _, exists := puzzleIDs[pc.ID]; exists {
-				panic(fmt.Errorf("puzzles: event %q duplicate puzzle ID %q", event.Config, pc.ID))
-			}
-			puzzleIDs[pc.ID] = struct{}{}
-
-			fsys, err := fs.Sub(fsys, path.Dir(puzzle.Config))
-			if err != nil {
-				panic(fmt.Errorf("puzzles: event %q puzzle %q sub fs: %w", event.Config, puzzle.Config, err))
-			}
-
-			pz := Puzzle{
-				ID:     pc.ID,
-				Path:   pc.Path,
-				Name:   pc.Name,
-				Unlock: puzzle.Unlock,
-				Parts:  make([]Part, 0, len(pc.Parts)),
-				Inputs: make([]Input, 0, len(pc.Inputs)),
-			}
-
-			for i, part := range pc.Parts {
-				content, err := fs.ReadFile(fsys, part.File)
-				if err != nil {
-					panic(fmt.Errorf("puzzles: event %q puzzle %q part %d read data file %q: %w", event.Config, puzzle.Config, i, part.File, err))
-				}
-
-				pz.Parts = append(pz.Parts, Part{
-					Text: string(content),
-					ID:   part.ID,
-				})
-			}
-
-			for i, input := range pc.Inputs {
-				if len(input.Answers) != len(pc.Parts) {
-					panic(fmt.Errorf(
-						"puzzles: event %q puzzle %q number of input %d answers (%d) does not match number of parts (%d)",
-						event.Config,
-						puzzle.Config,
-						i,
-						len(input.Answers),
-						len(pc.Parts),
-					))
-				}
-
-				content, err := fs.ReadFile(fsys, input.File)
-				if err != nil {
-					panic(fmt.Errorf("puzzles: event %q puzzle %q input %d read data file %q: %w", event.Config, puzzle.Config, i, input.File, err))
-				}
-
-				pz.Inputs = append(pz.Inputs, Input{
-					Text:    content,
-					Answers: input.Answers,
-				})
-			}
-
-			e.Puzzles = append(e.Puzzles, pz)
-			e.Total += len(pz.Parts)
-		}
+		eventIDs[e.ID] = struct{}{}
 
 		p.Events = append(p.Events, e)
 		if config.Default == e.Path {
@@ -158,6 +64,108 @@ func Load(config Config) *Puzzles {
 	}
 
 	return p
+}
+
+func LoadEvent(event EventPathConfig) Event {
+	ec, err := loadEventConfig(event.Config)
+	if err != nil {
+		panic(fmt.Errorf("puzzles: load event %q: %w", event.Config, err))
+	}
+	if event.Path == "" {
+		panic(fmt.Errorf("puzzles: event %q has empty path", event.Config))
+	}
+	if ec.ID == "" {
+		panic(fmt.Errorf("puzzles: event %q has empty ID", event.Config))
+	}
+
+	fsys := os.DirFS(filepath.Dir(filepath.FromSlash(event.Config)))
+
+	e := Event{
+		ID:      ec.ID,
+		Path:    event.Path,
+		Name:    ec.Name,
+		Puzzles: make([]Puzzle, 0, len(ec.Puzzles)),
+		Total:   0,
+	}
+
+	puzzlePaths := map[string]struct{}{}
+	puzzleIDs := map[string]struct{}{}
+
+	for _, puzzle := range ec.Puzzles {
+		pc, err := loadPuzzleConfig(fsys, puzzle.Config)
+		if err != nil {
+			panic(fmt.Errorf("puzzles: event %q load puzzle %q: %w", event.Config, puzzle.Config, err))
+		}
+		if pc.Path == "" {
+			panic(fmt.Errorf("puzzles: event %q puzzle %q has empty path", event.Config, puzzle.Config))
+		}
+		if _, exists := puzzlePaths[pc.Path]; exists {
+			panic(fmt.Errorf("puzzles: event %q duplicate puzzle path %q", event.Config, pc.Path))
+		}
+		puzzlePaths[pc.Path] = struct{}{}
+		if pc.ID == "" {
+			panic(fmt.Errorf("puzzles: event %q puzzle %q has empty ID", event.Config, puzzle.Config))
+		}
+		if _, exists := puzzleIDs[pc.ID]; exists {
+			panic(fmt.Errorf("puzzles: event %q duplicate puzzle ID %q", event.Config, pc.ID))
+		}
+		puzzleIDs[pc.ID] = struct{}{}
+
+		fsys, err := fs.Sub(fsys, path.Dir(puzzle.Config))
+		if err != nil {
+			panic(fmt.Errorf("puzzles: event %q puzzle %q sub fs: %w", event.Config, puzzle.Config, err))
+		}
+
+		pz := Puzzle{
+			ID:     pc.ID,
+			Path:   pc.Path,
+			Name:   pc.Name,
+			Unlock: puzzle.Unlock,
+			Parts:  make([]Part, 0, len(pc.Parts)),
+			Inputs: make([]Input, 0, len(pc.Inputs)),
+		}
+
+		for i, part := range pc.Parts {
+			content, err := fs.ReadFile(fsys, part.File)
+			if err != nil {
+				panic(fmt.Errorf("puzzles: event %q puzzle %q part %d read data file %q: %w", event.Config, puzzle.Config, i, part.File, err))
+			}
+
+			pz.Parts = append(pz.Parts, Part{
+				Text: string(content),
+				ID:   part.ID,
+			})
+		}
+
+		for i, input := range pc.Inputs {
+			if len(input.Answers) != len(pc.Parts) {
+				panic(fmt.Errorf(
+					"puzzles: event %q puzzle %q number of input %d answers (%d) does not match number of parts (%d)",
+					event.Config,
+					puzzle.Config,
+					i,
+					len(input.Answers),
+					len(pc.Parts),
+				))
+			}
+
+			content, err := fs.ReadFile(fsys, input.File)
+			if err != nil {
+				panic(fmt.Errorf("puzzles: event %q puzzle %q input %d read data file %q: %w", event.Config, puzzle.Config, i, input.File, err))
+			}
+
+			pz.Inputs = append(pz.Inputs, Input{
+				File:    input.File,
+				Text:    content,
+				Answers: input.Answers,
+			})
+		}
+
+		e.Puzzles = append(e.Puzzles, pz)
+		e.Total += len(pz.Parts)
+	}
+
+	return e
 }
 
 func loadEventConfig(filename string) (EventConfig, error) {
@@ -219,6 +227,7 @@ type Part struct {
 }
 
 type Input struct {
+	File    string
 	Text    []byte
 	Answers []string
 }
