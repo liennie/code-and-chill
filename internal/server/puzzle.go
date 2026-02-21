@@ -120,6 +120,7 @@ func puzzleDataFunc(puzzle puzzles.Puzzle, locked dataFunc) dataFunc {
 			}
 
 			pd.Content.Parts = append(pd.Content.Parts, partData{
+				Anchor:     part.ID,
 				MD:         part.Text,
 				Answer:     answer,
 				WantAnswer: true,

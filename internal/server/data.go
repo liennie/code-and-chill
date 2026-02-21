@@ -10,6 +10,7 @@ import (
 	"io/fs"
 	"mime"
 	"net/http"
+	"net/url"
 	"path"
 	"strconv"
 	"strings"
@@ -147,8 +148,9 @@ var extraFuncs = template.FuncMap{
 		}
 		return "", fmt.Errorf("cannot pad type %T", n)
 	},
-	"mdesc":   mdext.RawStringEscape,
-	"codeesc": mdext.CodeStringEscape,
+	"mdesc":    mdext.RawStringEscape,
+	"codeesc":  mdext.CodeStringEscape,
+	"queryesc": url.QueryEscape,
 	"choose": func(cond bool, t, f any) any {
 		if cond {
 			return t

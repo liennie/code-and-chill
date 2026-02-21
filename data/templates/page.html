@@ -78,7 +78,7 @@
 						{{- end }}
 					</div>
 					{{- else if $.User }}
-					<form class="answer" action="/{{ $.Event.Path }}/puzzle/{{ $.Puzzle.Path }}/answer" method="post">
+					<form id="{{ .Anchor }}-answer" class="answer" action="/{{ $.Event.Path }}/puzzle/{{ $.Puzzle.Path }}/answer" method="post">
 						{{- if $idx }}
 						<p>If you lost your input, you can <a href="/{{ $.Event.Path }}/puzzle/{{ $.Puzzle.Path }}/input" download="{{ $.Event.Path }}.{{ $.Puzzle.Path }}.input.txt">download it again</a>.</p>
 						{{- else }}
@@ -86,7 +86,8 @@
 						{{- end }}
 						<input type="hidden" name="part" value="{{ $idx }}">
 						<label>Answer (part {{ $idx | add 1 }}):
-							<input name="answer" autocomplete="off">
+							{{- $answer := $.Request.URL.Query.Get "a" }}
+							<input name="answer" autocomplete="off" {{- if $answer }} value="{{ $answer }}" {{- end }}>
 						</label>
 						<button type="submit">Submit</button>
 					</form>

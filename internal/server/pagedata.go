@@ -83,6 +83,7 @@ type contentData struct {
 }
 
 type partData struct {
+	Anchor     string
 	MD         string
 	Answer     string
 	WantAnswer bool
