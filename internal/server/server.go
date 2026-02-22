@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -31,6 +32,8 @@ type Server struct {
 	tlsLoader       *tlsLoader
 	httpsRedirect   bool
 	shutdownTimeout time.Duration
+	apiPort         int
+	apiHandler      http.Handler
 }
 
 func New(config Config, db *db.DB, session *session.Store, auth *auth.Auth, puzzles *puzzles.Puzzles) *Server {
@@ -52,11 +55,13 @@ func New(config Config, db *db.DB, session *session.Store, auth *auth.Auth, puzz
 	}
 
 	return &Server{
-		addr:            fmt.Sprintf("%s:%d", config.Host, config.Port),
+		addr:            net.JoinHostPort(config.Host, strconv.Itoa(config.Port)),
 		handler:         newHandler(config, db, session, auth, puzzles),
 		tlsLoader:       loader,
 		httpsRedirect:   config.HTTPSRedirect,
 		shutdownTimeout: config.ShutdownTimeout,
+		apiPort:         config.APIPort,
+		apiHandler:      apiHandler(auth),
 	}
 }
 
@@ -295,6 +300,17 @@ func (s *Server) Run(ctx context.Context) error {
 		}
 		group.Go(func() error {
 			return s.runServer(ctx, cancel, httpsRedirectSrv)
+		})
+	}
+
+	if s.apiPort != 0 {
+		apiSrv := &http.Server{
+			Addr:        net.JoinHostPort("localhost", strconv.Itoa(s.apiPort)),
+			Handler:     s.apiHandler,
+			BaseContext: func(net.Listener) context.Context { return ctx },
+		}
+		group.Go(func() error {
+			return s.runServer(ctx, cancel, apiSrv)
 		})
 	}
 

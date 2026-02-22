@@ -13,4 +13,5 @@ type Config struct {
 	HTTPSRedirect     bool          `yaml:"httpsRedirect"`
 	DataDir           string        `yaml:"dataDir"`
 	ShutdownTimeout   time.Duration `yaml:"shutdownTimeout"`
+	APIPort           int           `yaml:"apiPort"`
 }

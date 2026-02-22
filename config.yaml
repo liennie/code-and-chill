@@ -7,6 +7,7 @@ server:
   # httpsRedirect: true
   dataDir: data
   shutdownTimeout: 30s
+  apiPort: 1274
 
 db:
   file: db/cc.db

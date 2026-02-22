@@ -15,6 +15,7 @@ type User struct {
 	AvatarURL    string `json:"avatar_url"`
 	RandomAvatar bool   `json:"random_avatar"`
 	Token        string `json:"token"`
+	Admin        bool   `json:"admin"`
 }
 
 var _ db.KeySetter = (*User)(nil)
@@ -41,6 +42,27 @@ func newID() string {
 	return strconv.FormatUint(rand.Uint64(), 10)
 }
 
+func (a *Auth) ListUsers() (map[string]*User, error) {
+	return a.FindUsers(func(u *User) bool { return true })
+}
+
+func (a *Auth) FindUsers(cond func(*User) bool) (map[string]*User, error) {
+	users := map[string]*User{}
+	err := a.db.View(func(tx *db.Tx) error {
+		bucket := a.bucketUser.Open(tx)
+		for id, user := range bucket.All() {
+			if cond(user) {
+				users[id] = user
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
+}
+
 func (a *Auth) User(id string) (*User, error) {
 	var user *User
 	err := a.db.View(func(tx *db.Tx) error {
@@ -54,6 +76,23 @@ func (a *Auth) User(id string) (*User, error) {
 		return nil, fmt.Errorf("no user with id %q", id)
 	}
 	return user, nil
+}
+
+func (a *Auth) UpdateUser(id string, f func(*User) error) error {
+	return a.db.Update(func(tx *db.Tx) error {
+		bucket := a.bucketUser.Open(tx)
+
+		user := bucket.Get(id)
+		if user == nil {
+			return fmt.Errorf("no user with id %q", id)
+		}
+
+		if err := f(user); err != nil {
+			return err
+		}
+
+		return bucket.Put(id, user)
+	})
 }
 
 func (a *Auth) AllProgress(event string) (map[*User]*UserProgress, error) {
