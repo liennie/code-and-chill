@@ -147,5 +147,7 @@ func (n *Notifier) Stop() {
 	for _, cancel := range n.cancel {
 		cancel()
 	}
+	clear(n.cancel)
+	n.cancel = n.cancel[:0]
 	n.wg.Wait()
 }
