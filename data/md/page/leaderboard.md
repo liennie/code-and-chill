@@ -1,15 +1,15 @@
 # Leaderboard
 
 {{ if .Leaderboard -}}
-|  # | Name |  Parts | Score |
-| -: | ---- | -: | ----: |
-	{{- range $idx, $_ := .Leaderboard }}
-		{{- if and $.User (eq .User.ID $.User.ID)}}
+|  # | Name | Parts | Score |
+| -: | ---- | ----: | ----: |
+{{- range $idx, $_ := .Leaderboard }}
+	{{- if and $.User (eq .User.ID $.User.ID)}}
 | (({{ $idx | add 1 }})){.user} | ![{{ .User.Name | mdesc }} avatar]({{ .User.Avatar }}){.avatar} (({{ .User.Name | mdesc }})){.user} | (({{ .Solved }})){.user} | (({{ .Score }})){.user} |
-		{{- else }}
+	{{- else }}
 | {{ $idx | add 1 }} | ![{{ .User.Name | mdesc }} avatar]({{ .User.Avatar }}){.avatar} {{ .User.Name | mdesc }} | {{ .Solved }} | {{ .Score }} |
-		{{- end }}
 	{{- end }}
+{{- end }}
 
 {{- else -}}
 
