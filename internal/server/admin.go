@@ -1,11 +1,13 @@
 package server
 
 import (
+	"cmp"
 	"fmt"
 	"maps"
 	"net/http"
 	"slices"
 	"strconv"
+	"strings"
 
 	"cc/internal/auth"
 	"cc/internal/puzzles"
@@ -71,7 +73,12 @@ func adminMiddleware(a *auth.Auth, event puzzles.Event, next http.Handler) http.
 				panic(fmt.Errorf("list users: %w", err))
 			}
 
-			keys := slices.Sorted(maps.Keys(users))
+			keys := slices.SortedFunc(maps.Keys(users), func(a, b string) int {
+				return cmp.Compare(
+					strings.ToLower(users[a].Name),
+					strings.ToLower(users[b].Name),
+				)
+			})
 			for _, id := range keys {
 				user := users[id]
 				pd.Admin.Users = append(pd.Admin.Users, userData{
