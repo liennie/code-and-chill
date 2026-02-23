@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"maps"
 	"net/http"
+	"path"
 	"slices"
 	"strconv"
 	"strings"
@@ -58,7 +59,7 @@ func adminMiddleware(a *auth.Auth, event puzzles.Event, next http.Handler) http.
 				ppd := puzzleProgressData{
 					Path:       puzzle.Path,
 					Name:       puzzle.Name,
-					Input:      puzzle.Inputs[ii].File,
+					Input:      path.Base(puzzle.Inputs[ii].File),
 					InputIndex: ii,
 				}
 				for _, t := range progress.Puzzles[puzzle.ID].Parts {
