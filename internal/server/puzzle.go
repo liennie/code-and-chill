@@ -14,7 +14,6 @@ import (
 
 	"cc/internal/auth"
 	"cc/internal/puzzles"
-	"cc/internal/session"
 )
 
 func eventsMiddleware(events []puzzles.Event, next http.Handler) http.Handler {
@@ -103,8 +102,7 @@ func puzzleDataFunc(puzzle puzzles.Puzzle, locked dataFunc) dataFunc {
 			return locked(r)
 		}
 
-		sess := sessionFromContext(r.Context())
-		user := sess.Data().User
+		user := userFromContext(r.Context())
 		progress := progressFromContext(r.Context())
 		pd.Content.Parts = make([]partData, 0, len(puzzle.Parts))
 		for i, part := range puzzle.Parts {
@@ -115,7 +113,7 @@ func puzzleDataFunc(puzzle puzzles.Puzzle, locked dataFunc) dataFunc {
 
 			answer := ""
 			if solved && user != nil {
-				input := inputIndex(user, puzzle)
+				input := inputIndex(user.ID, puzzle)
 				answer = puzzle.Inputs[input].Answers[i]
 			}
 
@@ -156,9 +154,10 @@ func latestPuzzleRedirect(event puzzles.Event) http.Handler {
 	})
 }
 
-func inputIndex(user *session.User, puzzle puzzles.Puzzle) uint {
+func inputIndex(userID string, puzzle puzzles.Puzzle) uint {
+	// TODO save input index in db
 	h := fnv.New64()
-	io.WriteString(h, user.ID)
+	io.WriteString(h, userID)
 	io.WriteString(h, puzzle.ID)
 	return uint(h.Sum64()) % uint(len(puzzle.Inputs))
 }
@@ -177,15 +176,14 @@ func puzzleInputHandler(puzzle puzzles.Puzzle, locked http.Handler, unauth http.
 			return
 		}
 
-		sess := sessionFromContext(r.Context())
-		user := sess.Data().User
+		user := userFromContext(r.Context())
 		if user == nil {
 			// this should never happen
 			unauth.ServeHTTP(w, r)
 			return
 		}
 
-		i := inputIndex(user, puzzle)
+		i := inputIndex(user.ID, puzzle)
 		handlers[i].ServeHTTP(w, r)
 	})
 }
@@ -216,8 +214,7 @@ func puzzleAnswerDataFunc(a *auth.Auth, event puzzles.Event, pidx int, puzzle pu
 			return dataFuncs.locked(r)
 		}
 
-		sess := sessionFromContext(r.Context())
-		user := sess.Data().User
+		user := userFromContext(r.Context())
 		if user == nil {
 			// this should never happen
 			return dataFuncs.unauth(r)
@@ -234,7 +231,7 @@ func puzzleAnswerDataFunc(a *auth.Auth, event puzzles.Event, pidx int, puzzle pu
 			return dataFuncs.badPart(r)
 		}
 
-		ii := inputIndex(user, puzzle)
+		ii := inputIndex(user.ID, puzzle)
 		if part < 0 || part >= len(puzzle.Parts) || part >= len(puzzle.Inputs[ii].Answers) {
 			return dataFuncs.badPart(r)
 		}

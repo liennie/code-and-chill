@@ -12,6 +12,9 @@
 	<link rel="stylesheet" href="/fonts.css">
 	<link rel="stylesheet" href="/style.css">
 	<script src="/script.js" defer async></script>
+	{{- if and .User .User.Admin ($.Request.URL.Path | hasPrefix "/admin") }}
+	<script src="/admin.js" defer async></script>
+	{{- end }}
 </head>
 
 {{- $return := $.Request.URL.Query.Get "return" | default $.Request.URL.Path | trimPrefix "/" }}
@@ -29,6 +32,9 @@
 				<a href="/{{ $.Event.Path }}/rules">Rules</a>
 				<a href="/{{ $.Event.Path }}/leaderboard">Leaderboard</a>
 				<a href="/{{ $.Event.Path }}/contact">Contact</a>
+				{{- if and .User .User.Admin }}
+				<a href="/{{ $.Event.Path }}/admin">Admin</a>
+				{{- end }}
 				{{- if .User }}
 				<a href="/{{ $.Event.Path }}/profile{{ if $return }}?return={{ $return }}{{ end }}" class="profile"><img src="{{ .User.Avatar }}" alt="{{ .User.Name }} avatar"><span>{{ .User.Name }}</span></a>
 				{{- else }}

@@ -124,6 +124,15 @@ func discordAuthCallback(auth *auth.Auth) http.Handler {
 	})
 }
 
+type userCtxKey struct{}
+
+var userKey userCtxKey
+
+func userFromContext(ctx context.Context) *auth.User {
+	data, _ := ctx.Value(userKey).(*auth.User)
+	return data
+}
+
 type progressCtxKey struct{}
 
 var progressKey progressCtxKey
@@ -158,6 +167,7 @@ func userMiddleware(a *auth.Auth, event puzzles.Event, next http.Handler) http.H
 					ID:     user.ID,
 					Name:   user.Name,
 					Avatar: user.AvatarURL,
+					Admin:  user.Admin,
 				}
 
 				progress, err := a.Progress(event.ID, su.ID)
@@ -167,6 +177,10 @@ func userMiddleware(a *auth.Auth, event puzzles.Event, next http.Handler) http.H
 
 				ctx := r.Context()
 				ctx = context.WithValue(ctx, progressKey, progress)
+				ctx = context.WithValue(ctx, userKey, user)
+
+				ctxlog.AddExtra(ctx, "user", user.Name)
+
 				r = r.WithContext(ctx)
 			}
 		}
@@ -198,9 +212,9 @@ func logoutHandler(event puzzles.Event) http.Handler {
 
 func userMux(loggedin http.Handler, loggedout http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		sess := sessionFromContext(r.Context())
+		user := userFromContext(r.Context())
 
-		if sess.Data().User != nil {
+		if user != nil {
 			loggedin.ServeHTTP(w, r)
 		} else {
 			loggedout.ServeHTTP(w, r)

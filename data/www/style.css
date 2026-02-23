@@ -373,6 +373,10 @@ article input {
 	font-size: inherit;
 }
 
+article input[type="checkbox"] {
+	min-width: auto;
+}
+
 article button {
 	background: var(--bg-code);
 	font-family: inherit;

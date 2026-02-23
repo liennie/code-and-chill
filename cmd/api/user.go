@@ -56,7 +56,7 @@ func (c *FindUsersCmd) Do(ctx context.Context, p *arg.Parser, cli *http.Client, 
 	u := &url.URL{
 		Scheme:   "http",
 		Host:     net.JoinHostPort("localhost", strconv.Itoa(args.Port)),
-		Path:     "/api/users",
+		Path:     "/users",
 		RawQuery: v.Encode(),
 	}
 
@@ -85,7 +85,7 @@ func (c *ListUsersCmd) Do(ctx context.Context, p *arg.Parser, cli *http.Client, 
 	u := &url.URL{
 		Scheme: "http",
 		Host:   net.JoinHostPort("localhost", strconv.Itoa(args.Port)),
-		Path:   "/api/users",
+		Path:   "/users",
 	}
 
 	resp, err := cli.Get(u.String())
@@ -114,7 +114,7 @@ func (c *GetUserCmd) Do(ctx context.Context, p *arg.Parser, cli *http.Client, ar
 	u := &url.URL{
 		Scheme: "http",
 		Host:   net.JoinHostPort("localhost", strconv.Itoa(args.Port)),
-		Path:   path.Join("/api/user", c.ID),
+		Path:   path.Join("/user", c.ID),
 	}
 
 	resp, err := cli.Get(u.String())
@@ -146,7 +146,7 @@ func (c *UpdateUserCmd) Do(ctx context.Context, p *arg.Parser, cli *http.Client,
 	u := &url.URL{
 		Scheme: "http",
 		Host:   net.JoinHostPort("localhost", strconv.Itoa(args.Port)),
-		Path:   path.Join("/api/user", c.ID),
+		Path:   path.Join("/user", c.ID),
 	}
 
 	req := server.APIUpdateUserRequest{}

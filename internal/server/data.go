@@ -111,6 +111,7 @@ var extraFuncs = template.FuncMap{
 				&mdext.InlineAttrExtender{},
 				&mdext.RawStringExtender{},
 				&mdext.SpanExtender{},
+				&mdext.CheckboxExtender{},
 			),
 			goldmark.WithParserOptions(
 				parser.WithAutoHeadingID(),

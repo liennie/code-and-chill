@@ -77,7 +77,10 @@ func (s *Server) Close() error {
 func handlerRegistrar(prefix string, mux *http.ServeMux) func(method, path, src string, handler http.Handler) {
 	return func(method, path, src string, handler http.Handler) {
 		slog.Info("registering handler", "method", method, "path", prefix+path, "src", src)
-		mux.Handle(method+" "+path, handler)
+		if method != "" {
+			path = method + " " + path
+		}
+		mux.Handle(path, handler)
 	}
 }
 
@@ -132,7 +135,7 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 
 	// root
 	e := pzls.Default.Path
-	reg("GET", "/", "md/404.md", rootMiddleware(notFoundHandler))
+	reg("", "/", "md/404.md", rootMiddleware(notFoundHandler))
 	reg("GET", "/{$}", "redirect", http.RedirectHandler("/"+e, http.StatusTemporaryRedirect))
 	// reg("GET", "/events", "redirect", http.RedirectHandler("/"+e+"/events", http.StatusTemporaryRedirect))
 	reg("GET", "/rules", "redirect", http.RedirectHandler("/"+e+"/rules", http.StatusTemporaryRedirect))
@@ -149,6 +152,21 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 		http.RedirectHandler("/", http.StatusSeeOther),
 		discordAuthCallback(auth)),
 	))
+
+	reg("GET", "/admin.js", "extra/admin.js", rootMiddleware(adminMux(
+		cachedHandler(dataFile(fsys, "extra/admin.js")),
+		notFoundHandler,
+	)))
+
+	reg("", "/api", "apiHandler", rootMiddleware(adminMux(
+		apiNotFound(),
+		notFoundHandler,
+	)))
+
+	reg("", "/api/", "apiHandler", rootMiddleware(adminMux(
+		http.StripPrefix("/api", apiHandler(auth)),
+		notFoundHandler,
+	)))
 
 	// events
 	lockedDataFunc := mdDataFunc(http.StatusNotFound, "Puzzle locked", readFile(fsys, "md/puzzle/locked.md"))
@@ -172,8 +190,8 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 
 		reg("GET", "/login", "md/page/login.md", userMux(
 			http.RedirectHandler("/"+e+"/profile", http.StatusSeeOther),
-			page(mdDataFunc(http.StatusOK, "Log In", readFile(fsys, "md/page/login.md")))),
-		)
+			page(mdDataFunc(http.StatusOK, "Log In", readFile(fsys, "md/page/login.md"))),
+		))
 		reg("GET", "/login/discord", "discordAuthHandler", userMux(
 			http.RedirectHandler("/"+e+"/profile", http.StatusSeeOther),
 			discordAuthRedirect(auth, event),
@@ -215,6 +233,22 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 				unauthorizedHandler,
 			))
 		}
+
+		// admin
+		reg("GET", "/admin", "md/admin/admin.md", adminMux(
+			adminMiddleware(auth, event, page(mdDataFunc(http.StatusOK, "Admin", readFile(fsys, "md/admin/admin.md")))),
+			notFoundHandler,
+		))
+
+		reg("GET", "/admin/user/{id}", "md/admin/user.md", adminMux(
+			adminMiddleware(auth, event, page(mdDataFunc(http.StatusOK, "User", readFile(fsys, "md/admin/user.md")))),
+			notFoundHandler,
+		))
+
+		reg("GET", "/admin/input/{puzzle}/{index}", "adminPuzzleInputHandler", adminMux(
+			adminPuzzleInputHandler(event, notFoundHandler),
+			notFoundHandler,
+		))
 	}
 
 	// global middleware

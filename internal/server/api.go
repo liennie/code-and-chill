@@ -43,9 +43,9 @@ func apiHandler(auth *auth.Auth) http.Handler {
 
 	mux.Handle("/", apiNotFound())
 
-	mux.Handle("GET /api/users", apiListUsers(auth))
-	mux.Handle("GET /api/user/{id}", apiGetUser(auth))
-	mux.Handle("POST /api/user/{id}", apiUpdateUser(auth))
+	mux.Handle("GET /users", apiListUsers(auth))
+	mux.Handle("GET /user/{id}", apiGetUser(auth))
+	mux.Handle("POST /user/{id}", apiUpdateUser(auth))
 
 	// TODO progress handlers
 

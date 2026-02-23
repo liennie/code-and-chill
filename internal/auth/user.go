@@ -47,6 +47,8 @@ func (a *Auth) ListUsers() (map[string]*User, error) {
 }
 
 func (a *Auth) FindUsers(cond func(*User) bool) (map[string]*User, error) {
+	// TODO range start end
+
 	users := map[string]*User{}
 	err := a.db.View(func(tx *db.Tx) error {
 		bucket := a.bucketUser.Open(tx)
