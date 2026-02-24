@@ -77,7 +77,7 @@ func adminDataPuzzle(event puzzles.Event, puzzle string) (*adminData, bool) {
 	return nil, false
 }
 
-func adminDataIndex(a *auth.Auth) (*adminData, bool) {
+func adminDataIndex(a *auth.Auth, event puzzles.Event) (*adminData, bool) {
 	ad := &adminData{}
 
 	users, err := a.ListUsers()
@@ -96,6 +96,8 @@ func adminDataIndex(a *auth.Auth) (*adminData, bool) {
 		ad.Users = append(ad.Users, user)
 	}
 
+	ad.Puzzles = event.Puzzles
+
 	return ad, true
 }
 
@@ -109,7 +111,7 @@ func adminMiddleware(a *auth.Auth, event puzzles.Event, next http.Handler, notFo
 		} else if puzzle := r.PathValue("puzzle"); puzzle != "" {
 			pd.Admin, ok = adminDataPuzzle(event, puzzle)
 		} else {
-			pd.Admin, ok = adminDataIndex(a)
+			pd.Admin, ok = adminDataIndex(a, event)
 		}
 
 		if !ok {

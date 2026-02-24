@@ -95,7 +95,8 @@ type partData struct {
 }
 
 type adminData struct {
-	Users []*auth.User
+	Users   []*auth.User
+	Puzzles []puzzles.Puzzle
 
 	User     *auth.User
 	Progress *progressData

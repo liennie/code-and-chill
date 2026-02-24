@@ -12,10 +12,8 @@
 
 ## Puzzles
 
-(()){#puzzle-error class="error"}
-
-| Name | Hidden |
-| ---- | :----: |
-{{- range .Puzzles }}
-| [{{ .Name }}](/{{ $.Event.Path }}/admin/puzzle/{{ .Path }}) | [ ]{disabled=""} |
+| Name |
+| ---- |
+{{- range .Admin.Puzzles }}
+| [{{ .Name }}](/{{ $.Event.Path }}/admin/puzzle/{{ .Path }}) |
 {{- end }}

@@ -2,12 +2,9 @@
 
 ## Info
 
-(()){#puzzle-error class="error"}
-
 |                 |   |
 | -               | - |
 | *Link*          | [{{ .Admin.Puzzle.Name }}](/{{ $.Event.Path }}/puzzle/{{ .Admin.Puzzle.Path }}) |
-| *Hidden*        | [ ]{disabled=""} |
 | *ID*            | {{ .Admin.Puzzle.ID }} |
 | *Path*          | {{ .Admin.Puzzle.Path }} |
 | *Name*          | {{ .Admin.Puzzle.Name }} |
