@@ -59,6 +59,7 @@ func adminMiddleware(a *auth.Auth, event puzzles.Event, next http.Handler) http.
 				ppd := puzzleProgressData{
 					Path:       puzzle.Path,
 					Name:       puzzle.Name,
+					Unlock:     puzzle.Unlock,
 					Input:      path.Base(puzzle.Inputs[ii].File),
 					InputIndex: ii,
 				}

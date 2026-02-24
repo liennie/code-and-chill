@@ -210,10 +210,14 @@ document.addEventListener('click', function (ev) {
 		function formatTimeout(ms) {
 			if (ms <= 0) return '0s';
 			const s = Math.ceil(ms / 1000);
-			const hh = String(Math.floor(s / 3600));
-			const mm = String(Math.floor((s % 3600) / 60));
+			const dd = String(Math.floor(s / (24 * 60 * 60)))
+			const hh = String(Math.floor(s % (24 * 60 * 60) / (60 * 60)));
+			const mm = String(Math.floor((s % (60 * 60)) / 60));
 			const ss = String(s % 60);
 
+			if (dd > 0) {
+				return `${dd}d ${hh}h ${mm}m ${ss}s`;
+			}
 			if (hh > 0) {
 				return `${hh}h ${mm}m ${ss}s`;
 			}

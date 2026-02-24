@@ -101,7 +101,15 @@ var extraFuncs = template.FuncMap{
 	},
 	"formatDuration": func(d time.Duration) string {
 		d = d.Round(time.Second)
-		return strings.NewReplacer("h", "h ", "m", "m ").Replace(d.String())
+
+		days := d / (24 * time.Hour)
+		d = d % (24 * time.Hour)
+
+		dur := strings.NewReplacer("h", "h ", "m", "m ").Replace(d.String())
+		if days > 0 {
+			dur = fmt.Sprintf("%dd %s", days, dur)
+		}
+		return dur
 	},
 	"renderMD": func(md string) (template.HTML, error) {
 		gm := goldmark.New(

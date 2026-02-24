@@ -20,5 +20,6 @@
 | ------ | ----- | ------ | ------ |
 {{- range .Admin.Progress.Puzzles }}
 | [{{ .Name }}](/{{ $.Event.Path }}/puzzle/{{ .Path }}) | [{{ .Input }}](/{{ $.Event.Path }}/admin/input/{{ .Path }}/{{ .InputIndex }}) |
-{{- range .Solves }} {{ . | humanTime }} | {{- end }}
+{{- $puzzle := . }}
+{{- range .Solves }} (({{ .Sub $puzzle.Unlock | formatDuration }})){title="{{ . | humanTime }}"} | {{- end }}
 {{- end }}

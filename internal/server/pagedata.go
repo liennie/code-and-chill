@@ -105,6 +105,7 @@ type progressData struct {
 type puzzleProgressData struct {
 	Path       string
 	Name       string
+	Unlock     time.Time
 	Input      string
 	InputIndex uint
 	Solves     []time.Time
