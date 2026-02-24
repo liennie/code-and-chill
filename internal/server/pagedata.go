@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 	"time"
+
+	"cc/internal/auth"
 )
 
 const (
@@ -71,6 +73,7 @@ type userData struct {
 	Name   string
 	Avatar string
 	Admin  bool
+	Hidden bool
 }
 
 type leaderboardData struct {
@@ -91,8 +94,9 @@ type partData struct {
 }
 
 type adminData struct {
-	Users    []userData
-	User     *userData
+	Users []*auth.User
+
+	User     *auth.User
 	Progress *progressData
 }
 

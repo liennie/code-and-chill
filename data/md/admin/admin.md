@@ -2,8 +2,8 @@
 
 ## Users
 
-| Name | Admin |
-| ---- | ----- |
-{{- range $idx, $_ := .Admin.Users }}
-| ![{{ .Name | mdesc }} avatar]({{ .Avatar }}){.avatar} [{{ .Name | mdesc }}](/{{ $.Event.Path }}/admin/user/{{ .ID }}) | {{ choose .Admin "[x]" "[ ]" }}{disabled=""} |
+| Name | Admin | Hidden |
+| ---- | :---: | :----: |
+{{- range .Admin.Users }}
+| ![{{ .Name | mdesc }} avatar]({{ .AvatarURL }}){.avatar} [{{ .Name | mdesc }}](/{{ $.Event.Path }}/admin/user/{{ .ID }}) | {{ choose .Admin "[x]" "[ ]" }}{disabled=""} | {{ choose .Hidden "[x]" "[ ]" }}{disabled="" class="user-checkbox" data-user="{{ .ID }}" data-value="hidden"} |
 {{- end }}

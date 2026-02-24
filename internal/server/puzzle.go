@@ -380,6 +380,10 @@ func leaderboardMiddleware(a *auth.Auth, event puzzles.Event, next http.Handler)
 
 		ups := make([]*userProgress, 0, len(progress))
 		for user, p := range progress {
+			if user.Hidden {
+				continue
+			}
+
 			ups = append(ups, &userProgress{
 				User:    user,
 				Puzzles: p.Puzzles,

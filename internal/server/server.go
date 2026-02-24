@@ -240,8 +240,8 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 			notFoundHandler,
 		))
 
-		reg("GET", "/admin/user/{id}", "md/admin/user.md", adminMux(
-			adminMiddleware(auth, event, page(mdDataFunc(http.StatusOK, "User", readFile(fsys, "md/admin/user.md")))),
+		reg("GET", "/admin/user/{user}", "md/admin/user.md", adminMux(
+			adminMiddleware(auth, event, page(mdDataFunc(http.StatusOK, "Admin :: User", readFile(fsys, "md/admin/user.md")))),
 			notFoundHandler,
 		))
 

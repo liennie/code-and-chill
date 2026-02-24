@@ -2,12 +2,16 @@
 
 ## Info
 
-|          |   |
-| -        | - |
-| *Admin*  | {{ choose .Admin.User.Admin "[x]" "[ ]" }}{disabled=""} |
-| *ID*     | {{ .Admin.User.ID }} |
-| *Avatar* | ![{{ .Name | mdesc }} avatar]({{ .Admin.User.Avatar }}){.avatar} |
-| *Name*   | {{ .Admin.User.Name | mdesc }} |
+(()){#user-error}
+
+|                 |   |
+| -               | - |
+| *Admin*         | {{ choose .Admin.User.Admin "[x]" "[ ]" }}{disabled=""} |
+| *Hidden*        | {{ choose .Admin.User.Hidden "[x]" "[ ]" }}{disabled="" class="user-checkbox" data-user="{{ .Admin.User.ID }}" data-value="hidden"} |
+| *ID*            | {{ .Admin.User.ID }} |
+| *Name*          | {{ .Admin.User.Name | mdesc }} |
+| *Avatar*        | ![{{ .Name | mdesc }} avatar]({{ .Admin.User.AvatarURL }}){.avatar} |
+| *Random avatar* | {{ choose .Admin.User.RandomAvatar "[x]" "[ ]" }}{disabled=""} |
 
 ## Progress
 

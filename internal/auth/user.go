@@ -16,6 +16,7 @@ type User struct {
 	RandomAvatar bool   `json:"random_avatar"`
 	Token        string `json:"token"`
 	Admin        bool   `json:"admin"`
+	Hidden       bool   `json:"hidden"`
 }
 
 var _ db.KeySetter = (*User)(nil)
