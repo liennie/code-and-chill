@@ -453,6 +453,11 @@ article span[data-spoiler].revealed {
 	color: inherit;
 }
 
+article span.error {
+	font-weight: 800;
+	color: darkred;
+}
+
 .output {
 	flex: 1;
 }

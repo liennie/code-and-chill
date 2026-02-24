@@ -2,7 +2,7 @@
 
 ## Info
 
-(()){#user-error}
+(()){#user-error class="error"}
 
 |                 |   |
 | -               | - |

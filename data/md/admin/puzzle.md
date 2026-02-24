@@ -2,7 +2,7 @@
 
 ## Info
 
-(()){#puzzle-error}
+(()){#puzzle-error class="error"}
 
 |                 |   |
 | -               | - |

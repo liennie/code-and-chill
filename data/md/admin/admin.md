@@ -2,6 +2,8 @@
 
 ## Users
 
+(()){#user-error class="error"}
+
 | Name | Admin | Hidden |
 | ---- | :---: | :----: |
 {{- range .Admin.Users }}
@@ -9,6 +11,8 @@
 {{- end }}
 
 ## Puzzles
+
+(()){#puzzle-error class="error"}
 
 | Name | Hidden |
 | ---- | :----: |
