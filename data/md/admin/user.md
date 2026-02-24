@@ -17,7 +17,7 @@
 | *Timeout*   | {{ if .Admin.Progress.Timeout.After .Now }}*{{ .Admin.Progress.Timeout.Sub .Now | formatDuration }}*{data-timeout="{{ .Admin.Progress.Timeout | rfc3339Time }}" title="{{ .Admin.Progress.Timeout | humanTime }}"}{{ end }} |
 
 | Puzzle | Input | Part 1 | Part 2 |
-| ------ | ----- | ------ | ------ |
+| ------ | ----- | -----: | -----: |
 {{- range .Admin.Progress.Puzzles }}
 | [{{ .Name }}](/{{ $.Event.Path }}/puzzle/{{ .Path }}) | [{{ .Input }}](/{{ $.Event.Path }}/admin/input/{{ .Path }}/{{ .InputIndex }}) |
 {{- $puzzle := . }}
