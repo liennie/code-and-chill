@@ -105,8 +105,8 @@ document.addEventListener('click', function (ev) {
 		}
 
 		function formatDMHM(date) {
-			const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
-				"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+			const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+				'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 			const month = months[date.getMonth()];
 			const day = String(date.getDate()).padStart(2, '0');
 			const hours = String(date.getHours()).padStart(2, '0');
@@ -273,6 +273,38 @@ document.addEventListener('click', function (ev) {
 	window.addEventListener('pageshow', function (ev) {
 		if (ev.persisted) {
 			start();
+		}
+	});
+})();
+
+(function () {
+	function attachSpoilerHandlers() {
+		const spoilers = document.querySelectorAll('span[data-spoiler]');
+		spoilers.forEach(function (span) {
+			const spoiler = span.getAttribute('data-spoiler');
+			const placeholder = span.getAttribute('data-placeholder') || '********';
+			if (spoiler !== null) {
+				span.addEventListener('click', function () {
+					const revealed = span.classList.toggle('revealed');
+					if (revealed) {
+						span.textContent = spoiler.padEnd(8, ' ');
+					} else {
+						span.textContent = placeholder;
+					}
+				});
+			}
+		});
+	}
+
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', attachSpoilerHandlers);
+	} else {
+		attachSpoilerHandlers();
+	}
+
+	window.addEventListener('pageshow', function (ev) {
+		if (ev.persisted) {
+			attachSpoilerHandlers();
 		}
 	});
 })();

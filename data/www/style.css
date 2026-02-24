@@ -303,7 +303,7 @@ article h1 {
 }
 
 article h2 {
-	margin: 0 0 0.25rem 0;
+	margin: 1rem 0 0.25rem 0;
 	font-weight: 800;
 	color: var(--color-em);
 }
@@ -437,6 +437,20 @@ article .user {
 
 article .pre-wrap {
 	white-space: pre-wrap;
+}
+
+article span[data-spoiler] {
+	cursor: pointer;
+	background-color: black;
+	color: black;
+	border-radius: 3px;
+	min-width: 10ch;
+	white-space: pre-wrap;
+}
+
+article span[data-spoiler].revealed {
+	background-color: inherit;
+	color: inherit;
 }
 
 .output {

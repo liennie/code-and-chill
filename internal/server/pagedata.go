@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"cc/internal/auth"
+	"cc/internal/puzzles"
 )
 
 const (
@@ -98,6 +99,8 @@ type adminData struct {
 
 	User     *auth.User
 	Progress *progressData
+
+	Puzzle *puzzles.Puzzle
 }
 
 type progressData struct {

@@ -23,7 +23,7 @@
 | Puzzle | Input | Part 1 | Part 2 |
 | ------ | ----- | -----: | -----: |
 {{- range .Admin.Progress.Puzzles }}
-| [{{ .Name }}](/{{ $.Event.Path }}/puzzle/{{ .Path }}) | [{{ .Input }}](/{{ $.Event.Path }}/admin/input/{{ .Path }}/{{ .InputIndex }}) |
+| [{{ .Name }}](/{{ $.Event.Path }}/admin/puzzle/{{ .Path }}) | [{{ .Input | base }}](/{{ $.Event.Path }}/admin/puzzle/{{ .Path }}/input/{{ .InputIndex }}) |
 {{- $puzzle := . }}
 {{- range .Solves }} (({{ .Sub $puzzle.Unlock | formatDuration }})){title="{{ . | humanTime }}"} | {{- end }}
 {{- end }}

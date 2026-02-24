@@ -245,7 +245,12 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 			notFoundHandler,
 		))
 
-		reg("GET", "/admin/input/{puzzle}/{index}", "adminPuzzleInputHandler", adminMux(
+		reg("GET", "/admin/puzzle/{puzzle}", "md/admin/puzzle.md", adminMux(
+			adminMiddleware(auth, event, page(mdDataFunc(http.StatusOK, "Admin :: Puzzle", readFile(fsys, "md/admin/puzzle.md")))),
+			notFoundHandler,
+		))
+
+		reg("GET", "/admin/puzzle/{puzzle}/input/{index}", "adminPuzzleInputHandler", adminMux(
 			adminPuzzleInputHandler(event, notFoundHandler),
 			notFoundHandler,
 		))

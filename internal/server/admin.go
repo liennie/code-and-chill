@@ -63,6 +63,19 @@ func adminDataUser(a *auth.Auth, event puzzles.Event, id string) *adminData {
 	return ad
 }
 
+func adminDataPuzzle(event puzzles.Event, puzzle string) *adminData {
+	ad := &adminData{}
+
+	for _, p := range event.Puzzles {
+		if p.Path == puzzle {
+			ad.Puzzle = &p
+			break
+		}
+	}
+
+	return ad
+}
+
 func adminDataIndex(a *auth.Auth) *adminData {
 	ad := &adminData{}
 
@@ -91,6 +104,8 @@ func adminMiddleware(a *auth.Auth, event puzzles.Event, next http.Handler) http.
 
 		if user := r.PathValue("user"); user != "" {
 			pd.Admin = adminDataUser(a, event, user)
+		} else if puzzle := r.PathValue("puzzle"); puzzle != "" {
+			pd.Admin = adminDataPuzzle(event, puzzle)
 		} else {
 			pd.Admin = adminDataIndex(a)
 		}
