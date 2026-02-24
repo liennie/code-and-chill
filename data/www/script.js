@@ -301,10 +301,4 @@ document.addEventListener('click', function (ev) {
 	} else {
 		attachSpoilerHandlers();
 	}
-
-	window.addEventListener('pageshow', function (ev) {
-		if (ev.persisted) {
-			attachSpoilerHandlers();
-		}
-	});
 })();
