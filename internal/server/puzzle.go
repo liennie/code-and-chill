@@ -366,6 +366,7 @@ func (p *userProgress) Compare(other *userProgress) int {
 		-cmp.Compare(p.Solved, other.Solved),
 		-cmp.Compare(p.Score, other.Score),
 		p.LastSolve.Compare(other.LastSolve),
+		cmp.Compare(strings.ToLower(p.User.Name), strings.ToLower(other.User.Name)),
 	)
 }
 
