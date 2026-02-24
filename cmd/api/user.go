@@ -151,9 +151,9 @@ func (c *UpdateUserCmd) Do(ctx context.Context, p *arg.Parser, cli *http.Client,
 
 	req := server.APIUpdateUserRequest{}
 	if c.SetAdmin {
-		req.Admin = ptr(true)
+		req.Admin = new(true)
 	} else if c.UnsetAdmin {
-		req.Admin = ptr(false)
+		req.Admin = new(false)
 	}
 
 	body, err := json.Marshal(req)
