@@ -97,8 +97,10 @@ func discordAuthCallback(auth *auth.Auth) http.Handler {
 			return
 		}
 
+		token := rand.Text()
+
 		code := query.Get("code")
-		user, err := auth.Discord.Exchange(r.Context(), code, sess.ID().ID)
+		user, err := auth.Discord.Exchange(r.Context(), code, token)
 		if err != nil {
 			logger := ctxlog.Get(r.Context())
 			if extra, ok := ctxlog.ErrExtra(err); ok {
@@ -110,7 +112,10 @@ func discordAuthCallback(auth *auth.Auth) http.Handler {
 		}
 
 		err = sess.Update(func(data *session.Data) error {
-			data.User = &session.User{ID: user.ID}
+			data.User = &session.User{
+				ID:    user.ID,
+				Token: token,
+			}
 			return nil
 		})
 		if err != nil {
@@ -154,7 +159,7 @@ func userMiddleware(a *auth.Auth, event puzzles.Event, next http.Handler) http.H
 				panic(fmt.Errorf("get user: %w", err))
 			}
 
-			if user.Token != sess.ID().ID {
+			if user.Token != su.Token {
 				err := sess.Update(func(data *session.Data) error {
 					data.User = nil
 					return nil

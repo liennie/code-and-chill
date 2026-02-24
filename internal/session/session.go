@@ -22,7 +22,8 @@ type Auth struct {
 }
 
 type User struct {
-	ID string `json:"id"`
+	ID    string `json:"id"`
+	Token string `json:"token"`
 }
 
 type ID struct {
