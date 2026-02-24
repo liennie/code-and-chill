@@ -2,6 +2,7 @@ package server
 
 import (
 	"cmp"
+	"errors"
 	"fmt"
 	"maps"
 	"net/http"
@@ -25,11 +26,14 @@ func adminMux(admin http.Handler, notadmin http.Handler) http.Handler {
 	})
 }
 
-func adminDataUser(a *auth.Auth, event puzzles.Event, id string) *adminData {
+func adminDataUser(a *auth.Auth, event puzzles.Event, id string) (*adminData, bool) {
 	ad := &adminData{}
 
 	user, err := a.User(id)
 	if err != nil {
+		if _, ok := errors.AsType[*auth.ErrUserNotFound](err); ok {
+			return nil, false
+		}
 		panic(fmt.Errorf("user %q: %w", id, err))
 	}
 
@@ -60,23 +64,20 @@ func adminDataUser(a *auth.Auth, event puzzles.Event, id string) *adminData {
 		ad.Progress.Puzzles = append(ad.Progress.Puzzles, ppd)
 	}
 
-	return ad
+	return ad, true
 }
 
-func adminDataPuzzle(event puzzles.Event, puzzle string) *adminData {
-	ad := &adminData{}
-
+func adminDataPuzzle(event puzzles.Event, puzzle string) (*adminData, bool) {
 	for _, p := range event.Puzzles {
 		if p.Path == puzzle {
-			ad.Puzzle = &p
-			break
+			return &adminData{Puzzle: &p}, true
 		}
 	}
 
-	return ad
+	return nil, false
 }
 
-func adminDataIndex(a *auth.Auth) *adminData {
+func adminDataIndex(a *auth.Auth) (*adminData, bool) {
 	ad := &adminData{}
 
 	users, err := a.ListUsers()
@@ -95,19 +96,25 @@ func adminDataIndex(a *auth.Auth) *adminData {
 		ad.Users = append(ad.Users, user)
 	}
 
-	return ad
+	return ad, true
 }
 
-func adminMiddleware(a *auth.Auth, event puzzles.Event, next http.Handler) http.Handler {
+func adminMiddleware(a *auth.Auth, event puzzles.Event, next http.Handler, notFound http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		pd := pageDataFromContext(r.Context())
+		var ok bool
 
 		if user := r.PathValue("user"); user != "" {
-			pd.Admin = adminDataUser(a, event, user)
+			pd.Admin, ok = adminDataUser(a, event, user)
 		} else if puzzle := r.PathValue("puzzle"); puzzle != "" {
-			pd.Admin = adminDataPuzzle(event, puzzle)
+			pd.Admin, ok = adminDataPuzzle(event, puzzle)
 		} else {
-			pd.Admin = adminDataIndex(a)
+			pd.Admin, ok = adminDataIndex(a)
+		}
+
+		if !ok {
+			notFound.ServeHTTP(w, r)
+			return
 		}
 
 		next.ServeHTTP(w, r)

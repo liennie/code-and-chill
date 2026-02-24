@@ -236,17 +236,17 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 
 		// admin
 		reg("GET", "/admin", "md/admin/admin.md", adminMux(
-			adminMiddleware(auth, event, page(mdDataFunc(http.StatusOK, "Admin", readFile(fsys, "md/admin/admin.md")))),
+			adminMiddleware(auth, event, page(mdDataFunc(http.StatusOK, "Admin", readFile(fsys, "md/admin/admin.md"))), notFoundHandler),
 			notFoundHandler,
 		))
 
 		reg("GET", "/admin/user/{user}", "md/admin/user.md", adminMux(
-			adminMiddleware(auth, event, page(mdDataFunc(http.StatusOK, "Admin :: User", readFile(fsys, "md/admin/user.md")))),
+			adminMiddleware(auth, event, page(mdDataFunc(http.StatusOK, "Admin :: User", readFile(fsys, "md/admin/user.md"))), notFoundHandler),
 			notFoundHandler,
 		))
 
 		reg("GET", "/admin/puzzle/{puzzle}", "md/admin/puzzle.md", adminMux(
-			adminMiddleware(auth, event, page(mdDataFunc(http.StatusOK, "Admin :: Puzzle", readFile(fsys, "md/admin/puzzle.md")))),
+			adminMiddleware(auth, event, page(mdDataFunc(http.StatusOK, "Admin :: Puzzle", readFile(fsys, "md/admin/puzzle.md"))), notFoundHandler),
 			notFoundHandler,
 		))
 

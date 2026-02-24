@@ -9,6 +9,14 @@ import (
 	"cc/internal/db"
 )
 
+type ErrUserNotFound struct {
+	ID string
+}
+
+func (e *ErrUserNotFound) Error() string {
+	return fmt.Sprintf("no user with id %q", e.ID)
+}
+
 type User struct {
 	ID           string `json:"-"`
 	Name         string `json:"name"`
@@ -76,7 +84,7 @@ func (a *Auth) User(id string) (*User, error) {
 		return nil, err
 	}
 	if user == nil {
-		return nil, fmt.Errorf("no user with id %q", id)
+		return nil, &ErrUserNotFound{id}
 	}
 	return user, nil
 }
@@ -87,7 +95,7 @@ func (a *Auth) UpdateUser(id string, f func(*User) error) error {
 
 		user := bucket.Get(id)
 		if user == nil {
-			return fmt.Errorf("no user with id %q", id)
+			return &ErrUserNotFound{id}
 		}
 
 		if err := f(user); err != nil {
