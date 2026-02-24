@@ -61,7 +61,7 @@ func New(config Config, db *db.DB, session *session.Store, auth *auth.Auth, puzz
 		httpsRedirect:   config.HTTPSRedirect,
 		shutdownTimeout: config.ShutdownTimeout,
 		apiPort:         config.APIPort,
-		apiHandler:      apiHandler(auth),
+		apiHandler:      apiMiddleware(apiHandler(auth)),
 	}
 }
 

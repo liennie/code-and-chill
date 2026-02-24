@@ -50,10 +50,12 @@ func apiHandler(auth *auth.Auth) http.Handler {
 
 	// TODO progress handlers
 
-	handler := http.Handler(mux)
+	return mux
+}
+
+func apiMiddleware(handler http.Handler) http.Handler {
 	handler = recoverMiddleware(handler, apiCatchAllHandler())
 	handler = logMiddleware(handler)
-
 	return handler
 }
 
