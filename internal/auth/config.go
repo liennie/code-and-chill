@@ -13,4 +13,5 @@ type DiscordConfig struct {
 	ClientSecret    string        `yaml:"clientSecret"`
 	RedirectURI     string        `yaml:"redirectURI"`
 	ExchangeTimeout time.Duration `yaml:"exchangeTimeout"`
+	GuildID         string        `yaml:"guildID"`
 }

@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -19,6 +20,7 @@ type DiscordAuth struct {
 	clientSecret    string
 	redirectURI     string
 	exchangeTimeout time.Duration
+	guildID         string
 
 	db                *db.DB
 	bucketUser        *db.BucketKey[User]
@@ -46,6 +48,7 @@ func newDiscordAuth(config DiscordConfig, ddb *db.DB) DiscordAuth {
 		clientSecret:    strings.TrimSpace(string(secret)),
 		redirectURI:     config.RedirectURI,
 		exchangeTimeout: config.ExchangeTimeout,
+		guildID:         config.GuildID,
 
 		db:                ddb,
 		bucketUser:        db.NewBucketKey[User](ddb, db.BucketUser),
@@ -58,14 +61,20 @@ const discordTokenURL = "https://discord.com/api/oauth2/token"
 const discordTokenRevokeURL = "https://discord.com/api/oauth2/token/revoke"
 const discordAPIBaseURL = "https://discord.com/api/v10"
 const discordUserEndpoint = discordAPIBaseURL + "/users/@me"
+const discordGuildMemberEndpoint = discordAPIBaseURL + "/users/@me/guilds/%s/member"
 const discordAvatarURL = "https://cdn.discordapp.com/avatars/%s/%s.png?size=32"
 
 func (a *DiscordAuth) AuthURL(state string) string {
+	scope := "identify"
+	if a.guildID != "" {
+		scope = "identify guilds.members.read"
+	}
+
 	v := url.Values{
 		"client_id":     {a.clientID},
 		"response_type": {"code"},
 		"redirect_uri":  {a.redirectURI},
-		"scope":         {"identify"},
+		"scope":         {scope},
 		"state":         {state},
 	}
 	return discordAuthURL + "?" + v.Encode()
@@ -174,15 +183,86 @@ func (a *DiscordAuth) revoke(ctx context.Context, cli *http.Client, t token) err
 	return nil
 }
 
+type guildMember struct {
+	User   *discordUser `json:"user"`
+	Nick   *string      `json:"nick"`
+	Avatar *string      `json:"avatar"`
+}
+
+func (u *guildMember) toDiscordUser() *discordUser {
+	if u.User == nil {
+		return nil
+	}
+
+	user := u.User
+	if u.Nick != nil {
+		user.GlobalName = *u.Nick
+	}
+	if u.Avatar != nil {
+		user.Avatar = u.Avatar
+	}
+	user.GuildMember = true
+
+	return user
+}
+
 type discordUser struct {
 	ID            string  `json:"id"`
 	Username      string  `json:"username"`
 	Discriminator string  `json:"discriminator"`
 	GlobalName    string  `json:"global_name"`
 	Avatar        *string `json:"avatar"`
+	GuildMember   bool    `json:"-"`
+}
+
+func (a *DiscordAuth) getGuildMember(ctx context.Context, cli *http.Client, t token) (*discordUser, error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf(discordGuildMemberEndpoint, a.guildID), nil)
+	if err != nil {
+		return nil, fmt.Errorf("new request: %w", err)
+	}
+
+	req.Header.Set("Authorization", "Bearer "+t.AccessToken)
+
+	resp, err := cli.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("client: %w", err)
+	}
+	defer ctxlog.CloseErr(ctx, "discord user body", resp.Body)
+
+	if resp.StatusCode != http.StatusOK {
+		var dErr discordError
+		dec := json.NewDecoder(resp.Body)
+		err = dec.Decode(&dErr)
+		if err == nil && dErr.Code != 0 {
+			return nil, &dErr
+		}
+
+		return nil, fmt.Errorf("status %d: %s", resp.StatusCode, resp.Status)
+	}
+
+	var member guildMember
+	dec := json.NewDecoder(resp.Body)
+	err = dec.Decode(&member)
+	if err != nil {
+		return nil, fmt.Errorf("decode response: %w", err)
+	}
+
+	return member.toDiscordUser(), nil
 }
 
 func (a *DiscordAuth) getUser(ctx context.Context, cli *http.Client, t token) (*discordUser, error) {
+	if a.guildID != "" {
+		user, err := a.getGuildMember(ctx, cli, t)
+		if err != nil {
+			if derr, ok := errors.AsType[*discordError](err); !ok || derr.Code != 10004 {
+				return nil, fmt.Errorf("get guild member: %w", err)
+			}
+		}
+		if user != nil {
+			return user, nil
+		}
+	}
+
 	req, err := http.NewRequest("GET", discordUserEndpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("new request: %w", err)
@@ -238,7 +318,9 @@ func (a *DiscordAuth) updateDB(discordUser *discordUser, token string) (*User, e
 		}
 
 		if user == nil {
-			user = &User{}
+			user = &User{
+				Hidden: !discordUser.GuildMember,
+			}
 			user.ID = newID()
 			for userBucket.Has(user.ID) {
 				user.ID = newID()

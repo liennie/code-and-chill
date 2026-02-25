@@ -27,6 +27,7 @@ auth:
     clientSecret: secret/discord.clientsecret.txt
     redirectURI: http://localhost:8080/auth/discord
     exchangeTimeout: 10s
+    guildID: "1472383140310814783"
 
 notifier:
   baseURI: http://localhost:8080/
