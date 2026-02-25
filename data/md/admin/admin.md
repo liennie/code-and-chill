@@ -2,12 +2,12 @@
 
 ## Users
 
-(()){#user-error class="error"}
+(()){#user-error .error}
 
 | Name | Admin | Hidden |
 | ---- | :---: | :----: |
 {{- range .Admin.Users }}
-| ![{{ .Name | mdesc }} avatar]({{ .AvatarURL }}){.avatar} [{{ .Name | mdesc }}](/{{ $.Event.Path }}/admin/user/{{ .ID }}) | {{ choose .Admin "[x]" "[ ]" }}{disabled=""} | {{ choose .Hidden "[x]" "[ ]" }}{disabled="" class="user-checkbox" data-user="{{ .ID }}" data-value="hidden"} |
+| ![{{ .Name | mdesc }} avatar]({{ .AvatarURL }}){.avatar} [{{ .Name | abbrev 32 | mdesc }}](/{{ $.Event.Path }}/admin/user/{{ .ID }}){{ if gt (.Name | len) 32 }}{title="{{ .Name }}"}{{- end }} | {{ choose .Admin "[x]" "[ ]" }}{disabled=""} | {{ choose .Hidden "[x]" "[ ]" }}{.user-checkbox disabled="" data-user="{{ .ID }}" data-value="hidden"} |
 {{- end }}
 
 ## Puzzles

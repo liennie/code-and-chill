@@ -293,6 +293,8 @@ article {
 	position: relative;
 	line-height: 1.5;
 	font-size: 1rem;
+	overflow-x: hidden;
+	hyphens: auto;
 }
 
 article h1 {

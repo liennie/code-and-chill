@@ -36,7 +36,7 @@
 				<a href="/{{ $.Event.Path }}/admin">Admin</a>
 				{{- end }}
 				{{- if .User }}
-				<a href="/{{ $.Event.Path }}/profile{{ if $return }}?return={{ $return }}{{ end }}" class="profile"><img src="{{ .User.Avatar }}" alt="{{ .User.Name }} avatar"><span>{{ .User.Name }}</span></a>
+				<a href="/{{ $.Event.Path }}/profile{{ if $return }}?return={{ $return }}{{ end }}" class="profile"><img src="{{ .User.Avatar }}" alt="{{ .User.Name }} avatar"><span {{- if gt (.User.Name | len) 32 }} title="{{ .User.Name }}" {{- end }}>{{ .User.Name | abbrev 32 }}</span></a>
 				{{- else }}
 				<a href="/{{ $.Event.Path }}/login{{ if $return }}?return={{ $return }}{{ end }}">Log in</a>
 				{{- end }}

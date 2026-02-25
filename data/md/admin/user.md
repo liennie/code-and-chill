@@ -1,13 +1,13 @@
-# User::(({{ .Admin.User.Name | mdesc }})){.secondary-color} {#user}
+# User::(({{ .Admin.User.Name | abbrev 32 | mdesc }})){.secondary-color {{- if gt ($.User.Name | len) 32 }} title="{{ $.User.Name }}" {{- end }}} {#user}
 
 ## Info
 
-(()){#user-error class="error"}
+(()){#user-error .error}
 
 |                 |   |
 | -               | - |
 | *Admin*         | {{ choose .Admin.User.Admin "[x]" "[ ]" }}{disabled=""} |
-| *Hidden*        | {{ choose .Admin.User.Hidden "[x]" "[ ]" }}{disabled="" class="user-checkbox" data-user="{{ .Admin.User.ID }}" data-value="hidden"} |
+| *Hidden*        | {{ choose .Admin.User.Hidden "[x]" "[ ]" }}{.user-checkbox disabled="" data-user="{{ .Admin.User.ID }}" data-value="hidden"} |
 | *ID*            | {{ .Admin.User.ID }} |
 | *Name*          | {{ .Admin.User.Name | mdesc }} |
 | *Avatar*        | ![{{ .Name | mdesc }} avatar]({{ .Admin.User.AvatarURL }}){.avatar} |
