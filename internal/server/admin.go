@@ -26,6 +26,40 @@ func adminMux(admin http.Handler, notadmin http.Handler) http.Handler {
 	})
 }
 
+func adminPuzzleProgressData(puzzle puzzles.Puzzle, userID string, progress *auth.UserProgress) puzzleProgressData {
+	ii := inputIndex(userID, puzzle)
+
+	ppd := puzzleProgressData{
+		Path:       puzzle.Path,
+		Name:       puzzle.Name,
+		Unlock:     puzzle.Unlock,
+		Input:      puzzle.Inputs[ii].File,
+		InputIndex: ii,
+	}
+	for _, t := range progress.Puzzles[puzzle.ID].Parts {
+		ppd.Solves = append(ppd.Solves, t.Time)
+	}
+
+	return ppd
+}
+
+func adminProgressData(a *auth.Auth, event puzzles.Event, userID string) *progressData {
+	progress, err := a.Progress(event.ID, userID)
+	if err != nil {
+		panic(fmt.Errorf("user %q progress: %w", userID, err))
+	}
+
+	pd := &progressData{
+		Incorrect: progress.Incorrect,
+		Timeout:   progress.Timeout,
+	}
+	for _, puzzle := range event.Puzzles {
+		pd.Puzzles = append(pd.Puzzles, adminPuzzleProgressData(puzzle, userID, progress))
+	}
+
+	return pd
+}
+
 func adminDataUser(a *auth.Auth, event puzzles.Event, id string) (*adminData, string, bool) {
 	ad := &adminData{}
 
@@ -38,31 +72,7 @@ func adminDataUser(a *auth.Auth, event puzzles.Event, id string) (*adminData, st
 	}
 
 	ad.User = user
-
-	progress, err := a.Progress(event.ID, id)
-	if err != nil {
-		panic(fmt.Errorf("user %q progress: %w", id, err))
-	}
-
-	ad.Progress = &progressData{
-		Incorrect: progress.Incorrect,
-		Timeout:   progress.Timeout,
-	}
-	for _, puzzle := range event.Puzzles {
-		ii := inputIndex(id, puzzle)
-		ppd := puzzleProgressData{
-			Path:       puzzle.Path,
-			Name:       puzzle.Name,
-			Unlock:     puzzle.Unlock,
-			Input:      puzzle.Inputs[ii].File,
-			InputIndex: ii,
-		}
-		for _, t := range progress.Puzzles[puzzle.ID].Parts {
-			ppd.Solves = append(ppd.Solves, t.Time)
-		}
-
-		ad.Progress.Puzzles = append(ad.Progress.Puzzles, ppd)
-	}
+	ad.Progress = adminProgressData(a, event, id)
 
 	return ad, user.Name, true
 }
@@ -72,7 +82,7 @@ func adminDataPuzzle(a *auth.Auth, event puzzles.Event, puzzle string) (*adminDa
 		if p.Path == puzzle {
 			ad := &adminData{
 				Puzzle:           &p,
-				PuzzleInputUsers: make([][]*auth.User, len(p.Inputs)),
+				PuzzleInputUsers: make([][]puzzleInputData, len(p.Inputs)),
 			}
 
 			users, err := a.ListUsers()
@@ -87,8 +97,18 @@ func adminDataPuzzle(a *auth.Auth, event puzzles.Event, puzzle string) (*adminDa
 				)
 			})
 			for _, id := range keys {
+				progress, err := a.Progress(event.ID, id)
+				if err != nil {
+					panic(fmt.Errorf("user %q progress: %w", id, err))
+				}
+
 				ii := inputIndex(id, p)
-				ad.PuzzleInputUsers[ii] = append(ad.PuzzleInputUsers[ii], users[id])
+				ppd := adminPuzzleProgressData(p, id, progress)
+
+				ad.PuzzleInputUsers[ii] = append(ad.PuzzleInputUsers[ii], puzzleInputData{
+					User:     users[id],
+					Progress: &ppd,
+				})
 			}
 
 			return ad, p.Name, true

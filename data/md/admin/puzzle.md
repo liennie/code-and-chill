@@ -18,7 +18,8 @@
 | [{{ .File | base }}](/{{ $.Event.Path }}/admin/puzzle/{{ $.Admin.Puzzle.Path }}/input/{{ $idx }}){#{{ .File | base }}} | |
 {{- range .Answers }} ((********)){data-spoiler="{{ . }}" data-placeholder="********"} | {{- end }}
 {{- range index $.Admin.PuzzleInputUsers $idx }}
-| | [{{ .Name | base }}](/{{ $.Event.Path }}/admin/user/{{ .ID }}) |
+| | [{{ .User.Name | base }}](/{{ $.Event.Path }}/admin/user/{{ .User.ID }}) |
+{{- range .Progress.Solves }} (({{ .Sub $.Admin.Puzzle.Unlock | formatDuration }})){title="{{ . | humanTime }}"} | {{- end }}
 {{- end }}
 | (( )){.pre-wrap} | | | |
 {{- end }}
