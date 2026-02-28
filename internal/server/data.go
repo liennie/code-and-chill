@@ -208,7 +208,11 @@ func mdDataFunc(status int, title string, content []byte) dataFunc {
 
 	return func(r *http.Request) (int, any) {
 		pd := pageDataFromContext(r.Context())
-		pd.Title = title
+		if pd.Title != "" {
+			pd.Title = title + " :: " + pd.Title
+		} else {
+			pd.Title = title
+		}
 
 		buf := &strings.Builder{}
 		if err := t.Execute(buf, pd); err != nil {

@@ -26,13 +26,13 @@ func adminMux(admin http.Handler, notadmin http.Handler) http.Handler {
 	})
 }
 
-func adminDataUser(a *auth.Auth, event puzzles.Event, id string) (*adminData, bool) {
+func adminDataUser(a *auth.Auth, event puzzles.Event, id string) (*adminData, string, bool) {
 	ad := &adminData{}
 
 	user, err := a.User(id)
 	if err != nil {
 		if _, ok := errors.AsType[*auth.ErrUserNotFound](err); ok {
-			return nil, false
+			return nil, "", false
 		}
 		panic(fmt.Errorf("user %q: %w", id, err))
 	}
@@ -64,17 +64,38 @@ func adminDataUser(a *auth.Auth, event puzzles.Event, id string) (*adminData, bo
 		ad.Progress.Puzzles = append(ad.Progress.Puzzles, ppd)
 	}
 
-	return ad, true
+	return ad, user.Name, true
 }
 
-func adminDataPuzzle(event puzzles.Event, puzzle string) (*adminData, bool) {
+func adminDataPuzzle(a *auth.Auth, event puzzles.Event, puzzle string) (*adminData, string, bool) {
 	for _, p := range event.Puzzles {
 		if p.Path == puzzle {
-			return &adminData{Puzzle: &p}, true
+			ad := &adminData{
+				Puzzle:           &p,
+				PuzzleInputUsers: make([][]*auth.User, len(p.Inputs)),
+			}
+
+			users, err := a.ListUsers()
+			if err != nil {
+				panic(fmt.Errorf("list users: %w", err))
+			}
+
+			keys := slices.SortedFunc(maps.Keys(users), func(a, b string) int {
+				return cmp.Compare(
+					strings.ToLower(users[a].Name),
+					strings.ToLower(users[b].Name),
+				)
+			})
+			for _, id := range keys {
+				ii := inputIndex(id, p)
+				ad.PuzzleInputUsers[ii] = append(ad.PuzzleInputUsers[ii], users[id])
+			}
+
+			return ad, p.Name, true
 		}
 	}
 
-	return nil, false
+	return nil, "", false
 }
 
 func adminDataIndex(a *auth.Auth, event puzzles.Event) (*adminData, bool) {
@@ -105,11 +126,12 @@ func adminMiddleware(a *auth.Auth, event puzzles.Event, next http.Handler, notFo
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		pd := pageDataFromContext(r.Context())
 		var ok bool
+		var title string
 
 		if user := r.PathValue("user"); user != "" {
-			pd.Admin, ok = adminDataUser(a, event, user)
+			pd.Admin, title, ok = adminDataUser(a, event, user)
 		} else if puzzle := r.PathValue("puzzle"); puzzle != "" {
-			pd.Admin, ok = adminDataPuzzle(event, puzzle)
+			pd.Admin, title, ok = adminDataPuzzle(a, event, puzzle)
 		} else {
 			pd.Admin, ok = adminDataIndex(a, event)
 		}
@@ -118,6 +140,8 @@ func adminMiddleware(a *auth.Auth, event puzzles.Event, next http.Handler, notFo
 			notFound.ServeHTTP(w, r)
 			return
 		}
+
+		pd.Title = title
 
 		next.ServeHTTP(w, r)
 	})

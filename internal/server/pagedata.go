@@ -101,7 +101,8 @@ type adminData struct {
 	User     *auth.User
 	Progress *progressData
 
-	Puzzle *puzzles.Puzzle
+	Puzzle           *puzzles.Puzzle
+	PuzzleInputUsers [][]*auth.User
 }
 
 type progressData struct {
