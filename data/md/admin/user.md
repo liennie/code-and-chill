@@ -1,4 +1,4 @@
-# User::(({{ .Admin.User.Name | abbrev 32 | mdesc }})){.secondary-color {{- if gt ($.User.Name | len) 32 }} title="{{ $.User.Name }}" {{- end }}} {#user}
+# User::(({{ .Admin.User.Name | abbrev 32 | cleanutf | mdesc }})){.secondary-color {{- if gt ($.User.Name | len) 32 }} title="{{ $.User.Name }}" {{- end }}} {#user}
 
 ## Info
 

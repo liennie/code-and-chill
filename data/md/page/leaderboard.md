@@ -6,13 +6,13 @@
 {{- range $idx, $_ := .Leaderboard }}
 	{{- if and $.User (eq .User.ID $.User.ID)}}
 | (({{ $idx | add 1 }})){.user} {{"" -}}
-| ![{{ .User.Name | mdesc }} avatar]({{ .User.Avatar }}){.avatar} (({{ .User.Name | abbrev 32 | mdesc }})){.user {{- if gt (.User.Name | len) 32 }} title="{{ .User.Name }}" {{- end }}} {{"" -}}
+| ![{{ .User.Name | mdesc }} avatar]({{ .User.Avatar }}){.avatar} (({{ .User.Name | abbrev 32 | cleanutf | mdesc }})){.user {{- if gt (.User.Name | len) 32 }} title="{{ .User.Name }}" {{- end }}} {{"" -}}
 | (({{ .Solved }})){.user} {{"" -}}
 | (({{ .Score }})){.user} {{"" -}}
 |
 	{{- else }}
 | {{ $idx | add 1 }} {{"" -}}
-| ![{{ .User.Name | mdesc }} avatar]({{ .User.Avatar }}){.avatar} (({{ .User.Name | abbrev 32 | mdesc }})){{ if gt (.User.Name | len) 32 }}{title="{{ .User.Name }}"}{{- end }} {{"" -}}
+| ![{{ .User.Name | mdesc }} avatar]({{ .User.Avatar }}){.avatar} (({{ .User.Name | abbrev 32 | cleanutf | mdesc }})){{ if gt (.User.Name | len) 32 }}{title="{{ .User.Name }}"}{{- end }} {{"" -}}
 | {{ .Solved }} {{"" -}}
 | {{ .Score }} {{"" -}}
 |

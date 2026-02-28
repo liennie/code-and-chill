@@ -172,6 +172,9 @@ var extraFuncs = template.FuncMap{
 	"closetag": func(tag string) template.HTML {
 		return template.HTML("</" + tag + ">")
 	},
+	"cleanutf": func(s string) string {
+		return strings.ToValidUTF8(s, "")
+	},
 }
 
 type dataFunc func(r *http.Request) (int, any)
