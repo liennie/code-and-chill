@@ -51,10 +51,4 @@
 	} else {
 		start();
 	}
-
-	window.addEventListener('pageshow', function (ev) {
-		if (ev.persisted) {
-			start();
-		}
-	});
 })();
