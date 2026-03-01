@@ -216,13 +216,13 @@ document.addEventListener('click', function (ev) {
 			const ss = String(s % 60);
 
 			if (dd > 0) {
-				return `${dd}d ${hh}h ${mm}m ${ss}s`;
+				return `${dd}d ${hh.padStart(2, '0')}h ${mm.padStart(2, '0')}m ${ss.padStart(2, '0')}s`;
 			}
 			if (hh > 0) {
-				return `${hh}h ${mm}m ${ss}s`;
+				return `${hh}h ${mm.padStart(2, '0')}m ${ss.padStart(2, '0')}s`;
 			}
 			if (mm > 0) {
-				return `${mm}m ${ss}s`;
+				return `${mm}m ${ss.padStart(2, '0')}s`;
 			}
 			return `${ss}s`;
 		}
