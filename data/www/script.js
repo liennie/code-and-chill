@@ -282,12 +282,17 @@ document.addEventListener('click', function (ev) {
 		const spoilers = document.querySelectorAll('span[data-spoiler]');
 		spoilers.forEach(function (span) {
 			const spoiler = span.getAttribute('data-spoiler');
-			const placeholder = span.getAttribute('data-placeholder') || '********';
+			const placeholder = span.textContent || '********';
+			const pad = span.getAttribute('data-pad');
 			if (spoiler !== null) {
 				span.addEventListener('click', function () {
 					const revealed = span.classList.toggle('revealed');
 					if (revealed) {
-						span.textContent = spoiler.padEnd(8, ' ');
+						switch (pad) {
+							case 'start': span.textContent = spoiler.padStart(placeholder.length, '0'); break;
+							case 'end': span.textContent = spoiler.padEnd(placeholder.length, '0'); break;
+							default: span.textContent = spoiler;
+						}
 					} else {
 						span.textContent = placeholder;
 					}
