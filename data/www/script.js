@@ -289,8 +289,8 @@ document.addEventListener('click', function (ev) {
 					const revealed = span.classList.toggle('revealed');
 					if (revealed) {
 						switch (pad) {
-							case 'start': span.textContent = spoiler.padStart(placeholder.length, '0'); break;
-							case 'end': span.textContent = spoiler.padEnd(placeholder.length, '0'); break;
+							case 'start': span.textContent = spoiler.padStart(placeholder.length, ' '); break;
+							case 'end': span.textContent = spoiler.padEnd(placeholder.length, ' '); break;
 							default: span.textContent = spoiler;
 						}
 					} else {
