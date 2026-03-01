@@ -13,7 +13,7 @@
 ## Inputs
 
 | Input | User | Part 1 | Part 2 |
-| ----- | ---- | ------ | ------ |
+| ----- | ---- | -----: | -----: |
 {{- range $idx, $_ := .Admin.Puzzle.Inputs }}
 | [{{ .File | base }}](/{{ $.Event.Path }}/admin/puzzle/{{ $.Admin.Puzzle.Path }}/input/{{ $idx }}){#{{ .File | base }}} | |
 {{- range .Answers }} ((********)){data-spoiler="{{ . }}" data-pad="start"} | {{- end }}
