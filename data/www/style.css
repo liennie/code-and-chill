@@ -14,6 +14,8 @@
 
 	--color-secondary: #5865f2;
 
+	--color-spoiler: black;
+
 	--bg: #fff;
 	--bg-code: #f9f9f9;
 	--bg-btn: #fff;
@@ -33,6 +35,8 @@ html.dark {
 	--color-inactive: #6b6b6b;
 	--color-em: #fff;
 	--color-em-shadow: rgba(255,255,255,0.5);
+
+	--color-spoiler: white;
 
 	--bg: #1b1e22;
 	--bg-code: #161718;
@@ -443,16 +447,17 @@ article .pre-wrap {
 
 article span[data-spoiler] {
 	cursor: pointer;
-	background-color: black;
-	color: black;
+	background-color: var(--color-spoiler);
+	color: var(--color-spoiler);
 	border-radius: 3px;
 	min-width: 10ch;
 	white-space: pre-wrap;
+	font-weight: 800;
 }
 
 article span[data-spoiler].revealed {
 	background-color: inherit;
-	color: inherit;
+	border: 1px dotted var(--color-spoiler);
 }
 
 article span.error {
