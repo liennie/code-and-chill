@@ -36,8 +36,10 @@ func adminPuzzleProgressData(puzzle puzzles.Puzzle, userID string, progress *aut
 		Input:      puzzle.Inputs[ii].File,
 		InputIndex: ii,
 	}
-	for _, t := range progress.Puzzles[puzzle.ID].Parts {
-		ppd.Solves = append(ppd.Solves, t.Time)
+	if progress != nil {
+		for _, t := range progress.Puzzles[puzzle.ID].Parts {
+			ppd.Solves = append(ppd.Solves, t.Time)
+		}
 	}
 
 	return ppd
@@ -48,11 +50,12 @@ func adminProgressData(a *auth.Auth, event puzzles.Event, userID string) *progre
 	if err != nil {
 		panic(fmt.Errorf("user %q progress: %w", userID, err))
 	}
-
-	pd := &progressData{
-		Incorrect: progress.Incorrect,
-		Timeout:   progress.Timeout,
+	pd := &progressData{}
+	if progress != nil {
+		pd.Incorrect = progress.Incorrect
+		pd.Timeout = progress.Timeout
 	}
+
 	for _, puzzle := range event.Puzzles {
 		pd.Puzzles = append(pd.Puzzles, adminPuzzleProgressData(puzzle, userID, progress))
 	}
