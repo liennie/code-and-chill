@@ -4,7 +4,7 @@ package eventtest
 import (
 	"testing"
 
-	"cc/internal/puzzles"
+	"github.com/liennie/code-and-chill/internal/puzzles"
 )
 
 func Test(t *testing.T, eventConfig string, solutions ...func(input []byte) []string) {

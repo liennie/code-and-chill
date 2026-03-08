@@ -6,7 +6,7 @@ import (
 	"runtime"
 	"runtime/debug"
 
-	"cc/internal/ctxlog"
+	"github.com/liennie/code-and-chill/internal/ctxlog"
 )
 
 func recoverMiddleware(next, err http.Handler) http.Handler {

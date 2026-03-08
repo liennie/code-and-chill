@@ -6,9 +6,9 @@ import (
 	"os"
 	"time"
 
-	"cc/internal/auth"
-	"cc/internal/db"
-	"cc/internal/puzzles"
+	"github.com/liennie/code-and-chill/internal/auth"
+	"github.com/liennie/code-and-chill/internal/db"
+	"github.com/liennie/code-and-chill/internal/puzzles"
 )
 
 func randomAvatar() string {

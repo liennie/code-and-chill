@@ -7,8 +7,8 @@ import (
 	"slices"
 	"time"
 
-	"cc/internal/db"
-	"cc/internal/sched"
+	"github.com/liennie/code-and-chill/internal/db"
+	"github.com/liennie/code-and-chill/internal/sched"
 
 	"github.com/robfig/cron/v3"
 )

@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"os"
 
-	"cc/internal/auth"
-	"cc/internal/ctxlog"
-	"cc/internal/db"
-	"cc/internal/notifier"
-	"cc/internal/puzzles"
-	"cc/internal/server"
-	"cc/internal/session"
+	"github.com/liennie/code-and-chill/internal/auth"
+	"github.com/liennie/code-and-chill/internal/ctxlog"
+	"github.com/liennie/code-and-chill/internal/db"
+	"github.com/liennie/code-and-chill/internal/notifier"
+	"github.com/liennie/code-and-chill/internal/puzzles"
+	"github.com/liennie/code-and-chill/internal/server"
+	"github.com/liennie/code-and-chill/internal/session"
 
 	"github.com/goccy/go-yaml"
 )

@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"cc/internal/ctxlog"
-	"cc/internal/db"
+	"github.com/liennie/code-and-chill/internal/ctxlog"
+	"github.com/liennie/code-and-chill/internal/db"
 )
 
 type DiscordAuth struct {

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"cc/internal/session"
+	"github.com/liennie/code-and-chill/internal/session"
 )
 
 type sessionCtxKey struct{}

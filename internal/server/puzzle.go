@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"cc/internal/auth"
-	"cc/internal/puzzles"
+	"github.com/liennie/code-and-chill/internal/auth"
+	"github.com/liennie/code-and-chill/internal/puzzles"
 )
 
 func eventsMiddleware(events []puzzles.Event, next http.Handler) http.Handler {

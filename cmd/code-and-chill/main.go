@@ -7,15 +7,15 @@ import (
 	"os/signal"
 	"syscall"
 
-	"cc/internal/auth"
-	"cc/internal/ctxlog"
-	"cc/internal/db"
-	"cc/internal/notifier"
-	"cc/internal/puzzles"
-	"cc/internal/rec"
-	"cc/internal/sched"
-	"cc/internal/server"
-	"cc/internal/session"
+	"github.com/liennie/code-and-chill/internal/auth"
+	"github.com/liennie/code-and-chill/internal/ctxlog"
+	"github.com/liennie/code-and-chill/internal/db"
+	"github.com/liennie/code-and-chill/internal/notifier"
+	"github.com/liennie/code-and-chill/internal/puzzles"
+	"github.com/liennie/code-and-chill/internal/rec"
+	"github.com/liennie/code-and-chill/internal/sched"
+	"github.com/liennie/code-and-chill/internal/server"
+	"github.com/liennie/code-and-chill/internal/session"
 )
 
 func run(ctx context.Context, config string) (err error) {

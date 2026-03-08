@@ -17,8 +17,8 @@ import (
 	ttemplate "text/template"
 	"time"
 
-	"cc/internal/ctxlog"
-	"cc/internal/mdext"
+	"github.com/liennie/code-and-chill/internal/ctxlog"
+	"github.com/liennie/code-and-chill/internal/mdext"
 
 	"github.com/Masterminds/sprig/v3"
 	"github.com/yuin/goldmark"

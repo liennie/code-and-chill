@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"cc/internal/auth"
-	"cc/internal/puzzles"
+	"github.com/liennie/code-and-chill/internal/auth"
+	"github.com/liennie/code-and-chill/internal/puzzles"
 )
 
 const (

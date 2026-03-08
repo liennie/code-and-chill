@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"cc/internal/ctxlog"
+	"github.com/liennie/code-and-chill/internal/ctxlog"
 
 	"github.com/goccy/go-yaml"
 )

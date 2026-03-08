@@ -2,8 +2,6 @@ package main
 
 import (
 	"bytes"
-	"cc/internal/auth"
-	"cc/internal/server"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -14,6 +12,9 @@ import (
 	"path"
 	"slices"
 	"strconv"
+
+	"github.com/liennie/code-and-chill/internal/auth"
+	"github.com/liennie/code-and-chill/internal/server"
 
 	"github.com/alexflint/go-arg"
 )

@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"sync/atomic"
 
-	"cc/internal/sched"
+	"github.com/liennie/code-and-chill/internal/sched"
 
 	"github.com/robfig/cron/v3"
 )

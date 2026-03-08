@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"strings"
 
-	"cc/internal/auth"
-	"cc/internal/puzzles"
+	"github.com/liennie/code-and-chill/internal/auth"
+	"github.com/liennie/code-and-chill/internal/puzzles"
 )
 
 func adminMux(admin http.Handler, notadmin http.Handler) http.Handler {

@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	"cc/internal/auth"
+	"github.com/liennie/code-and-chill/internal/auth"
 )
 
 type APIError struct {

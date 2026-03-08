@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"math/rand/v2"
 
-	"cc/internal/db"
+	"github.com/liennie/code-and-chill/internal/db"
 )
 
 type Auth struct {

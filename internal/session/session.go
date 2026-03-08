@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"cc/internal/db"
+	"github.com/liennie/code-and-chill/internal/db"
 )
 
 type Data struct {

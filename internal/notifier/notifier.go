@@ -11,8 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"cc/internal/ctxlog"
-	"cc/internal/puzzles"
+	"github.com/liennie/code-and-chill/internal/ctxlog"
+	"github.com/liennie/code-and-chill/internal/puzzles"
 )
 
 type Notifier struct {

@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"time"
 
-	"cc/internal/db"
+	"github.com/liennie/code-and-chill/internal/db"
 
 	"github.com/robfig/cron/v3"
 )

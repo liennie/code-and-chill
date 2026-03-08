@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"time"
 
-	"cc/internal/ctxlog"
+	"github.com/liennie/code-and-chill/internal/ctxlog"
 )
 
 type statusCapturingResponseWriter struct {

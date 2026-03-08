@@ -1,4 +1,4 @@
-module cc
+module github.com/liennie/code-and-chill
 
 go 1.26.0
 
