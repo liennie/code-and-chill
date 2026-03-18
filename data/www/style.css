@@ -484,14 +484,13 @@ article span[data-spoiler] {
 	background-color: var(--color-spoiler);
 	color: var(--color-spoiler);
 	border-radius: 3px;
-	min-width: 10ch;
+	border: 1px dotted var(--color-spoiler);
 	white-space: pre-wrap;
 	font-weight: 800;
 }
 
 article span[data-spoiler].revealed {
 	background-color: inherit;
-	border: 1px dotted var(--color-spoiler);
 }
 
 article span.error {

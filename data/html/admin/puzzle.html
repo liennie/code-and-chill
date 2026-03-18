@@ -44,7 +44,7 @@
 			<td><a id="{{ .File | base }}" href="/{{ $.Event.Path }}/admin/puzzle/{{ $.Admin.Puzzle.Path }}/input/{{ $idx }}">{{ .File | base }}</a></td>
 			<td></td>
 			{{- range .Answers }}
-			<td><span data-spoiler="{{ . }}" data-pad="start">********</span></td>
+			<td><span data-spoiler="{{ . }}" data-pad="start">**********</span></td>
 			{{- end }}
 		</tr>
 		{{- range index $.Admin.PuzzleInputUsers $idx }}
