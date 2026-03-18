@@ -321,7 +321,7 @@ article h3 {
 }
 
 article p {
-	margin: 1rem 0;
+	margin: 1.5rem 0;
 }
 
 article ul {
@@ -419,6 +419,7 @@ article table {
 }
 
 article th {
+	font-weight: 600;
 	color: var(--color-em)
 }
 
@@ -431,8 +432,41 @@ article table img {
 	vertical-align: middle;
 }
 
+article table {
+	--c1: inherit;
+	--c2: inherit;
+	--c3: inherit;
+	--c4: inherit;
+	--c5: inherit;
+
+	thead {
+		text-align: center;
+	}
+	tbody {
+		text-align: left;
+	}
+
+	th:nth-of-type(1), td:nth-of-type(1) {
+		text-align: var(--c1);
+	}
+	th:nth-of-type(2), td:nth-of-type(2) {
+		text-align: var(--c2);
+	}
+	th:nth-of-type(3), td:nth-of-type(3) {
+		text-align: var(--c3);
+	}
+	th:nth-of-type(4), td:nth-of-type(4) {
+		text-align: var(--c4);
+	}
+	th:nth-of-type(5), td:nth-of-type(5) {
+		text-align: var(--c5);
+	}
+}
+
 article .avatar {
+	display: inline-block;
 	width: 2.5ch;
+	height: 2.5ch;
 	border: 1px solid var(--line);
 }
 

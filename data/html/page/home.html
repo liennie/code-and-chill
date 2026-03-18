@@ -1,0 +1,32 @@
+<h1 id="title">{{ $.Name }}::<span class="secondary-color">{{ $.Event.Name }}</span></h1>
+
+<p>Get ready for a series of coding puzzles released <em>one at a time</em>! Each puzzle unlocks on schedule - solve them to climb the <a href="/{{ $.Event.Path }}/leaderboard">leaderboard</a> and uncover the full story as it unfolds.</p>
+
+<p>To get started:</p>
+<ul>
+	<li>Read the <a href="/{{ $.Event.Path }}/rules">rules</a></li>
+	<li>Join the <a href="/{{ $.Event.Path }}/contact">discussion</a></li>
+	{{- if not .User }}
+	<li><a href="/{{ $.Event.Path }}/login">Log in</a> to start solving</li>
+	{{- end }}
+	{{- if .PuzzleUnlocked }}
+	<li>Visit the <a href="/{{ $.Event.Path }}/latest">latest puzzle</a></li>
+	{{- end }}
+	<li>Check out the <a href="/{{ $.Event.Path }}/leaderboard">leaderboard</a></li>
+</ul>
+
+<h2 id="puzzles">Puzzles</h2>
+
+<p>Below are all the puzzles for this event. Locked puzzles will appear greyed out until they're ready to play. You can also find all the puzzles for this event in the <em>side menu</em>.</p>
+
+<ul>
+	{{- range .Puzzles }}
+	{{- if .Locked }}
+	<li><del>{{ .Name }}</del></li>
+	{{- else }}
+	<li><a href="/{{ $.Event.Path }}/puzzle/{{ .Path }}">{{ .Name }}</a>{{ if $.User }}<span class="pre-wrap">{{ repeat (.Name | len | sub $.PuzzleAlign | int) " " }}<em>{{ .Solved }}</em> / {{ .Total }}</span>{{ end }}</li>
+	{{- end }}
+	{{- end }}
+</ul>
+
+<p>Good luck, have fun, and happy puzzling!</p>

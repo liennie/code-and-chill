@@ -1,0 +1,15 @@
+<h1 id="404-not-found">404: Not Found</h1>
+
+<p>We couldn't find the page you were looking for. If you followed a link, it might be out of date.</p>
+
+<p>You can:</p>
+<ul>
+	<li>Return to the <a href="/{{ $.Event.Path }}">homepage</a></li>
+	{{- if .PuzzleUnlocked }}
+	<li>Visit the <a href="/{{ $.Event.Path }}/latest">latest puzzle</a></li>
+	<li>Explore other puzzles</li>
+	{{- end }}
+	<li>Take a break and come back later :)</li>
+</ul>
+
+<p>If this page <em>should</em> exist, please <a href="/{{ $.Event.Path }}/contact">let us know</a> so we can track it down!</p>

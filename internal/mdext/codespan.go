@@ -1,8 +1,6 @@
 package mdext
 
 import (
-	"strings"
-
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/ast"
 	"github.com/yuin/goldmark/parser"
@@ -91,29 +89,4 @@ func (r *codeSpanRenderer) renderCodeSpan(writer util.BufWriter, source []byte, 
 		_, _ = writer.WriteString("</code>")
 	}
 	return ast.WalkContinue, nil
-}
-
-func CodeStringEscape(s string) string {
-	backticks := map[int]struct{}{}
-
-	run := 0
-	for _, c := range s {
-		if c == '`' {
-			run++
-		} else {
-			backticks[run] = struct{}{}
-			run = 0
-		}
-	}
-	backticks[run] = struct{}{}
-
-	var delim string
-	for i := 2; ; i++ {
-		if _, present := backticks[i]; !present {
-			delim = strings.Repeat("`", i)
-			break
-		}
-	}
-
-	return delim + " " + s + " " + delim
 }

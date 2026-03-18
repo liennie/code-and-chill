@@ -92,11 +92,11 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 	reg := handlerRegistrar("", mux)
 
 	page := templateHandler(dataFile(fsys, "templates/page.html"))
-	badRequestDataFunc := mdDataFunc(http.StatusBadRequest, "400: Bad Request", readFile(fsys, "md/400.md"))
-	unauthorizedDataFunc := mdDataFunc(http.StatusUnauthorized, "401: Unauthorized", readFile(fsys, "md/401.md"))
+	badRequestDataFunc := htmlDataFunc(http.StatusBadRequest, "400: Bad Request", readFile(fsys, "html/400.html"))
+	unauthorizedDataFunc := htmlDataFunc(http.StatusUnauthorized, "401: Unauthorized", readFile(fsys, "html/401.html"))
 	unauthorizedHandler := page(unauthorizedDataFunc)
-	notFoundHandler := page(mdDataFunc(http.StatusNotFound, "404: Not Found", readFile(fsys, "md/404.md")))
-	internalErrorHandler := page(mdDataFunc(http.StatusInternalServerError, "500: Internal Server Error", readFile(fsys, "md/500.md")))
+	notFoundHandler := page(htmlDataFunc(http.StatusNotFound, "404: Not Found", readFile(fsys, "html/404.html")))
+	internalErrorHandler := page(htmlDataFunc(http.StatusInternalServerError, "500: Internal Server Error", readFile(fsys, "html/500.html")))
 
 	eventMiddleware := func(event puzzles.Event) func(http.Handler) http.Handler {
 		return func(handler http.Handler) http.Handler {
@@ -135,7 +135,7 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 
 	// root
 	e := pzls.Default.Path
-	reg("", "/", "md/404.md", rootMiddleware(notFoundHandler))
+	reg("", "/", "html/404.html", rootMiddleware(notFoundHandler))
 	reg("GET", "/{$}", "redirect", http.RedirectHandler("/"+e, http.StatusTemporaryRedirect))
 	// reg("GET", "/events", "redirect", http.RedirectHandler("/"+e+"/events", http.StatusTemporaryRedirect))
 	reg("GET", "/rules", "redirect", http.RedirectHandler("/"+e+"/rules", http.StatusTemporaryRedirect))
@@ -169,7 +169,7 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 	)))
 
 	// events
-	lockedDataFunc := mdDataFunc(http.StatusNotFound, "Puzzle locked", readFile(fsys, "md/puzzle/locked.md"))
+	lockedDataFunc := htmlDataFunc(http.StatusNotFound, "Puzzle locked", readFile(fsys, "html/puzzle/locked.html"))
 	for _, event := range pzls.Events {
 		e = event.Path
 
@@ -177,31 +177,31 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 		middleware := eventMiddleware(event)
 		reg("GET", "/"+e+"/", "mux", http.StripPrefix("/"+e, middleware(evMux)))
 		reg("POST", "/"+e+"/", "mux", http.StripPrefix("/"+e, middleware(evMux)))
-		reg("GET", "/"+e, "md/page/home.md", http.StripPrefix("/"+e, middleware(page(mdDataFunc(http.StatusOK, "", readFile(fsys, "md/page/home.md"))))))
+		reg("GET", "/"+e, "html/page/home.html", http.StripPrefix("/"+e, middleware(page(htmlDataFunc(http.StatusOK, "", readFile(fsys, "html/page/home.html"))))))
 
 		reg := handlerRegistrar("/"+e, evMux)
 
-		reg("GET", "/", "md/404.md", notFoundHandler)
-		// reg("GET", "/events", "md/page/events.md", eventsMiddleware(pzls.Events, page(mdDataFunc(http.StatusOK, "Events", readFile(fsys, "md/page/events.md")))))
-		reg("GET", "/rules", "md/page/rules.md", page(mdDataFunc(http.StatusOK, "Rules", readFile(fsys, "md/page/rules.md"))))
-		reg("GET", "/leaderboard", "md/page/leaderboard.md", leaderboardMiddleware(auth, event, page(mdDataFunc(http.StatusOK, "Leaderboard", readFile(fsys, "md/page/leaderboard.md")))))
-		reg("GET", "/contact", "md/page/contact.md", page(mdDataFunc(http.StatusOK, "Contact", readFile(fsys, "md/page/contact.md"))))
+		reg("GET", "/", "html/404.html", notFoundHandler)
+		// reg("GET", "/events", "html/page/events.html", eventsMiddleware(pzls.Events, page(htmlDataFunc(http.StatusOK, "Events", readFile(fsys, "html/page/events.html")))))
+		reg("GET", "/rules", "html/page/rules.html", page(htmlDataFunc(http.StatusOK, "Rules", readFile(fsys, "html/page/rules.html"))))
+		reg("GET", "/leaderboard", "html/page/leaderboard.html", leaderboardMiddleware(auth, event, page(htmlDataFunc(http.StatusOK, "Leaderboard", readFile(fsys, "html/page/leaderboard.html")))))
+		reg("GET", "/contact", "html/page/contact.html", page(htmlDataFunc(http.StatusOK, "Contact", readFile(fsys, "html/page/contact.html"))))
 		reg("GET", "/latest", "latestPuzzleRedirect", latestPuzzleRedirect(event))
 
-		reg("GET", "/login", "md/page/login.md", userMux(
+		reg("GET", "/login", "html/page/login.html", userMux(
 			http.RedirectHandler("/"+e+"/profile", http.StatusSeeOther),
-			page(mdDataFunc(http.StatusOK, "Log In", readFile(fsys, "md/page/login.md"))),
+			page(htmlDataFunc(http.StatusOK, "Log In", readFile(fsys, "html/page/login.html"))),
 		))
 		reg("GET", "/login/discord", "discordAuthHandler", userMux(
 			http.RedirectHandler("/"+e+"/profile", http.StatusSeeOther),
 			discordAuthRedirect(auth, event),
 		))
-		reg("GET", "/login/fail", "md/page/loginfail.md", userMux(
+		reg("GET", "/login/fail", "html/page/loginfail.html", userMux(
 			http.RedirectHandler("/"+e+"/profile", http.StatusSeeOther),
-			page(mdDataFunc(http.StatusUnauthorized, "Login failed", readFile(fsys, "md/page/loginfail.md"))),
+			page(htmlDataFunc(http.StatusUnauthorized, "Login failed", readFile(fsys, "html/page/loginfail.html"))),
 		))
-		reg("GET", "/profile", "md/page/profile.md", userMux(
-			page(mdDataFunc(http.StatusOK, "Profile", readFile(fsys, "md/page/profile.md"))),
+		reg("GET", "/profile", "html/page/profile.html", userMux(
+			page(htmlDataFunc(http.StatusOK, "Profile", readFile(fsys, "html/page/profile.html"))),
 			http.RedirectHandler("/"+e+"/login", http.StatusSeeOther),
 		))
 		reg("POST", "/logout", "logoutHandler", userMux(
@@ -223,30 +223,30 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 					locked:        lockedDataFunc,
 					unauth:        unauthorizedDataFunc,
 					badRequest:    badRequestDataFunc,
-					empty:         mdDataFunc(http.StatusBadRequest, puzzle.Name, readFile(fsys, "md/puzzle/empty.md")),
-					alreadySolved: mdDataFunc(http.StatusBadRequest, puzzle.Name, readFile(fsys, "md/puzzle/alreadysolved.md")),
-					badPart:       mdDataFunc(http.StatusBadRequest, puzzle.Name, readFile(fsys, "md/puzzle/badpart.md")),
-					timeout:       mdDataFunc(http.StatusTooManyRequests, puzzle.Name, readFile(fsys, "md/puzzle/timeout.md")),
-					incorrect:     mdDataFunc(http.StatusOK, puzzle.Name, readFile(fsys, "md/puzzle/incorrect.md")),
-					correct:       mdDataFunc(http.StatusOK, puzzle.Name, readFile(fsys, "md/puzzle/correct.md")),
+					empty:         htmlDataFunc(http.StatusBadRequest, puzzle.Name, readFile(fsys, "html/puzzle/empty.html")),
+					alreadySolved: htmlDataFunc(http.StatusBadRequest, puzzle.Name, readFile(fsys, "html/puzzle/alreadysolved.html")),
+					badPart:       htmlDataFunc(http.StatusBadRequest, puzzle.Name, readFile(fsys, "html/puzzle/badpart.html")),
+					timeout:       htmlDataFunc(http.StatusTooManyRequests, puzzle.Name, readFile(fsys, "html/puzzle/timeout.html")),
+					incorrect:     htmlDataFunc(http.StatusOK, puzzle.Name, readFile(fsys, "html/puzzle/incorrect.html")),
+					correct:       htmlDataFunc(http.StatusOK, puzzle.Name, readFile(fsys, "html/puzzle/correct.html")),
 				})),
 				unauthorizedHandler,
 			))
 		}
 
 		// admin
-		reg("GET", "/admin", "md/admin/admin.md", adminMux(
-			adminMiddleware(auth, event, page(mdDataFunc(http.StatusOK, "Admin", readFile(fsys, "md/admin/admin.md"))), notFoundHandler),
+		reg("GET", "/admin", "html/admin/admin.html", adminMux(
+			adminMiddleware(auth, event, page(htmlDataFunc(http.StatusOK, "Admin", readFile(fsys, "html/admin/admin.html"))), notFoundHandler),
 			notFoundHandler,
 		))
 
-		reg("GET", "/admin/user/{user}", "md/admin/user.md", adminMux(
-			adminMiddleware(auth, event, page(mdDataFunc(http.StatusOK, "Admin :: User", readFile(fsys, "md/admin/user.md"))), notFoundHandler),
+		reg("GET", "/admin/user/{user}", "html/admin/user.html", adminMux(
+			adminMiddleware(auth, event, page(htmlDataFunc(http.StatusOK, "Admin :: User", readFile(fsys, "html/admin/user.html"))), notFoundHandler),
 			notFoundHandler,
 		))
 
-		reg("GET", "/admin/puzzle/{puzzle}", "md/admin/puzzle.md", adminMux(
-			adminMiddleware(auth, event, page(mdDataFunc(http.StatusOK, "Admin :: Puzzle", readFile(fsys, "md/admin/puzzle.md"))), notFoundHandler),
+		reg("GET", "/admin/puzzle/{puzzle}", "html/admin/puzzle.html", adminMux(
+			adminMiddleware(auth, event, page(htmlDataFunc(http.StatusOK, "Admin :: Puzzle", readFile(fsys, "html/admin/puzzle.html"))), notFoundHandler),
 			notFoundHandler,
 		))
 

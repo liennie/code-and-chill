@@ -1,0 +1,12 @@
+<h1 id="incorrect">Incorrect</h1>
+
+<p>Your answer <code>{{ $.Puzzle.Submitted }}</code> is not correct. Don't give up - <a href="/{{ $.Event.Path }}/puzzle/{{ $.Puzzle.Path }}#{{ $.Puzzle.Anchor }}">return to the puzzle</a> and try again!</p>
+
+<p>Tips:</p>
+<ul>
+	<li>Re-read the puzzle carefully and check formatting</li>
+	<li>The puzzle expects a numeric or exact-token answer, submit only that token</li>
+	<li>Look for common pitfalls: off-by-one, indexing, base conversions, or subtle wording</li>
+</ul>
+
+<p>Per the <a href="/{{ $.Event.Path }}/rules#fair-play">rules</a>, do not use automated solvers or brute-force methods. If you believe there's an error, please <a href="/{{ $.Event.Path }}/contact">let us know</a>.</p>

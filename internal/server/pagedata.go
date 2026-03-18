@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"html/template"
 	"net/http"
 	"time"
 
@@ -90,6 +91,7 @@ type contentData struct {
 type partData struct {
 	Anchor     string
 	MD         string
+	HTML       template.HTML
 	Answer     string
 	WantAnswer bool
 }

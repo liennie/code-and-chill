@@ -1,0 +1,9 @@
+<h1 id="please-wait">Please wait</h1>
+
+<p>Your answer <code>{{ $.Puzzle.Submitted }}</code> cannot be submitted just yet. You recently submitted an incorrect answer and must wait <em data-timeout="{{ $.Puzzle.Timeout | rfc3339Time }}" title="{{ $.Puzzle.Timeout | humanTime }}">{{ $.Puzzle.Timeout.Sub $.Now | formatDuration }}</em> before trying again.</p>
+
+<p><a href="/{{ $.Event.Path }}/puzzle/{{ $.Puzzle.Path }}?a={{ $.Puzzle.Submitted | queryesc }}#{{ $.Puzzle.Anchor }}-answer">Return to the puzzle</a>.</p>
+
+<p>Do not attempt automated or brute-force methods - see the <a href="/{{ $.Event.Path }}/rules#fair-play">rules</a> for permitted behavior.</p>
+
+<p>If you believe the cooldown is incorrect or excessive, please <a href="/{{ $.Event.Path }}/contact">let us know</a> with the time of your last attempt and any error details.</p>

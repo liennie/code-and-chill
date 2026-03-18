@@ -1,0 +1,68 @@
+<h1 id="puzzle">Puzzle::<span class="secondary-color">{{ .Admin.Puzzle.Name }}</span></h1>
+
+<h2 id="info">Info</h2>
+
+<table>
+	<tbody>
+		<tr>
+			<th>Link</th>
+			<td><a href="/{{ $.Event.Path }}/puzzle/{{ .Admin.Puzzle.Path }}">{{ .Admin.Puzzle.Name }}</a></td>
+		</tr>
+		<tr>
+			<th>ID</th>
+			<td>{{ .Admin.Puzzle.ID }}</td>
+		</tr>
+		<tr>
+			<th>Path</th>
+			<td>{{ .Admin.Puzzle.Path }}</td>
+		</tr>
+		<tr>
+			<th>Name</th>
+			<td>{{ .Admin.Puzzle.Name }}</td>
+		</tr>
+		<tr>
+			<th>Unlock</th>
+			<td>{{ .Admin.Puzzle.Unlock | humanTime }}</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2 id="inputs">Inputs</h2>
+
+<table style="--c3:right; --c4:right;">
+	<thead>
+		<tr>
+			<th>Input</th>
+			<th>User</th>
+			<th>Part 1</th>
+			<th>Part 2</th>
+		</tr>
+	</thead>
+	<tbody>
+		{{- range $idx, $_ := .Admin.Puzzle.Inputs }}
+		<tr>
+			<td><a id="{{ .File | base }}" href="/{{ $.Event.Path }}/admin/puzzle/{{ $.Admin.Puzzle.Path }}/input/{{ $idx }}">{{ .File | base }}</a></td>
+			<td></td>
+			{{- range .Answers }}
+			<td><span data-spoiler="{{ . }}" data-pad="start">********</span></td>
+			{{- end }}
+		</tr>
+		{{- range index $.Admin.PuzzleInputUsers $idx }}
+		<tr>
+			<td></td>
+			<td><img src="{{ .User.AvatarURL }}" alt="{{ .User.Name }} avatar" class="avatar"> <a href="/{{ $.Event.Path }}/admin/user/{{ .User.ID }}" {{- if gt (.User.Name | len) 32 }} title="{{ .User.Name }}" {{- end }}>{{ .User.Name | abbrev 32 | cleanutf }}</a></td>
+			{{- range .Progress.Solves }}
+			<td><span title="{{ . | humanTime }}">{{ .Sub $.Admin.Puzzle.Unlock | formatDuration }}</span></td>
+			{{- end }}
+		</tr>
+		{{- end }}
+		<tr style="height: 2ch;"></tr>
+		{{- end }}
+	</tbody>
+</table>
+
+<h1 id="text">Text</h1>
+
+{{- range .Admin.Puzzle.Parts }}
+{{ .Text | renderMD }}
+{{- end }}

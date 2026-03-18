@@ -1,0 +1,9 @@
+<h1 id="events">Events</h1>
+
+<p>Here's a list of all events you can explore. Click on any event to see its puzzles, rules, and leaderboard.</p>
+
+<ul>
+	{{- range .Events }}
+	<li><a href="/{{ .Path }}">{{ .Name }}</a>{{ if $.User }}<span class="pre-wrap">{{ repeat (.Name | len | sub $.EventAlign | int) " " }}*{{ .Solved }}* / {{ .Total }}</span>{{ end }}</li>
+	{{- end }}
+</ul>

@@ -1,0 +1,14 @@
+<h1 id="login-failed">Login failed</h1>
+
+<p>Something went wrong during authorization.</p>
+
+<p>You can:</p>
+
+{{ $return := $.Request.URL.Query.Get "return" | trimPrefix "/" -}}
+<ul>
+	<li>Try to <a href="/{{ $.Event.Path }}/login{{ if $return }}?return={{ $return }}{{ end }}">log in</a> again</li>
+	<li>Return to the <a href="/{{ $.Event.Path }}">homepage</a></li>
+	<li>Take a break and come back later :)</li>
+</ul>
+
+<p>If you believe this is an error, please <a href="/{{ $.Event.Path }}/contact">let us know</a>.</p>

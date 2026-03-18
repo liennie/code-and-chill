@@ -1,0 +1,14 @@
+<h1 id="puzzle-locked">Puzzle locked</h1>
+
+<p>This puzzle isn't available just yet - please check back once it unlocks!</p>
+
+<p>In the meantime, you can:</p>
+
+<ul>
+	<li>Return to the <a href="/{{ $.Event.Path }}">homepage</a></li>
+	{{- if .PuzzleUnlocked }}
+	<li>Visit the <a href="/{{ $.Event.Path }}/latest">latest puzzle</a></li>
+	<li>Explore other puzzles</li>
+	{{- end }}
+	<li>Take a break and come back later :)</li>
+</ul>

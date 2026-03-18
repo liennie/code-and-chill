@@ -131,11 +131,8 @@ var extraFuncs = template.FuncMap{
 		gm := goldmark.New(
 			goldmark.WithExtensions(
 				extension.Strikethrough,
-				extension.Table,
 				&mdext.InlineAttrExtender{},
-				&mdext.RawStringExtender{},
 				&mdext.SpanExtender{},
-				&mdext.CheckboxExtender{},
 				&mdext.CodeSpanExtender{},
 			),
 			goldmark.WithParserOptions(
@@ -144,7 +141,6 @@ var extraFuncs = template.FuncMap{
 			),
 			goldmark.WithRendererOptions(
 				html.WithHardWraps(),
-				html.WithUnsafe(),
 			),
 		)
 		var buf bytes.Buffer
@@ -174,8 +170,6 @@ var extraFuncs = template.FuncMap{
 		}
 		return "", fmt.Errorf("cannot pad type %T", n)
 	},
-	"mdesc":    mdext.RawStringEscape,
-	"codeesc":  mdext.CodeStringEscape,
 	"queryesc": url.QueryEscape,
 	"choose": func(cond bool, t, f any) any {
 		if cond {
@@ -191,6 +185,10 @@ var extraFuncs = template.FuncMap{
 	},
 	"cleanutf": func(s string) string {
 		return strings.ToValidUTF8(s, "")
+	},
+	"tindent": func(tabs int, v template.HTML) template.HTML {
+		pad := strings.Repeat("\t", tabs)
+		return template.HTML("\n" + pad + strings.ReplaceAll(strings.TrimSpace(string(v)), "\n", "\n"+pad))
 	},
 }
 
@@ -240,6 +238,34 @@ func mdDataFunc(status int, title string, content []byte) dataFunc {
 
 		pd.Content.Parts = []partData{{
 			MD: buf.String(),
+		}}
+		return status, pd
+	}
+}
+
+func htmlDataFunc(status int, title string, content []byte) dataFunc {
+	t, err := template.New("html").Funcs(sprig.HtmlFuncMap()).Funcs(extraFuncs).Parse(string(content))
+	if err != nil {
+		panic(fmt.Errorf("title %q: %w", title, err))
+	}
+
+	return func(r *http.Request) (int, any) {
+		pd := pageDataFromContext(r.Context())
+		if pd.Title != "" {
+			pd.Title = title + " :: " + pd.Title
+		} else {
+			pd.Title = title
+		}
+
+		buf := &strings.Builder{}
+		if err := t.Execute(buf, pd); err != nil {
+			logger := ctxlog.Get(r.Context())
+			logger.Error("failed to exec html", "error", err)
+			panic(err)
+		}
+
+		pd.Content.Parts = []partData{{
+			HTML: template.HTML(buf.String()),
 		}}
 		return status, pd
 	}

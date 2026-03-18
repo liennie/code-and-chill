@@ -1,0 +1,15 @@
+<h1 id="500-internal-server-error">500: Internal Server Error</h1>
+
+<p>Something went wrong on our end - but don't worry, it's not your fault!</p>
+
+<p>You can try one of the following options:</p>
+<ul>
+	<li>Return to the <a href="/{{ $.Event.Path }}">homepage</a></li>
+	{{- if .PuzzleUnlocked }}
+	<li>Visit the <a href="/{{ $.Event.Path }}/latest">latest puzzle</a></li>
+	<li>Explore other puzzles</li>
+	{{- end }}
+	<li>Take a break and come back later :)</li>
+</ul>
+
+<p>If this keeps happening, please <a href="/{{ $.Event.Path }}/contact">let us know</a> what you were doing when the error appeared.</p>

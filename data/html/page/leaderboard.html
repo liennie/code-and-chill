@@ -1,0 +1,81 @@
+<h1 id="leaderboard">Leaderboard</h1>
+
+{{ if .Leaderboard -}}
+<table style="--c1:right; --c3:right; --c4:right;">
+	<thead>
+		<tr>
+			<th>#</th>
+			<th>Name</th>
+			<th>Parts</th>
+			<th>Score</th>
+		</tr>
+	</thead>
+	<tbody>
+		{{- range $idx, $_ := .Leaderboard }}
+		<tr {{- if and $.User (eq .User.ID $.User.ID)}} class="user" {{- end }}>
+			<td>{{ $idx | add 1 }}</td>
+			<td><img src="{{ .User.Avatar }}" alt="{{ .User.Name }} avatar" class="avatar"> <span {{- if gt (.User.Name | len) 32 }} title="{{ .User.Name }}" {{- end }}>{{ .User.Name | abbrev 32 | cleanutf }}</span></td>
+			<td>{{ .Solved }}</td>
+			<td>{{ .Score }}</td>
+		</tr>
+		{{- end }}
+	</tbody>
+</table>
+
+{{- else -}}
+
+<p><em>No entries yet</em> - be the first to solve a puzzle and appear on the leaderboard!</p>
+
+{{- if .User }}
+
+{{- if .PuzzleUnlocked }}
+<p>Try the <a href="/{{ $.Event.Path }}/latest">latest puzzle</a>.</p>
+{{- end }}
+
+{{- else }}
+
+{{- if .PuzzleUnlocked }}
+<p><a href="/{{ $.Event.Path }}/login?return=leaderboard">Log in</a> and try the <a href="/{{ $.Event.Path }}/latest">latest puzzle</a>.</p>
+{{- else }}
+<p><a href="/{{ $.Event.Path }}/login?return=leaderboard">Log in</a> to start solving.</p>
+{{- end }}
+
+{{- end }}
+
+{{- end }}
+
+<h2 id="how-it-works">How it works</h2>
+
+<p>Your <em>position</em> is determined using the following criteria, in order:</p>
+<ol>
+	<li>How many <em>puzzle parts</em> you've solved,</li>
+	<li>Your <em>total score</em>, and</li>
+	<li>The time of your <em>most recent</em> correct solution (for tie-breaking).</li>
+</ol>
+
+<p>Your <em>score</em> for each puzzle part is:</p>
+<ul>
+	<li><em>1 base point</em>, plus</li>
+	<li><em>1 bonus point</em> for <em>every</em> participant who submits that part <em>after</em> you (or never submits it).</li>
+</ul>
+
+<p>For example, with <em>10</em> participants, for each puzzle part:</p>
+<ul>
+	<li>The <em>first</em> solver earns: 1 + (10 - 1) = <em>10 points</em></li>
+	<li>The <em>second</em> solver earns: 1 + (10 - 2) = <em>9 points</em></li>
+</ul>
+<p>...and so on.</p>
+
+<h2 id="additional-details">Additional details</h2>
+
+<ul>
+	<li>The leaderboard updates automatically whenever a participant submits a solution.</li>
+	<li>Participants appear on the leaderboard as soon as they submit <em>any</em> solution, correct or incorrect.</li>
+	<li>Scores are calculated using all participants who have submitted at least one solution; participants without any submissions are not included.</li>
+	<li>Each puzzle has <em>two parts</em>, and every part counts as one solved item.</li>
+	<li>The leaderboard is <em>global</em> and combines all puzzle parts from the <em>entire event</em>.</li>
+</ul>
+
+<h2 id="questions">Questions?</h2>
+
+<p>If something looks wrong or you have questions about scoring, <a href="/{{ $.Event.Path }}/contact">reach out to us</a>.</p>

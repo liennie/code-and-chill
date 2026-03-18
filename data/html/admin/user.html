@@ -1,0 +1,66 @@
+<h1 id="user">User::<span class="secondary-color" {{- if gt (.Admin.User.Name | len) 32 }} title="{{ .Admin.User.Name }}" {{- end }}>{{ .Admin.User.Name | abbrev 32 | cleanutf }}</span></h1>
+
+<h2 id="info">Info</h2>
+
+<p><span id="user-error" class="error"></span></p>
+
+<table>
+	<tbody>
+		<tr>
+			<th>Admin</th>
+			<td><input type="checkbox" disabled {{- if .Admin.User.Admin }} checked {{- end }}></td>
+		<tr>
+			<th>Hidden</th>
+			<td><input type="checkbox" class="user-checkbox" data-user="{{ .Admin.User.ID }}" data-value="hidden" disabled {{- if .Admin.User.Hidden }} checked {{- end }}></td>
+		<tr>
+			<th>ID</th>
+			<td>{{ .Admin.User.ID }}</td>
+		<tr>
+			<th>Name</th>
+			<td>{{ .Admin.User.Name }}</td>
+		<tr>
+			<th>Avatar</th>
+			<td><img src="{{ .Admin.User.AvatarURL }}" alt="{{ .Admin.User.Name }} avatar" class="avatar"></td>
+		<tr>
+			<th>Random avatar</th>
+			<td><input type="checkbox" disabled {{- if .Admin.User.RandomAvatar }} checked {{- end }}></td>
+	</tbody>
+</table>
+
+<h2 id="progress">Progress</h2>
+
+<table>
+	<tbody>
+		<tr>
+			<th>Incorrect</th>
+			<td>{{ .Admin.Progress.Incorrect }}</td>
+		</tr>
+		<tr>
+			<th>Timeout</th>
+			<td>{{ if .Admin.Progress.Timeout.After .Now }}<em data-timeout="{{ .Admin.Progress.Timeout | rfc3339Time }}" title="{{ .Admin.Progress.Timeout | humanTime }}">{{ .Admin.Progress.Timeout.Sub .Now | formatDuration }}</em>{{ end }}</td>
+		</tr>
+	</tbody>
+</table>
+
+<table style="--c3:right; --c4:right;">
+	<thead>
+		<tr>
+			<th>Puzzle</th>
+			<th>Input</th>
+			<th>Part 1</th>
+			<th>Part 2</th>
+		</tr>
+	</thead>
+	<tbody>
+		{{- range .Admin.Progress.Puzzles }}
+		<tr>
+			<td><a href="/{{ $.Event.Path }}/admin/puzzle/{{ .Path }}#{{ .Input | base }}">{{ .Name }}</a></td>
+			<td><a href="/{{ $.Event.Path }}/admin/puzzle/{{ .Path }}/input/{{ .InputIndex }}">{{ .Input | base }}</a></td>
+			{{- $puzzle := . }}
+			{{- range .Solves }}
+			<td><span title="{{ . | humanTime }}">{{ .Sub $puzzle.Unlock | formatDuration }}</span></td>
+			{{- end }}
+		</tr>
+		{{- end }}
+	</tbody>
+</table>

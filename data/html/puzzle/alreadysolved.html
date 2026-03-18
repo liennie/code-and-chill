@@ -1,0 +1,17 @@
+<h1 id="already-solved">Already solved</h1>
+
+<p>You attempted to submit an answer to an already solved part of this puzzle.</p>
+
+{{ if not $.Puzzle.Finished -}}
+<p><a href="/{{ $.Event.Path }}/puzzle/{{ $.Puzzle.Path }}#{{ $.Puzzle.Anchor }}">Continue to part {{ $.Puzzle.Part }}</a>.</p>
+{{- else -}}
+<p><em>All parts of this puzzle are solved.</em></p>
+
+<p>What happens next:</p>
+<ul>
+	<li>Continue to the <a href="/{{ $.Event.Path }}/latest">latest puzzle</a></li>
+	<li>Return to the <a href="/{{ $.Event.Path }}">homepage</a></li>
+</ul>
+{{- end }}
+
+<p>If you believe you received this message in error, please <a href="/{{ $.Event.Path }}/contact">let us know</a> and include which puzzle part you were on and the exact text you submitted.</p>

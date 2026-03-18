@@ -1,0 +1,18 @@
+<h1 id="correct">Correct</h1>
+
+<p><em>Congratulations</em> - your answer is correct!</p>
+
+{{ if not $.Puzzle.Finished -}}
+<p><a href="/{{ $.Event.Path }}/puzzle/{{ $.Puzzle.Path }}#{{ $.Puzzle.Anchor }}">Continue to part {{ $.Puzzle.Part }}</a>.</p>
+{{- else -}}
+<p><em>All parts of this puzzle are solved.</em></p>
+
+<p>What happens next:</p>
+<ul>
+	<li>Your solve has been recorded on the <a href="/{{ $.Event.Path }}/leaderboard">leaderboard</a></li>
+	<li>Continue to the <a href="/{{ $.Event.Path }}/latest">latest puzzle</a></li>
+	<li>Return to the <a href="/{{ $.Event.Path }}">homepage</a></li>
+</ul>
+
+<p>Thanks for playing - good luck on the next one!</p>
+{{- end }}

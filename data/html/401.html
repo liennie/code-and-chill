@@ -1,0 +1,13 @@
+<h1 id="401-unauthorized">401: Unauthorized</h1>
+
+{{ $return := $.Request.URL.Query.Get "return" | default $.Request.URL.Path | trimPrefix "/" -}}
+<p>You must be <a href="/{{ $.Event.Path }}/login{{ if $return }}?return={{ $return }}{{ end }}">logged in</a> to perform this action.</p>
+
+<p>You can:</p>
+<ul>
+	<li><a href="/{{ $.Event.Path }}/login{{ if $return }}?return={{ $return }}{{ end }}">Log in</a></li>
+	<li>Return to the <a href="/{{ $.Event.Path }}">homepage</a></li>
+	<li>Take a break and come back later :)</li>
+</ul>
+
+<p>If you believe this is an error, please <a href="/{{ $.Event.Path }}/contact">let us know</a>.</p>
