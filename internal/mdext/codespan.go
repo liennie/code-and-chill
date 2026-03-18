@@ -44,8 +44,8 @@ func (p *codeSpanParser) Trigger() []byte {
 func (p *codeSpanParser) Parse(parent ast.Node, block text.Reader, pc parser.Context) ast.Node {
 	before := block.PrecendingCharacter()
 	line, segment := block.PeekLine()
-	node := parser.ScanDelimiter(line, before, 1, defaultCodeSpanDelimiterProcessor)
-	if node == nil || node.OriginalLength != 1 {
+	node := parser.ScanDelimiter(line, before, 2, defaultCodeSpanDelimiterProcessor)
+	if node == nil || node.OriginalLength != 2 {
 		return nil
 	}
 

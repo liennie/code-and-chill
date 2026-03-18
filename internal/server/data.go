@@ -24,7 +24,6 @@ import (
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
-	"github.com/yuin/goldmark/renderer/html"
 )
 
 func readFile(fsys fs.FS, file string) []byte {
@@ -134,14 +133,13 @@ var extraFuncs = template.FuncMap{
 				&mdext.InlineAttrExtender{},
 				&mdext.SpanExtender{},
 				&mdext.CodeSpanExtender{},
+				&mdext.CodeBlockExtender{},
 			),
 			goldmark.WithParserOptions(
 				parser.WithAutoHeadingID(),
 				parser.WithAttribute(),
 			),
-			goldmark.WithRendererOptions(
-				html.WithHardWraps(),
-			),
+			goldmark.WithRendererOptions(),
 		)
 		var buf bytes.Buffer
 		if err := gm.Convert([]byte(md), &buf); err != nil {
