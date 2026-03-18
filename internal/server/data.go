@@ -15,8 +15,8 @@ import (
 	"strconv"
 	"strings"
 	ttemplate "text/template"
-	"time"
 
+	"github.com/liennie/code-and-chill/internal/chrono"
 	"github.com/liennie/code-and-chill/internal/ctxlog"
 	"github.com/liennie/code-and-chill/internal/mdext"
 
@@ -89,43 +89,6 @@ func cachedHandler(content []byte, ct string) http.Handler {
 }
 
 var extraFuncs = template.FuncMap{
-	"rfc3339Time": func(t time.Time) string {
-		return t.Format(time.RFC3339)
-	},
-	"humanTime": func(t time.Time) string {
-		if t.Second() == 0 {
-			return t.Format("Mon, Jan 02, 15:04")
-		}
-		return t.Format("Mon, Jan 02, 15:04:05")
-	},
-	"formatDuration": func(d time.Duration) string {
-		d = d.Round(time.Second)
-
-		dd := d / (24 * time.Hour)
-		d = d % (24 * time.Hour)
-
-		hh := d / (time.Hour)
-		d = d % (time.Hour)
-
-		mm := d / (time.Minute)
-		d = d % (time.Minute)
-
-		ss := d / (time.Second)
-
-		switch {
-		case dd > 0:
-			return fmt.Sprintf("%dd %02dh %02dm %02ds", dd, hh, mm, ss)
-
-		case hh > 0:
-			return fmt.Sprintf("%dh %02dm %02ds", hh, mm, ss)
-
-		case mm > 0:
-			return fmt.Sprintf("%dm %02ds", mm, ss)
-
-		default:
-			return fmt.Sprintf("%ds", ss)
-		}
-	},
 	"renderMD": func(md string) (template.HTML, error) {
 		gm := goldmark.New(
 			goldmark.WithExtensions(
@@ -147,6 +110,12 @@ var extraFuncs = template.FuncMap{
 		}
 		return template.HTML(buf.String()), nil
 	},
+
+	"rfc3339Time":    chrono.RFC3339Time,
+	"humanTime":      chrono.HumanTime,
+	"unlockTime":     chrono.UnlockTime,
+	"formatDuration": chrono.FormatDuration,
+
 	"puzzleClass": func(puzzle puzzleData) string {
 		if puzzle.Locked {
 			return puzzleClassLocked
@@ -159,6 +128,7 @@ var extraFuncs = template.FuncMap{
 		}
 		return puzzleClassUnlocked
 	},
+
 	"pad": func(digits int, n any) (string, error) {
 		switch n.(type) {
 		case int, int8, int16, int32, int64,
@@ -168,22 +138,28 @@ var extraFuncs = template.FuncMap{
 		}
 		return "", fmt.Errorf("cannot pad type %T", n)
 	},
+
 	"queryesc": url.QueryEscape,
+
 	"choose": func(cond bool, t, f any) any {
 		if cond {
 			return t
 		}
 		return f
 	},
+
 	"opentag": func(tag string) template.HTML {
 		return template.HTML("<" + tag)
 	},
+
 	"closetag": func(tag string) template.HTML {
 		return template.HTML("</" + tag + ">")
 	},
+
 	"cleanutf": func(s string) string {
 		return strings.ToValidUTF8(s, "")
 	},
+
 	"tindent": func(tabs int, v template.HTML) template.HTML {
 		pad := strings.Repeat("\t", tabs)
 		return template.HTML("\n" + pad + strings.ReplaceAll(strings.TrimSpace(string(v)), "\n", "\n"+pad))

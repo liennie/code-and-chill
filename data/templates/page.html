@@ -55,7 +55,7 @@
 					<li class="{{ puzzleClass . }}{{ if eq .Path $.Puzzle.Path }} active{{ end }}">
 						{{ opentag $tag }} href="/{{ $.Event.Path }}/puzzle/{{ .Path }}">
 						<span class="puzzle-label">{{ .Name }}</span>
-						{{- if .Unlock }}<span class="time hint" data-unlock="{{ .Unlock | rfc3339Time }}" title="{{ .Unlock | humanTime }}"></span>{{ end }}
+						{{- if .Unlock }}<span class="time hint" data-unlock="{{ .Unlock | rfc3339Time }}" title="{{ .Unlock | humanTime }}">{{ .Unlock | unlockTime }}</span>{{ end }}
 						{{- if $.User }}<span class="part hint"><em>{{ .Solved }}</em> / {{ .Total }}</span>{{ end }}
 						{{ closetag $tag }}
 					</li>
