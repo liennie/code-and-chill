@@ -50,7 +50,7 @@ html.dark {
 	--p-link-hover: #8791f6;
 }
 
-body, div, pre, code, span, em, .topnav a, .leftmenu a, input, button, header, nav, aside, section, article {
+body, div, pre, code, span, em, a, input, button, header, nav, aside, section, article, i {
 	--td: 0.2s;
 	transition: color var(--td), background-color var(--td), border-color var(--td), box-shadow var(--td);
 }
@@ -175,7 +175,7 @@ a {
 	padding: 0 0.6rem 0 0;
 }
 
-.topnav img {
+.topnav .avatar {
 	width: calc(2rem - 4px);
 	height: calc(2rem - 4px);
 	margin: 1px;
@@ -538,6 +538,17 @@ article input, article button {
 
 article button {
 	cursor: pointer;
+}
+
+i.discord-icon {
+	width: 2ch;
+	height: 2ch;
+	margin-right: 1ch;
+	vertical-align: middle;
+	background-color: currentColor;
+	-webkit-mask: url("/icon-discord.svg") no-repeat center / contain;
+	mask: url("/icon-discord.svg") no-repeat center / contain;
+	display: inline-block;
 }
 
 @media (max-width:700px) {

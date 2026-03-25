@@ -6,7 +6,7 @@
 
 {{ $return := $.Request.URL.Query.Get "return" | trimPrefix "/" -}}
 <ul>
-	<li>Try to <a href="/{{ $.Event.Path }}/login{{ if $return }}?return={{ $return }}{{ end }}">log in</a> again</li>
+	<li>Try to <a href="/{{ $.Event.Path }}/login/discord{{ if $return }}?return={{ $return }}{{ end }}"><i class="discord-icon"></i>log in</a> again</li>
 	<li>Return to the <a href="/{{ $.Event.Path }}">homepage</a></li>
 	<li>Take a break and come back later :)</li>
 </ul>

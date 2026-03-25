@@ -35,9 +35,9 @@
 				<a href="/{{ $.Event.Path }}/admin">Admin</a>
 				{{- end }}
 				{{- if .User }}
-				<a href="/{{ $.Event.Path }}/profile{{ if $return }}?return={{ $return }}{{ end }}" class="profile"><img src="{{ .User.Avatar }}" alt="{{ .User.Name }} avatar"><span {{- if gt (.User.Name | len) 32 }} title="{{ .User.Name }}" {{- end }}>{{ .User.Name | abbrev 32 | cleanutf }}</span></a>
+				<a href="/{{ $.Event.Path }}/profile{{ if $return }}?return={{ $return }}{{ end }}" class="profile"><img src="{{ .User.Avatar }}" alt="{{ .User.Name }} avatar" class="avatar"><span {{- if gt (.User.Name | len) 32 }} title="{{ .User.Name }}" {{- end }}>{{ .User.Name | abbrev 32 | cleanutf }}</span></a>
 				{{- else }}
-				<a href="/{{ $.Event.Path }}/login{{ if $return }}?return={{ $return }}{{ end }}">Log in</a>
+				<a href="/{{ $.Event.Path }}/login/discord{{ if $return }}?return={{ $return }}{{ end }}"><i class="discord-icon"></i>Log in</a>
 				{{- end }}
 				<label class="dark-switch" title="Toggle dark mode">
 					<input id="darkmode-toggle" type="checkbox" aria-label="Toggle dark mode" {{- if .Dark }} checked{{ end }}>
@@ -98,7 +98,7 @@
 					</form>
 					{{- else }}
 					<div class="answer">
-						<p>You must <a href="/{{ $.Event.Path }}/login{{ if $return }}?return={{ $return }}{{ end }}">log in</a> to submit an answer.</p>
+						<p>You must <a href="/{{ $.Event.Path }}/login/discord{{ if $return }}?return={{ $return }}{{ end }}"><i class="discord-icon"></i>log in</a> to submit an answer.</p>
 					</div>
 					{{- end }}
 					{{- end }}

@@ -35,9 +35,9 @@
 {{- else }}
 
 {{- if .PuzzleUnlocked }}
-<p><a href="/{{ $.Event.Path }}/login?return=leaderboard">Log in</a> and try the <a href="/{{ $.Event.Path }}/latest">latest puzzle</a>.</p>
+<p><a href="/{{ $.Event.Path }}/login/discord?return=leaderboard"><i class="discord-icon"></i>Log in</a> and try the <a href="/{{ $.Event.Path }}/latest">latest puzzle</a>.</p>
 {{- else }}
-<p><a href="/{{ $.Event.Path }}/login?return=leaderboard">Log in</a> to start solving.</p>
+<p><a href="/{{ $.Event.Path }}/login/discord?return=leaderboard"><i class="discord-icon"></i>Log in</a> to start solving.</p>
 {{- end }}
 
 {{- end }}

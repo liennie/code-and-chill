@@ -7,7 +7,7 @@
 	<li>Read the <a href="/{{ $.Event.Path }}/rules">rules</a></li>
 	<li>Join the <a href="/{{ $.Event.Path }}/contact">discussion</a></li>
 	{{- if not .User }}
-	<li><a href="/{{ $.Event.Path }}/login">Log in</a> to start solving</li>
+	<li><a href="/{{ $.Event.Path }}/login/discord"><i class="discord-icon"></i>Log in</a> to start solving</li>
 	{{- end }}
 	{{- if .PuzzleUnlocked }}
 	<li>Visit the <a href="/{{ $.Event.Path }}/latest">latest puzzle</a></li>

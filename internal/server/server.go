@@ -143,7 +143,7 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 	reg("GET", "/contact", "redirect", http.RedirectHandler("/"+e+"/contact", http.StatusTemporaryRedirect))
 	reg("GET", "/latest", "redirect", http.RedirectHandler("/"+e+"/latest", http.StatusTemporaryRedirect))
 
-	reg("GET", "/login", "redirect", http.RedirectHandler("/"+e+"/login", http.StatusTemporaryRedirect))
+	// reg("GET", "/login", "redirect", http.RedirectHandler("/"+e+"/login", http.StatusTemporaryRedirect))
 	reg("GET", "/login/fail", "redirect", http.RedirectHandler("/"+e+"/login/fail", http.StatusTemporaryRedirect))
 	reg("GET", "/profile", "redirect", http.RedirectHandler("/"+e+"/profile", http.StatusTemporaryRedirect))
 	reg("GET", "/logout", "redirect", http.RedirectHandler("/"+e+"/logout", http.StatusTemporaryRedirect))
@@ -188,10 +188,10 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 		reg("GET", "/contact", "html/page/contact.html", page(htmlDataFunc(http.StatusOK, "Contact", readFile(fsys, "html/page/contact.html"))))
 		reg("GET", "/latest", "latestPuzzleRedirect", latestPuzzleRedirect(event))
 
-		reg("GET", "/login", "html/page/login.html", userMux(
-			http.RedirectHandler("/"+e+"/profile", http.StatusSeeOther),
-			page(htmlDataFunc(http.StatusOK, "Log In", readFile(fsys, "html/page/login.html"))),
-		))
+		// reg("GET", "/login", "html/page/login.html", userMux(
+		// 	http.RedirectHandler("/"+e+"/profile", http.StatusSeeOther),
+		// 	page(htmlDataFunc(http.StatusOK, "Log In", readFile(fsys, "html/page/login.html"))),
+		// ))
 		reg("GET", "/login/discord", "discordAuthHandler", userMux(
 			http.RedirectHandler("/"+e+"/profile", http.StatusSeeOther),
 			discordAuthRedirect(auth, event),
@@ -202,7 +202,7 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 		))
 		reg("GET", "/profile", "html/page/profile.html", userMux(
 			page(htmlDataFunc(http.StatusOK, "Profile", readFile(fsys, "html/page/profile.html"))),
-			http.RedirectHandler("/"+e+"/login", http.StatusSeeOther),
+			http.RedirectHandler("/"+e+"/login/discord", http.StatusSeeOther),
 		))
 		reg("POST", "/logout", "logoutHandler", userMux(
 			logoutHandler(event),

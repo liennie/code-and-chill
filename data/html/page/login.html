@@ -1,7 +1,7 @@
 <h1 id="log-in">Log in</h1>
 
 {{ $return := $.Request.URL.Query.Get "return" | trimPrefix "/" -}}
-<p>Please <a href="/{{ $.Event.Path }}/login/discord{{ if $return }}?return={{ $return }}{{ end }}">log in using your Discord account</a> to participate in <em>Code && Chill::</em><a href="/{{ $.Event.Path }}">{{ $.Event.Name }}</a>.</p>
+<p>Please <a href="/{{ $.Event.Path }}/login/discord{{ if $return }}?return={{ $return }}{{ end }}"><i class="discord-icon"></i>log in using your Discord account</a> to participate in <em>Code && Chill::</em><a href="/{{ $.Event.Path }}">{{ $.Event.Name }}</a>.</p>
 
 <p>Logging in allows us to:</p>
 <ul>

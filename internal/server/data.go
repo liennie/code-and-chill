@@ -38,6 +38,7 @@ var contentType = map[string]string{
 	".css": "text/css; charset=utf-8",
 	".ico": "image/x-icon",
 	".js":  "text/javascript; charset=utf-8",
+	".svg": "image/svg+xml",
 	".ttf": "font/ttf",
 	".txt": "text/plain; charset=utf-8",
 }
@@ -54,6 +55,7 @@ func dataFile(fsys fs.FS, file string) ([]byte, string) {
 
 var maxAge = map[string]int{
 	"font/ttf":                       14 * 24 * 60 * 60,
+	"image/svg+xml":                  14 * 24 * 60 * 60,
 	"image/x-icon":                   14 * 24 * 60 * 60,
 	"text/css; charset=utf-8":        1 * 24 * 60 * 60,
 	"text/javascript; charset=utf-8": 1 * 24 * 60 * 60,
