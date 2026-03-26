@@ -34,7 +34,7 @@ func logMiddleware(next http.Handler) http.Handler {
 		}
 
 		logger := ctxlog.Get(ctx)
-		logger = logger.With("method", r.Method, "url", u.String())
+		logger = logger.With("remote_addr", r.RemoteAddr, "method", r.Method, "url", u.String())
 
 		ctx = ctxlog.Store(r.Context(), logger)
 		ctx = ctxlog.WithExtra(ctx)
@@ -64,6 +64,6 @@ func logMiddleware(next http.Handler) http.Handler {
 
 		logger = logger.With(ctxlog.GetExtra(ctx)...)
 
-		logger.Info("request completed", "remote_addr", r.RemoteAddr, "duration", dur.String())
+		logger.Info("request completed", "duration", dur.String())
 	})
 }

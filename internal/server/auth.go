@@ -184,7 +184,10 @@ func userMiddleware(a *auth.Auth, event puzzles.Event, next http.Handler) http.H
 				ctx = context.WithValue(ctx, progressKey, progress)
 				ctx = context.WithValue(ctx, userKey, user)
 
+				logger := ctxlog.Get(ctx)
+				logger = logger.With("user", user.Name)
 				ctxlog.AddExtra(ctx, "user", user.Name)
+				ctx = ctxlog.Store(ctx, logger)
 
 				r = r.WithContext(ctx)
 			}
