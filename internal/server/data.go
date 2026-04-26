@@ -141,7 +141,7 @@ var extraFuncs = template.FuncMap{
 		return "", fmt.Errorf("cannot pad type %T", n)
 	},
 
-	"queryesc": url.QueryEscape,
+	"queryEsc": url.QueryEscape,
 
 	"choose": func(cond bool, t, f any) any {
 		if cond {
@@ -150,19 +150,19 @@ var extraFuncs = template.FuncMap{
 		return f
 	},
 
-	"opentag": func(tag string) template.HTML {
+	"openTag": func(tag string) template.HTML {
 		return template.HTML("<" + tag)
 	},
 
-	"closetag": func(tag string) template.HTML {
+	"closeTag": func(tag string) template.HTML {
 		return template.HTML("</" + tag + ">")
 	},
 
-	"cleanutf": func(s string) string {
+	"cleanUTF": func(s string) string {
 		return strings.ToValidUTF8(s, "")
 	},
 
-	"tindent": func(tabs int, v template.HTML) template.HTML {
+	"tabIndent": func(tabs int, v template.HTML) template.HTML {
 		pad := strings.Repeat("\t", tabs)
 		return template.HTML("\n" + pad + strings.ReplaceAll(strings.TrimSpace(string(v)), "\n", "\n"+pad))
 	},

@@ -15,7 +15,7 @@
 	<tbody>
 		{{- range .Admin.Users }}
 		<tr>
-			<td><img src="{{ .AvatarURL }}" alt="{{ .Name }} avatar" class="avatar"> <a href="/{{ $.Event.Path }}/admin/user/{{ .ID }}" {{- if gt (.Name | len) 32 }} title="{{ .Name }}" {{- end }}>{{ .Name | abbrev 32 | cleanutf }}</a></td>
+			<td><img src="{{ .AvatarURL }}" alt="{{ .Name }} avatar" class="avatar"> <a href="/{{ $.Event.Path }}/admin/user/{{ .ID }}" {{- if gt (.Name | len) 32 }} title="{{ .Name }}" {{- end }}>{{ .Name | abbrev 32 | cleanUTF }}</a></td>
 			<td><input type="checkbox" disabled {{- if .Admin }} checked {{- end }}></td>
 			<td><input type="checkbox" class="user-checkbox" data-user="{{ .ID }}" data-value="hidden" disabled {{- if .Hidden }} checked {{- end }}></td>
 		</tr>

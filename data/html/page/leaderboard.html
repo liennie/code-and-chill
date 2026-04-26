@@ -14,7 +14,7 @@
 		{{- range $idx, $_ := .Leaderboard }}
 		<tr {{- if and $.User (eq .User.ID $.User.ID)}} class="user" {{- end }}>
 			<td>{{ $idx | add 1 }}</td>
-			<td><img src="{{ .User.Avatar }}" alt="{{ .User.Name }} avatar" class="avatar"> <span {{- if gt (.User.Name | len) 32 }} title="{{ .User.Name }}" {{- end }}>{{ .User.Name | abbrev 32 | cleanutf }}</span></td>
+			<td><img src="{{ .User.Avatar }}" alt="{{ .User.Name }} avatar" class="avatar"> <span {{- if gt (.User.Name | len) 32 }} title="{{ .User.Name }}" {{- end }}>{{ .User.Name | abbrev 32 | cleanUTF }}</span></td>
 			<td>{{ .Solved }}</td>
 			<td>{{ .Score }}</td>
 		</tr>

@@ -1,4 +1,4 @@
-<h1 id="profile">Profile::<span class="secondary-color" {{- if gt ($.User.Name | len) 32 }} title="{{ $.User.Name }}" {{- end }}>{{ $.User.Name | abbrev 32 | cleanutf }}</span></h1>
+<h1 id="profile">Profile::<span class="secondary-color" {{- if gt ($.User.Name | len) 32 }} title="{{ $.User.Name }}" {{- end }}>{{ $.User.Name | abbrev 32 | cleanUTF }}</span></h1>
 
 {{ $return := $.Request.URL.Query.Get "return" | trimPrefix "/" -}}
 <form action="/{{ $.Event.Path }}/logout{{ if $return }}?return={{ $return }}{{ end }}" method="POST">

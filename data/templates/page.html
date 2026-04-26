@@ -35,7 +35,7 @@
 				<a href="/{{ $.Event.Path }}/admin">Admin</a>
 				{{- end }}
 				{{- if .User }}
-				<a href="/{{ $.Event.Path }}/profile{{ if $return }}?return={{ $return }}{{ end }}" class="profile"><img src="{{ .User.Avatar }}" alt="{{ .User.Name }} avatar" class="avatar"><span {{- if gt (.User.Name | len) 32 }} title="{{ .User.Name }}" {{- end }}>{{ .User.Name | abbrev 32 | cleanutf }}</span></a>
+				<a href="/{{ $.Event.Path }}/profile{{ if $return }}?return={{ $return }}{{ end }}" class="profile"><img src="{{ .User.Avatar }}" alt="{{ .User.Name }} avatar" class="avatar"><span {{- if gt (.User.Name | len) 32 }} title="{{ .User.Name }}" {{- end }}>{{ .User.Name | abbrev 32 | cleanUTF }}</span></a>
 				{{- else }}
 				<a href="/{{ $.Event.Path }}/login/discord{{ if $return }}?return={{ $return }}{{ end }}"><i class="discord-icon"></i>Log in</a>
 				{{- end }}
@@ -53,11 +53,11 @@
 					{{- range .Puzzles }}
 					{{- $tag := choose .Locked "span" "a" }}
 					<li class="{{ puzzleClass . }}{{ if eq .Path $.Puzzle.Path }} active{{ end }}">
-						{{ opentag $tag }} href="/{{ $.Event.Path }}/puzzle/{{ .Path }}">
+						{{ openTag $tag }} href="/{{ $.Event.Path }}/puzzle/{{ .Path }}">
 						<span class="puzzle-label">{{ .Name }}</span>
 						{{- if .Unlock }}<span class="time hint" data-unlock="{{ .Unlock | rfc3339Time }}" title="{{ .Unlock | humanTime }}">{{ .Unlock | unlockTime }}</span>{{ end }}
 						{{- if $.User }}<span class="part hint"><em>{{ .Solved }}</em> / {{ .Total }}</span>{{ end }}
-						{{ closetag $tag }}
+						{{ closeTag $tag }}
 					</li>
 					{{- end }}
 				</ul>

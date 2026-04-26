@@ -50,7 +50,7 @@
 		{{- range index $.Admin.PuzzleInputUsers $idx }}
 		<tr>
 			<td></td>
-			<td><img src="{{ .User.AvatarURL }}" alt="{{ .User.Name }} avatar" class="avatar"> <a href="/{{ $.Event.Path }}/admin/user/{{ .User.ID }}" {{- if gt (.User.Name | len) 32 }} title="{{ .User.Name }}" {{- end }}>{{ .User.Name | abbrev 32 | cleanutf }}</a></td>
+			<td><img src="{{ .User.AvatarURL }}" alt="{{ .User.Name }} avatar" class="avatar"> <a href="/{{ $.Event.Path }}/admin/user/{{ .User.ID }}" {{- if gt (.User.Name | len) 32 }} title="{{ .User.Name }}" {{- end }}>{{ .User.Name | abbrev 32 | cleanUTF }}</a></td>
 			{{- range .Progress.Solves }}
 			<td><span title="{{ . | humanTime }}">{{ .Sub $.Admin.Puzzle.Unlock | formatDuration }}</span></td>
 			{{- end }}
