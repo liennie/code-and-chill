@@ -258,7 +258,7 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 
 	// global middleware
 	handler := http.Handler(mux)
-	handler = robotsMiddleware(handler)
+	handler = headersMiddleware(handler)
 	handler = hostMiddleware(config.Host, handler)
 	handler = recoverMiddleware(handler, catchAllHandler())
 	handler = logMiddleware(handler)
