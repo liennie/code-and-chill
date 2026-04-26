@@ -332,85 +332,109 @@ func puzzleAnswerDataFunc(a *auth.Auth, event puzzles.Event, pidx int, puzzle pu
 }
 
 type userProgress struct {
-	User      *auth.User
-	Puzzles   map[string]auth.PuzzleProgress
-	Solved    int
-	Score     int
-	LastSolve time.Time
-}
-
-func (p *userProgress) Time(puzzleID string, part int) (time.Time, bool) {
-	if puzzle, ok := p.Puzzles[puzzleID]; ok {
-		if part < len(puzzle.Parts) {
-			return puzzle.Parts[part].Time, true
-		}
-	}
-	return time.Time{}, false
-}
-
-func (p *userProgress) ComparePart(other *userProgress, puzzleID string, part int) int {
-	aTime, aOk := p.Time(puzzleID, part)
-	bTime, bOk := other.Time(puzzleID, part)
-	if aOk && bOk {
-		return aTime.Compare(bTime)
-	}
-	if aOk {
-		return -1
-	}
-	if bOk {
-		return 1
-	}
-	return 0
+	user      *auth.User
+	puzzles   map[string]auth.PuzzleProgress
+	solved    int
+	score     int
+	lastSolve time.Time
 }
 
 func (p *userProgress) Compare(other *userProgress) int {
 	return cmp.Or(
-		-cmp.Compare(p.Solved, other.Solved),
-		-cmp.Compare(p.Score, other.Score),
-		p.LastSolve.Compare(other.LastSolve),
-		cmp.Compare(strings.ToLower(p.User.Name), strings.ToLower(other.User.Name)),
+		-cmp.Compare(p.solved, other.solved),
+		-cmp.Compare(p.score, other.score),
+		p.lastSolve.Compare(other.lastSolve),
+		cmp.Compare(strings.ToLower(p.user.Name), strings.ToLower(other.user.Name)),
 	)
+}
+
+type userSolve struct {
+	progress *userProgress
+	time     time.Time
+	puzzle   string
+	part     int
+}
+
+func (p *userSolve) Compare(other *userSolve) int {
+	return p.time.Compare(other.time)
+}
+
+type pointKey struct {
+	puzzle string
+	part   int
+}
+
+func prepareSolves(a *auth.Auth, event puzzles.Event) ([]*userProgress, []*userSolve, map[pointKey]int) {
+	progress, err := a.AllProgress(event.ID)
+	if err != nil {
+		panic(fmt.Errorf("get all progress: %w", err))
+	}
+
+	ups := make([]*userProgress, 0, len(progress))
+	for user, p := range progress {
+		if user.Hidden {
+			continue
+		}
+
+		ups = append(ups, &userProgress{
+			user:    user,
+			puzzles: p.Puzzles,
+		})
+	}
+
+	partsTotal := 0
+	for _, puzzle := range event.Puzzles {
+		partsTotal += len(puzzle.Parts)
+	}
+
+	solves := make([]*userSolve, 0, len(ups)*partsTotal)
+	for _, up := range ups {
+		for puzzle, prog := range up.puzzles {
+			for i, part := range prog.Parts {
+				solves = append(solves, &userSolve{
+					progress: up,
+					time:     part.Time,
+					puzzle:   puzzle,
+					part:     i,
+				})
+			}
+		}
+	}
+	slices.SortFunc(solves, (*userSolve).Compare)
+
+	points := make(map[pointKey]int, partsTotal)
+	for _, puzzle := range event.Puzzles {
+		for i := range puzzle.Parts {
+			points[pointKey{
+				puzzle: puzzle.ID,
+				part:   i,
+			}] = len(ups)
+		}
+	}
+
+	return ups, solves, points
 }
 
 func leaderboardMiddleware(a *auth.Auth, event puzzles.Event, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		pd := pageDataFromContext(r.Context())
 
-		progress, err := a.AllProgress(event.ID)
-		if err != nil {
-			panic(fmt.Errorf("get all progress: %w", err))
-		}
+		ups, solves, points := prepareSolves(a, event)
 
-		ups := make([]*userProgress, 0, len(progress))
-		for user, p := range progress {
-			if user.Hidden {
-				continue
+		for _, solve := range solves {
+			up := solve.progress
+
+			up.solved++
+
+			pk := pointKey{
+				puzzle: solve.puzzle,
+				part:   solve.part,
 			}
+			up.score += points[pk]
+			points[pk]--
 
-			ups = append(ups, &userProgress{
-				User:    user,
-				Puzzles: p.Puzzles,
-			})
-		}
-
-		for _, puzzle := range event.Puzzles {
-			for part := range puzzle.Parts {
-				slices.SortFunc(ups, func(a, b *userProgress) int {
-					return a.ComparePart(b, puzzle.ID, part)
-				})
-
-				for i, up := range ups {
-					t, ok := up.Time(puzzle.ID, part)
-					if !ok {
-						continue
-					}
-
-					up.Score += len(ups) - i
-					up.Solved++
-					if t.After(up.LastSolve) {
-						up.LastSolve = t
-					}
-				}
+			if solve.time.After(up.lastSolve) {
+				up.lastSolve = solve.time
 			}
 		}
 
@@ -422,12 +446,12 @@ func leaderboardMiddleware(a *auth.Auth, event puzzles.Event, next http.Handler)
 		for _, up := range ups {
 			pd.Leaderboard = append(pd.Leaderboard, leaderboardData{
 				User: userData{
-					ID:     up.User.ID,
-					Name:   up.User.Name,
-					Avatar: up.User.AvatarURL,
+					ID:     up.user.ID,
+					Name:   up.user.Name,
+					Avatar: up.user.AvatarURL,
 				},
-				Solved: up.Solved,
-				Score:  up.Score,
+				Solved: up.solved,
+				Score:  up.score,
 			})
 		}
 
