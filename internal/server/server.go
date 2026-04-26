@@ -189,24 +189,24 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 		reg("GET", "/latest", "latestPuzzleRedirect", latestPuzzleRedirect(event))
 
 		// reg("GET", "/login", "html/page/login.html", userMux(
-		// 	http.RedirectHandler("/"+e+"/profile", http.StatusSeeOther),
+		// 	returnRedirect(e),
 		// 	page(htmlDataFunc(http.StatusOK, "Log In", readFile(fsys, "html/page/login.html"))),
 		// ))
 		reg("GET", "/login/discord", "discordAuthHandler", userMux(
-			http.RedirectHandler("/"+e+"/profile", http.StatusSeeOther),
+			returnRedirect(event),
 			discordAuthRedirect(auth, event),
 		))
 		reg("GET", "/login/fail", "html/page/loginfail.html", userMux(
-			http.RedirectHandler("/"+e+"/profile", http.StatusSeeOther),
+			returnRedirect(event),
 			page(htmlDataFunc(http.StatusUnauthorized, "Login failed", readFile(fsys, "html/page/loginfail.html"))),
 		))
 		reg("GET", "/profile", "html/page/profile.html", userMux(
 			page(htmlDataFunc(http.StatusOK, "Profile", readFile(fsys, "html/page/profile.html"))),
-			http.RedirectHandler("/"+e+"/login/discord", http.StatusSeeOther),
+			http.RedirectHandler("/"+e+"/login/discord?return=profile", http.StatusSeeOther),
 		))
 		reg("POST", "/logout", "logoutHandler", userMux(
 			logoutHandler(event),
-			http.RedirectHandler("/"+e, http.StatusSeeOther),
+			returnRedirect(event),
 		))
 
 		for pidx, puzzle := range event.Puzzles {

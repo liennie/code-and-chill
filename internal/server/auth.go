@@ -229,3 +229,13 @@ func userMux(loggedin http.Handler, loggedout http.Handler) http.Handler {
 		}
 	})
 }
+
+func returnRedirect(event puzzles.Event) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		redir := "/" + event.Path
+		if ret := r.URL.Query().Get("return"); ret != "" {
+			redir += "/" + ret
+		}
+		http.Redirect(w, r, redir, http.StatusSeeOther)
+	})
+}
