@@ -55,6 +55,8 @@ type currentPuzzleData struct {
 	Name string
 
 	Submitted string
+	Correct   string
+	Incorrect uint
 	Part      int
 	Anchor    string
 	Timeout   time.Time

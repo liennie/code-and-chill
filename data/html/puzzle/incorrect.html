@@ -1,6 +1,6 @@
 <h1 id="incorrect">Incorrect</h1>
 
-<p>Your answer <code>{{ $.Puzzle.Submitted }}</code> is not correct. Don't give up - <a href="/{{ $.Event.Path }}/puzzle/{{ $.Puzzle.Path }}#{{ $.Puzzle.Anchor }}">return to the puzzle</a> and try again!</p>
+<p>Your answer <code>{{ $.Puzzle.Submitted }}</code> is {{ $.Puzzle | incorrectMsg }}. Don't give up - <a href="/{{ $.Event.Path }}/puzzle/{{ $.Puzzle.Path }}#{{ $.Puzzle.Anchor }}">return to the puzzle</a> and try again!</p>
 
 <p>Tips:</p>
 <ul>

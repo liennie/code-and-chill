@@ -8,6 +8,7 @@ import (
 	"html/template"
 	"io"
 	"io/fs"
+	"math/rand/v2"
 	"mime"
 	"net/http"
 	"net/url"
@@ -165,6 +166,34 @@ var extraFuncs = template.FuncMap{
 	"tabIndent": func(tabs int, v template.HTML) template.HTML {
 		pad := strings.Repeat("\t", tabs)
 		return template.HTML("\n" + pad + strings.ReplaceAll(strings.TrimSpace(string(v)), "\n", "\n"+pad))
+	},
+
+	"incorrectMsg": func(puzzle currentPuzzleData) string {
+		const notCorrect = "not correct"
+
+		if puzzle.Incorrect > 2 && rand.IntN(3) != 0 {
+			return notCorrect
+		}
+
+		correct, err := strconv.Atoi(puzzle.Correct)
+		if err != nil {
+			return notCorrect
+		}
+
+		submitted, err := strconv.Atoi(puzzle.Submitted)
+		if err != nil {
+			return notCorrect
+		}
+
+		if submitted > (correct + rand.IntN(9000) + 1000) {
+			return "too high"
+		}
+
+		if submitted < (correct - rand.IntN(9000) - 1000) {
+			return "too low"
+		}
+
+		return notCorrect
 	},
 }
 

@@ -290,6 +290,8 @@ func puzzleAnswerDataFunc(a *auth.Auth, event puzzles.Event, pidx int, puzzle pu
 					progress.Timeout = pd.Now.Add(5 * time.Minute)
 				}
 
+				pd.Puzzle.Correct = correctAnswer
+				pd.Puzzle.Incorrect = progress.Incorrect
 				pd.Puzzle.Anchor = puzzle.Parts[part].ID
 				df = dataFuncs.incorrect
 				return nil
