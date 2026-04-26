@@ -185,6 +185,7 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 		// reg("GET", "/events", "html/page/events.html", eventsMiddleware(pzls.Events, page(htmlDataFunc(http.StatusOK, "Events", readFile(fsys, "html/page/events.html")))))
 		reg("GET", "/rules", "html/page/rules.html", page(htmlDataFunc(http.StatusOK, "Rules", readFile(fsys, "html/page/rules.html"))))
 		reg("GET", "/leaderboard", "html/page/leaderboard.html", leaderboardMiddleware(auth, event, page(htmlDataFunc(http.StatusOK, "Leaderboard", readFile(fsys, "html/page/leaderboard.html")))))
+		reg("GET", "/leaderboard/chart.svg", "leaderboardChart", leaderboardChart(auth, event))
 		reg("GET", "/contact", "html/page/contact.html", page(htmlDataFunc(http.StatusOK, "Contact", readFile(fsys, "html/page/contact.html"))))
 		reg("GET", "/latest", "latestPuzzleRedirect", latestPuzzleRedirect(event))
 

@@ -498,6 +498,12 @@ article span.error {
 	color: darkred;
 }
 
+article img {
+	display: block;
+	max-width: 100%;
+	height: auto;
+}
+
 .output {
 	flex: 1;
 }

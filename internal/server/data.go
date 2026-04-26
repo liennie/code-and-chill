@@ -39,7 +39,7 @@ var contentType = map[string]string{
 	".css": "text/css; charset=utf-8",
 	".ico": "image/x-icon",
 	".js":  "text/javascript; charset=utf-8",
-	".svg": "image/svg+xml",
+	".svg": "image/svg+xml; charset=utf-8",
 	".ttf": "font/ttf",
 	".txt": "text/plain; charset=utf-8",
 }
@@ -56,7 +56,7 @@ func dataFile(fsys fs.FS, file string) ([]byte, string) {
 
 var maxAge = map[string]int{
 	"font/ttf":                       14 * 24 * 60 * 60,
-	"image/svg+xml":                  14 * 24 * 60 * 60,
+	"image/svg+xml; charset=utf-8":   14 * 24 * 60 * 60,
 	"image/x-icon":                   14 * 24 * 60 * 60,
 	"text/css; charset=utf-8":        1 * 24 * 60 * 60,
 	"text/javascript; charset=utf-8": 1 * 24 * 60 * 60,
@@ -75,13 +75,15 @@ func cachedHandler(content []byte, ct string) http.Handler {
 				w.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d", maxAge))
 			}
 		}
+		w.Header().Set("ETag", etag)
+
 		if r.Header.Get("If-None-Match") == etag {
 			w.WriteHeader(http.StatusNotModified)
+			w.Write([]byte{})
 			return
 		}
 
 		w.Header().Set("Content-Length", strconv.Itoa(len(content)))
-		w.Header().Set("ETag", etag)
 		w.WriteHeader(http.StatusOK)
 		if _, err := w.Write(content); err != nil {
 			logger := ctxlog.Get(r.Context())

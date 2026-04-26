@@ -42,8 +42,6 @@ func main() {
 			return err
 		}
 
-		now := time.Now()
-
 		for i := 0; i < 30; i++ {
 			user := &auth.User{
 				Name:         fmt.Sprintf("Fake User %d", i+1),
@@ -62,7 +60,8 @@ func main() {
 
 			thresh := rand.Float64()
 			val := 1.
-			ut := now.Add(time.Duration(rand.Uint64N(uint64(10 * time.Minute)))).Add(-30 * 24 * time.Hour)
+			ct := time.Duration(rand.Uint64N(uint64(15 * time.Minute)))
+			mt := puzzles.Default.Puzzles[0].Unlock.Add(time.Duration(rand.Uint64N(uint64(len(puzzles.Default.Puzzles) * 24 * int(time.Hour)))))
 			for i, puzzle := range puzzles.Default.Puzzles {
 				pval := val
 				for j := range puzzle.Parts {
@@ -70,7 +69,12 @@ func main() {
 						break
 					}
 
-					ut = ut.Add(time.Duration(rand.Uint64N(uint64(5+i*2+j*10) * uint64(time.Minute))))
+					ut := puzzle.Unlock
+					ut = ut.Add(ct)
+					if ut.Before(mt) {
+						ut = mt
+					}
+					ut = ut.Add(time.Duration(rand.Uint64N(uint64(5+i*30+j*10) * uint64(time.Minute))))
 					progress.Puzzles[puzzle.ID] = auth.PuzzleProgress{
 						Parts: append(progress.Puzzles[puzzle.ID].Parts, auth.PartProgress{
 							Time: ut,
