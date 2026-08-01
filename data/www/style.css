@@ -3,7 +3,7 @@
 }
 
 :root {
-	--max-width: 100ch;
+	--max-width: 96ch;
 
 	--line: #1b1e22;
 
@@ -563,7 +563,7 @@ i.discord-icon {
 	}
 }
 
-@media (max-width:1200px) {
+@media (max-width:1000px) {
 	.content {
 		flex-direction: column;
 	}

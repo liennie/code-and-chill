@@ -24,8 +24,8 @@ func main() {
 	puzzles := puzzles.Load(puzzles.Config{
 		Name: "Code && Chill test",
 		Events: []puzzles.EventPathConfig{{
-			Path:   "test",
-			Config: "../cc-test/event.yaml",
+			Path:   "gt7",
+			Config: "../cc-gt-7/event.yaml",
 		}},
 	})
 

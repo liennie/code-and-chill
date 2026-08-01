@@ -12,13 +12,11 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"sync/atomic"
 	"time"
 
 	"github.com/liennie/code-and-chill/internal/auth"
 	"github.com/liennie/code-and-chill/internal/ctxlog"
 	"github.com/liennie/code-and-chill/internal/puzzles"
-	"golang.org/x/sync/singleflight"
 )
 
 func eventsMiddleware(events []puzzles.Event, next http.Handler) http.Handler {
@@ -465,51 +463,43 @@ func leaderboardMiddleware(a *auth.Auth, event puzzles.Event, next http.Handler)
 }
 
 func leaderboardChart(a *auth.Auth, event puzzles.Event) http.Handler {
-	type chartCacheEntry struct {
-		svg  []byte
-		etag string
-	}
+	axisEndTime := func(now time.Time) time.Time {
+		end := now
 
-	var (
-		cachePtr   atomic.Pointer[chartCacheEntry]
-		recomputeG singleflight.Group
-	)
+		if len(event.Puzzles) > 0 {
+			firstUnlock := event.Puzzles[0].Unlock
+			lastUnlock := event.Puzzles[len(event.Puzzles)-1].Unlock
 
-	ifNoneMatchMatches := func(ifNoneMatch, etag string) bool {
-		if etag == "" || ifNoneMatch == "" {
-			return false
-		}
+			if end.Before(firstUnlock) {
+				end = firstUnlock
+			}
 
-		for _, part := range strings.Split(ifNoneMatch, ",") {
-			tag := strings.TrimSpace(part)
-			if tag == "*" || tag == etag {
-				return true
+			maxEnd := lastUnlock.Add(48 * time.Hour)
+			if end.After(maxEnd) {
+				end = maxEnd
 			}
 		}
 
-		return false
+		return end
 	}
 
-	currentSolveETag := func() string {
-		_, solves, _ := prepareSolves(a, event)
-		lastSolve := time.Time{}
-		if len(solves) > 0 {
-			lastSolve = solves[len(solves)-1].time
+	filterSolvesAtOrBefore := func(solves []*userSolve, now time.Time) []*userSolve {
+		visible := solves[:0]
+		for _, solve := range solves {
+			if solve.time.After(now) {
+				continue
+			}
+			visible = append(visible, solve)
 		}
-		return fmt.Sprintf("\"%d\"", lastSolve.UnixNano())
+		return visible
 	}
 
-	buildChart := func() *chartCacheEntry {
+	buildChart := func(now time.Time) []byte {
 		ups, solves, points := prepareSolves(a, event)
-
-		lastSolve := time.Time{}
-		if len(solves) > 0 {
-			lastSolve = solves[len(solves)-1].time
-		}
-		etag := fmt.Sprintf("\"%d\"", lastSolve.UnixNano())
+		solves = filterSolvesAtOrBefore(solves, now)
 
 		const (
-			width   = 920
+			width   = 900
 			left    = 18.0
 			right   = 210.0
 			top     = 28.0
@@ -524,10 +514,7 @@ func leaderboardChart(a *auth.Auth, event puzzles.Event) http.Handler {
 
 		if len(solves) == 0 {
 			height := 420
-			return &chartCacheEntry{
-				svg:  []byte(fmt.Sprintf("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"%d\" height=\"%d\" viewBox=\"0 0 %d %d\"><text x=\"50%%\" y=\"50%%\" text-anchor=\"middle\" fill=\"%s\" font-size=\"24\" font-family=\"monospace\" font-weight=\"700\">No leaderboard data yet</text></svg>", width, height, width, height, textCol)),
-				etag: etag,
-			}
+			return []byte(fmt.Sprintf("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"%d\" height=\"%d\" viewBox=\"0 0 %d %d\"><text x=\"50%%\" y=\"50%%\" text-anchor=\"middle\" fill=\"%s\" font-size=\"24\" font-family=\"monospace\" font-weight=\"700\">No leaderboard data yet</text></svg>", width, height, width, height, textCol))
 		}
 
 		rankLimit := min(maxRank, len(ups))
@@ -546,10 +533,9 @@ func leaderboardChart(a *auth.Auth, event puzzles.Event) http.Handler {
 		unlockMarks := make([]unlockMark, 0, len(event.Puzzles))
 
 		start := solves[0].time
-		end := solves[len(solves)-1].time
+		end := axisEndTime(now)
 		if len(event.Puzzles) > 0 {
 			start = event.Puzzles[0].Unlock
-			latestUnlock := event.Puzzles[0].Unlock
 			for _, puzzle := range event.Puzzles {
 				unlockMarks = append(unlockMarks, unlockMark{
 					name:   puzzle.Name,
@@ -559,12 +545,6 @@ func leaderboardChart(a *auth.Auth, event puzzles.Event) http.Handler {
 				if puzzle.Unlock.Before(start) {
 					start = puzzle.Unlock
 				}
-				if puzzle.Unlock.After(latestUnlock) {
-					latestUnlock = puzzle.Unlock
-				}
-			}
-			if latestUnlock.After(end) {
-				end = latestUnlock
 			}
 
 			slices.SortFunc(unlockMarks, func(a, b unlockMark) int {
@@ -748,11 +728,18 @@ func leaderboardChart(a *auth.Auth, event puzzles.Event) http.Handler {
 			fmt.Fprintf(&b, "<line x1=\"%.2f\" y1=\"%.2f\" x2=\"%.2f\" y2=\"%.2f\" stroke=\"%s\" stroke-opacity=\"%s\" stroke-width=\"1\"/>", left, y, left+plotW, y, gridCol, strokeOpacity)
 		}
 
+		guideX := left + plotW
+		fmt.Fprintf(&b, "<line x1=\"%.2f\" y1=\"%.2f\" x2=\"%.2f\" y2=\"%.2f\" stroke=\"%s\" stroke-opacity=\"0.45\" stroke-width=\"2\" stroke-dasharray=\"4 4\"/>", guideX, top, guideX, top+plotH, gridCol)
+
 		for _, mark := range unlockMarks {
+			if mark.unlock.Before(start) || mark.unlock.After(end) {
+				continue
+			}
+
 			x := timeX(mark.unlock)
 			fmt.Fprintf(&b, "<line x1=\"%.2f\" y1=\"%.2f\" x2=\"%.2f\" y2=\"%.2f\" stroke=\"%s\" stroke-opacity=\"0.8\" stroke-width=\"2.2\"/>", x, top, x, top+plotH, textCol)
 
-			label := html.EscapeString(fmt.Sprintf("%s (%s)", mark.name, mark.unlock.Format("Jan _2 15:04")))
+			label := html.EscapeString(mark.name)
 			y := top + plotH + 14
 			fmt.Fprintf(&b, "<text x=\"%.2f\" y=\"%.2f\" text-anchor=\"start\" transform=\"rotate(15 %.2f %.2f)\" fill=\"%s\" font-size=\"13\" font-family=\"monospace\">%s</text>", x+2, y, x+2, y, textCol, label)
 		}
@@ -886,51 +873,27 @@ func leaderboardChart(a *auth.Auth, event puzzles.Event) http.Handler {
 				fmt.Fprintf(&b, "<circle cx=\"%.2f\" cy=\"%.2f\" r=\"3.4\" fill=\"%s\" stroke=\"#fff\" stroke-width=\"0.9\"/>", playerPointX(p.idx), rankY(p.rank), color)
 			}
 
-			x := playerPointX(last.idx)
+			lastX := playerPointX(last.idx)
 			y := rankY(last.rank)
+			rightX := left + plotW
+			if lastX < rightX {
+				fmt.Fprintf(&b, "<line x1=\"%.2f\" y1=\"%.2f\" x2=\"%.2f\" y2=\"%.2f\" stroke=\"%s\" stroke-opacity=\"0.78\" stroke-width=\"1.7\" stroke-linecap=\"round\"/>", lastX, y, rightX, y, color)
+			}
 
-			fmt.Fprintf(&b, "<text x=\"%.2f\" y=\"%.2f\" text-anchor=\"start\" dominant-baseline=\"middle\" fill=\"%s\" font-size=\"13\" font-family=\"monospace\">%s</text>", x+4, y, color, html.EscapeString(s.name))
+			fmt.Fprintf(&b, "<text x=\"%.2f\" y=\"%.2f\" text-anchor=\"start\" dominant-baseline=\"middle\" fill=\"%s\" font-size=\"13\" font-family=\"monospace\">%s</text>", rightX+4, y, color, html.EscapeString(s.name))
 		}
 
 		b.WriteString("</svg>")
 
-		return &chartCacheEntry{
-			svg:  []byte(b.String()),
-			etag: etag,
-		}
+		return []byte(b.String())
 	}
 
-	refreshCache := func(expectedETag string) *chartCacheEntry {
-		result, _, _ := recomputeG.Do("leaderboard-chart:"+expectedETag, func() (any, error) {
-			if cached := cachePtr.Load(); cached != nil && cached.etag == expectedETag {
-				return cached, nil
-			}
-
-			entry := buildChart()
-			cachePtr.Store(entry)
-
-			return entry, nil
-		})
-
-		return result.(*chartCacheEntry)
-	}
-
-	writeCachedResponse := func(w http.ResponseWriter, r *http.Request, entry *chartCacheEntry) {
+	writeResponse := func(w http.ResponseWriter, r *http.Request, svg []byte, cacheControl string) {
 		w.Header().Set("Content-Type", "image/svg+xml; charset=utf-8")
-		w.Header().Set("Cache-Control", "public, max-age=300, stale-while-revalidate=300, stale-if-error=86400")
-		if entry.etag != "" {
-			w.Header().Set("ETag", entry.etag)
-		}
-
-		if ifNoneMatchMatches(r.Header.Get("If-None-Match"), entry.etag) {
-			w.WriteHeader(http.StatusNotModified)
-			w.Write([]byte{})
-			return
-		}
-
-		w.Header().Set("Content-Length", strconv.Itoa(len(entry.svg)))
+		w.Header().Set("Cache-Control", cacheControl)
+		w.Header().Set("Content-Length", strconv.Itoa(len(svg)))
 		w.WriteHeader(http.StatusOK)
-		if _, err := w.Write(entry.svg); err != nil {
+		if _, err := w.Write(svg); err != nil {
 			logger := ctxlog.Get(r.Context())
 			logger.Error("failed to write response", "error", err)
 			return
@@ -938,15 +901,19 @@ func leaderboardChart(a *auth.Auth, event puzzles.Event) http.Handler {
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		expectedETag := currentSolveETag()
-		cached := cachePtr.Load()
-		ok := cached != nil && cached.etag == expectedETag
-
-		if ok {
-			writeCachedResponse(w, r, cached)
-		} else {
-			entry := refreshCache(expectedETag)
-			writeCachedResponse(w, r, entry)
+		now := time.Now()
+		cacheControl := "no-store"
+		if rawAt := r.URL.Query().Get("at"); rawAt != "" {
+			at, err := time.Parse(time.RFC3339, rawAt)
+			if err != nil {
+				http.Error(w, "invalid at query parameter; expected RFC3339 datetime", http.StatusBadRequest)
+				return
+			}
+			now = at
+			cacheControl = "public, max-age=300, stale-while-revalidate=300, stale-if-error=86400"
 		}
+
+		svg := buildChart(now)
+		writeResponse(w, r, svg, cacheControl)
 	})
 }
