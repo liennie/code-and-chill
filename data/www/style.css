@@ -50,7 +50,7 @@ html.dark {
 	--p-link-hover: #8791f6;
 }
 
-body, div, pre, code, span, em, a, input, button, header, nav, aside, section, article, i {
+body, div, pre, code, span, em, strong, a, input, button, header, nav, aside, section, article, i {
 	--td: 0.2s;
 	transition: color var(--td), background-color var(--td), border-color var(--td), box-shadow var(--td);
 }
@@ -400,7 +400,7 @@ article a:hover {
 	text-decoration: underline;
 }
 
-article em, .leftmenu li > a em {
+article em, article strong, .leftmenu li > a em {
 	font-weight: 600;
 	color: var(--color-em);
 	text-shadow: 0 0 1px var(--color-em-shadow);
