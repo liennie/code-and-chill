@@ -40,7 +40,7 @@ notifier:
 
 puzzles:
   name: "Code && Chill"
-  default: "test"
+  default: "gt7"
   events:
-    - path: test
-      config: ../cc-test/event.yaml
+    - path: gt7
+      config: ../cc-gt-7/event.yaml
