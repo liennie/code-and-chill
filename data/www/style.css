@@ -498,7 +498,7 @@ article span.error {
 	color: darkred;
 }
 
-article img {
+article img, article svg {
 	display: block;
 	max-width: 100%;
 	height: auto;

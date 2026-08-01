@@ -22,7 +22,11 @@
 	</tbody>
 </table>
 
+{{- if .LeaderboardChart }}
+{{ .LeaderboardChart }}
+{{- else }}
 <img src="/{{ $.Event.Path }}/leaderboard/chart.svg" alt="leaderboard chart">
+{{- end }}
 
 {{- else -}}
 

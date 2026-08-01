@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"html"
+	"html/template"
 	"io"
 	"math"
 	"net/http"
@@ -421,6 +422,7 @@ func prepareSolves(a *auth.Auth, event puzzles.Event) ([]*userProgress, []*userS
 func leaderboardMiddleware(a *auth.Auth, event puzzles.Event, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		pd := pageDataFromContext(r.Context())
+		pd.LeaderboardChart = template.HTML(buildLeaderboardChart(nowForChart(pd.Now), a, event))
 
 		ups, solves, points := prepareSolves(a, event)
 
@@ -462,432 +464,439 @@ func leaderboardMiddleware(a *auth.Auth, event puzzles.Event, next http.Handler)
 	})
 }
 
-func leaderboardChart(a *auth.Auth, event puzzles.Event) http.Handler {
-	axisEndTime := func(now time.Time) time.Time {
-		end := now
+func nowForChart(now time.Time) time.Time {
+	if now.IsZero() {
+		return time.Now()
+	}
+	return now
+}
 
-		if len(event.Puzzles) > 0 {
-			firstUnlock := event.Puzzles[0].Unlock
-			lastUnlock := event.Puzzles[len(event.Puzzles)-1].Unlock
+func leaderboardAxisEndTime(event puzzles.Event, now time.Time) time.Time {
+	end := now
 
-			if end.Before(firstUnlock) {
-				end = firstUnlock
-			}
+	if len(event.Puzzles) > 0 {
+		firstUnlock := event.Puzzles[0].Unlock
+		lastUnlock := event.Puzzles[len(event.Puzzles)-1].Unlock
 
-			maxEnd := lastUnlock.Add(48 * time.Hour)
-			if end.After(maxEnd) {
-				end = maxEnd
-			}
+		if end.Before(firstUnlock) {
+			end = firstUnlock
 		}
 
-		return end
+		maxEnd := lastUnlock.Add(48 * time.Hour)
+		if end.After(maxEnd) {
+			end = maxEnd
+		}
 	}
 
-	filterSolvesAtOrBefore := func(solves []*userSolve, now time.Time) []*userSolve {
-		visible := solves[:0]
-		for _, solve := range solves {
-			if solve.time.After(now) {
-				continue
-			}
-			visible = append(visible, solve)
+	return end
+}
+
+func filterSolvesAtOrBefore(solves []*userSolve, now time.Time) []*userSolve {
+	visible := solves[:0]
+	for _, solve := range solves {
+		if solve.time.After(now) {
+			continue
 		}
-		return visible
+		visible = append(visible, solve)
+	}
+	return visible
+}
+
+func buildLeaderboardChart(now time.Time, a *auth.Auth, event puzzles.Event) []byte {
+	ups, solves, points := prepareSolves(a, event)
+	solves = filterSolvesAtOrBefore(solves, now)
+
+	const (
+		width   = 900
+		left    = 18.0
+		right   = 210.0
+		top     = 28.0
+		bottom  = 110.0
+		maxRank = 50
+		textCol = "#5865f2"
+		gridCol = "#808080"
+		rowGap  = 22.0
+	)
+
+	plotW := float64(width) - left - right
+
+	if len(solves) == 0 {
+		height := 420
+		return []byte(fmt.Sprintf("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"%d\" height=\"%d\" viewBox=\"0 0 %d %d\"><text x=\"50%%\" y=\"50%%\" text-anchor=\"middle\" fill=\"%s\" font-size=\"24\" font-family=\"monospace\" font-weight=\"700\">No leaderboard data yet</text></svg>", width, height, width, height, textCol))
 	}
 
-	buildChart := func(now time.Time) []byte {
-		ups, solves, points := prepareSolves(a, event)
-		solves = filterSolvesAtOrBefore(solves, now)
+	rankLimit := min(maxRank, len(ups))
+	if rankLimit <= 0 {
+		rankLimit = 1
+	}
 
-		const (
-			width   = 900
-			left    = 18.0
-			right   = 210.0
-			top     = 28.0
-			bottom  = 110.0
-			maxRank = 50
-			textCol = "#5865f2"
-			gridCol = "#808080"
-			rowGap  = 22.0
-		)
+	rows := max(rankLimit-1, 1)
+	plotH := float64(rows) * rowGap
+	height := int(top + plotH + bottom)
 
-		plotW := float64(width) - left - right
+	type unlockMark struct {
+		name   string
+		unlock time.Time
+	}
+	unlockMarks := make([]unlockMark, 0, len(event.Puzzles))
 
-		if len(solves) == 0 {
-			height := 420
-			return []byte(fmt.Sprintf("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"%d\" height=\"%d\" viewBox=\"0 0 %d %d\"><text x=\"50%%\" y=\"50%%\" text-anchor=\"middle\" fill=\"%s\" font-size=\"24\" font-family=\"monospace\" font-weight=\"700\">No leaderboard data yet</text></svg>", width, height, width, height, textCol))
-		}
-
-		rankLimit := min(maxRank, len(ups))
-		if rankLimit <= 0 {
-			rankLimit = 1
-		}
-
-		rows := max(rankLimit-1, 1)
-		plotH := float64(rows) * rowGap
-		height := int(top + plotH + bottom)
-
-		type unlockMark struct {
-			name   string
-			unlock time.Time
-		}
-		unlockMarks := make([]unlockMark, 0, len(event.Puzzles))
-
-		start := solves[0].time
-		end := axisEndTime(now)
-		if len(event.Puzzles) > 0 {
-			start = event.Puzzles[0].Unlock
-			for _, puzzle := range event.Puzzles {
-				unlockMarks = append(unlockMarks, unlockMark{
-					name:   puzzle.Name,
-					unlock: puzzle.Unlock,
-				})
-
-				if puzzle.Unlock.Before(start) {
-					start = puzzle.Unlock
-				}
-			}
-
-			slices.SortFunc(unlockMarks, func(a, b unlockMark) int {
-				return a.unlock.Compare(b.unlock)
+	start := solves[0].time
+	end := leaderboardAxisEndTime(event, now)
+	if len(event.Puzzles) > 0 {
+		start = event.Puzzles[0].Unlock
+		for _, puzzle := range event.Puzzles {
+			unlockMarks = append(unlockMarks, unlockMark{
+				name:   puzzle.Name,
+				unlock: puzzle.Unlock,
 			})
-		}
 
-		if end.Before(start) {
-			end = start
-		}
-		totalRange := end.Sub(start)
-		if totalRange <= 0 {
-			totalRange = time.Second
-		}
-
-		type chartPoint struct {
-			idx   int
-			time  time.Time
-			rank  int
-			solve bool
-		}
-
-		type chartSeries struct {
-			name   string
-			userID string
-			points []chartPoint
-		}
-
-		series := make(map[string]*chartSeries, len(ups))
-		for _, up := range ups {
-			series[up.user.ID] = &chartSeries{
-				name:   up.user.Name,
-				userID: up.user.ID,
-				points: make([]chartPoint, 0, 16),
+			if puzzle.Unlock.Before(start) {
+				start = puzzle.Unlock
 			}
 		}
 
-		for i, solve := range solves {
-			up := solve.progress
-
-			up.solved++
-
-			pk := pointKey{
-				puzzle: solve.puzzle,
-				part:   solve.part,
-			}
-			up.score += points[pk]
-			points[pk]--
-
-			if solve.time.After(up.lastSolve) {
-				up.lastSolve = solve.time
-			}
-
-			slices.SortFunc(ups, (*userProgress).Compare)
-
-			topN := min(maxRank, len(ups))
-			for rank := 1; rank <= topN; rank++ {
-				cur := ups[rank-1]
-				s := series[cur.user.ID]
-				s.points = append(s.points, chartPoint{
-					idx:   i,
-					time:  solve.time,
-					rank:  rank,
-					solve: cur.user.ID == up.user.ID,
-				})
-			}
-		}
-
-		timeX := func(t time.Time) float64 {
-			ratio := float64(t.Sub(start)) / float64(totalRange)
-			if ratio < 0 {
-				ratio = 0
-			}
-			if ratio > 1 {
-				ratio = 1
-			}
-			return left + ratio*plotW
-		}
-
-		type solveGroup struct {
-			x     float64
-			count int
-		}
-
-		rawSolveX := make([]float64, len(solves))
-		for i, solve := range solves {
-			rawSolveX[i] = timeX(solve.time)
-		}
-
-		keepSolveIdx := make([]bool, len(solves))
-		solveToClump := make([]int, len(solves))
-		for i := range solveToClump {
-			solveToClump[i] = -1
-		}
-		solveGroups := make([]solveGroup, 0, len(solves))
-
-		// Fixed clump distance in pixels to keep behavior predictable.
-		clumpGap := 8.0
-
-		for i := 0; i < len(rawSolveX); {
-			j := i + 1
-			for j < len(rawSolveX) {
-				if rawSolveX[j]-rawSolveX[j-1] > clumpGap {
-					break
-				}
-				j++
-			}
-
-			clumpIdx := len(solveGroups)
-			for k := i; k < j; k++ {
-				solveToClump[k] = clumpIdx
-			}
-
-			keep := j - 1
-			keepSolveIdx[keep] = true
-
-			groupX := rawSolveX[keep]
-			count := j - i
-			solveGroups = append(solveGroups, solveGroup{
-				x:     groupX,
-				count: count,
-			})
-			i = j
-		}
-
-		clumpSolvedByUser := make([]map[string]bool, len(solveGroups))
-		clumpLastSolveIdxByUser := make([]map[string]int, len(solveGroups))
-		for i, solve := range solves {
-			clumpIdx := solveToClump[i]
-			if clumpIdx < 0 || clumpIdx >= len(clumpSolvedByUser) {
-				continue
-			}
-			if clumpSolvedByUser[clumpIdx] == nil {
-				clumpSolvedByUser[clumpIdx] = make(map[string]bool)
-			}
-			userID := solve.progress.user.ID
-			clumpSolvedByUser[clumpIdx][userID] = true
-			if clumpLastSolveIdxByUser[clumpIdx] == nil {
-				clumpLastSolveIdxByUser[clumpIdx] = make(map[string]int)
-			}
-			clumpLastSolveIdxByUser[clumpIdx][userID] = i
-		}
-
-		pointX := func(idx int) float64 {
-			if idx >= 0 && idx < len(rawSolveX) {
-				return rawSolveX[idx]
-			}
-			return left
-		}
-
-		rankY := func(rank int) float64 {
-			if rankLimit <= 1 {
-				return top
-			}
-			ratio := float64(rank-1) / float64(rankLimit-1)
-			return top + ratio*plotH
-		}
-
-		var b strings.Builder
-		b.Grow(64 * 1024)
-		fmt.Fprintf(&b, "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"%d\" height=\"%d\" viewBox=\"0 0 %d %d\" font-weight=\"700\">", width, height, width, height)
-
-		for _, grp := range solveGroups {
-			opacity := 0.16 + 0.02*float64(grp.count-1)
-			if opacity > 0.52 {
-				opacity = 0.52
-			}
-			strokeW := 1.0
-			if grp.count > 1 {
-				strokeW = 1.2
-			}
-			fmt.Fprintf(&b, "<line x1=\"%.2f\" y1=\"%.2f\" x2=\"%.2f\" y2=\"%.2f\" stroke=\"%s\" stroke-opacity=\"%.2f\" stroke-width=\"%.1f\"/>", grp.x, top, grp.x, top+plotH, gridCol, opacity, strokeW)
-		}
-
-		for rank := 1; rank <= rankLimit; rank++ {
-			y := rankY(rank)
-			strokeOpacity := "0.22"
-			if rank == 1 || rank == rankLimit || rank == 10 || rank == 25 {
-				strokeOpacity = "0.36"
-			}
-			fmt.Fprintf(&b, "<line x1=\"%.2f\" y1=\"%.2f\" x2=\"%.2f\" y2=\"%.2f\" stroke=\"%s\" stroke-opacity=\"%s\" stroke-width=\"1\"/>", left, y, left+plotW, y, gridCol, strokeOpacity)
-		}
-
-		guideX := left + plotW
-		fmt.Fprintf(&b, "<line x1=\"%.2f\" y1=\"%.2f\" x2=\"%.2f\" y2=\"%.2f\" stroke=\"%s\" stroke-opacity=\"0.45\" stroke-width=\"2\" stroke-dasharray=\"4 4\"/>", guideX, top, guideX, top+plotH, gridCol)
-
-		for _, mark := range unlockMarks {
-			if mark.unlock.Before(start) || mark.unlock.After(end) {
-				continue
-			}
-
-			x := timeX(mark.unlock)
-			fmt.Fprintf(&b, "<line x1=\"%.2f\" y1=\"%.2f\" x2=\"%.2f\" y2=\"%.2f\" stroke=\"%s\" stroke-opacity=\"0.8\" stroke-width=\"2.2\"/>", x, top, x, top+plotH, textCol)
-
-			label := html.EscapeString(mark.name)
-			y := top + plotH + 14
-			fmt.Fprintf(&b, "<text x=\"%.2f\" y=\"%.2f\" text-anchor=\"start\" transform=\"rotate(15 %.2f %.2f)\" fill=\"%s\" font-size=\"13\" font-family=\"monospace\">%s</text>", x+2, y, x+2, y, textCol, label)
-		}
-
-		fmt.Fprintf(&b, "<line x1=\"%.2f\" y1=\"%.2f\" x2=\"%.2f\" y2=\"%.2f\" stroke=\"%s\" stroke-opacity=\"0.7\" stroke-width=\"1.5\"/>", left, top, left, top+plotH, gridCol)
-		fmt.Fprintf(&b, "<line x1=\"%.2f\" y1=\"%.2f\" x2=\"%.2f\" y2=\"%.2f\" stroke=\"%s\" stroke-opacity=\"0.7\" stroke-width=\"1.5\"/>", left, top+plotH, left+plotW, top+plotH, gridCol)
-
-		rankLabels := []int{1}
-		for _, rank := range []int{10, 25, 50} {
-			if rank > 1 && rank < rankLimit {
-				rankLabels = append(rankLabels, rank)
-			}
-		}
-		if rankLimit > 1 {
-			rankLabels = append(rankLabels, rankLimit)
-		}
-		slices.Sort(rankLabels)
-		rankLabels = slices.Compact(rankLabels)
-		for _, rank := range rankLabels {
-			y := rankY(rank)
-			fmt.Fprintf(&b, "<text x=\"%.2f\" y=\"%.2f\" text-anchor=\"end\" dominant-baseline=\"middle\" fill=\"%s\" font-size=\"13\" font-family=\"monospace\">%d</text>", left-3, y, textCol, rank)
-		}
-
-		seriesList := make([]*chartSeries, 0, len(series))
-		for _, s := range series {
-			if len(s.points) == 0 {
-				continue
-			}
-			seriesList = append(seriesList, s)
-		}
-		slices.SortFunc(seriesList, func(a, b *chartSeries) int {
-			la := a.points[len(a.points)-1].rank
-			lb := b.points[len(b.points)-1].rank
-			return cmp.Or(cmp.Compare(la, lb), cmp.Compare(strings.ToLower(a.name), strings.ToLower(b.name)))
+		slices.SortFunc(unlockMarks, func(a, b unlockMark) int {
+			return a.unlock.Compare(b.unlock)
 		})
+	}
 
-		lineColors := make(map[string]string, len(seriesList))
-		baseHue := 212.0
-		for i, s := range seriesList {
-			hue := math.Mod(baseHue+float64(i)*137.507764, 360)
-			sat := 74
-			light := 44
-			switch i % 3 {
-			case 1:
-				sat = 82
-				light = 40
-			case 2:
-				sat = 68
-				light = 50
-			}
-			lineColors[s.userID] = fmt.Sprintf("hsl(%.1f %d%% %d%%)", hue, sat, light)
+	if end.Before(start) {
+		end = start
+	}
+	totalRange := end.Sub(start)
+	if totalRange <= 0 {
+		totalRange = time.Second
+	}
+
+	type chartPoint struct {
+		idx   int
+		time  time.Time
+		rank  int
+		solve bool
+	}
+
+	type chartSeries struct {
+		name   string
+		userID string
+		points []chartPoint
+	}
+
+	series := make(map[string]*chartSeries, len(ups))
+	for _, up := range ups {
+		series[up.user.ID] = &chartSeries{
+			name:   up.user.Name,
+			userID: up.user.ID,
+			points: make([]chartPoint, 0, 16),
+		}
+	}
+
+	for i, solve := range solves {
+		up := solve.progress
+
+		up.solved++
+
+		pk := pointKey{
+			puzzle: solve.puzzle,
+			part:   solve.part,
+		}
+		up.score += points[pk]
+		points[pk]--
+
+		if solve.time.After(up.lastSolve) {
+			up.lastSolve = solve.time
 		}
 
-		for _, s := range seriesList {
-			color := lineColors[s.userID]
+		slices.SortFunc(ups, (*userProgress).Compare)
 
-			playerSolvedInClump := func(solveIdx int) bool {
-				if solveIdx < 0 || solveIdx >= len(solveToClump) {
-					return false
-				}
-				clumpIdx := solveToClump[solveIdx]
-				if clumpIdx < 0 || clumpIdx >= len(clumpSolvedByUser) {
-					return false
-				}
-				return clumpSolvedByUser[clumpIdx][s.userID]
+		topN := min(maxRank, len(ups))
+		for rank := 1; rank <= topN; rank++ {
+			cur := ups[rank-1]
+			s := series[cur.user.ID]
+			s.points = append(s.points, chartPoint{
+				idx:   i,
+				time:  solve.time,
+				rank:  rank,
+				solve: cur.user.ID == up.user.ID,
+			})
+		}
+	}
+
+	timeX := func(t time.Time) float64 {
+		ratio := float64(t.Sub(start)) / float64(totalRange)
+		if ratio < 0 {
+			ratio = 0
+		}
+		if ratio > 1 {
+			ratio = 1
+		}
+		return left + ratio*plotW
+	}
+
+	type solveGroup struct {
+		x     float64
+		count int
+	}
+
+	rawSolveX := make([]float64, len(solves))
+	for i, solve := range solves {
+		rawSolveX[i] = timeX(solve.time)
+	}
+
+	keepSolveIdx := make([]bool, len(solves))
+	solveToClump := make([]int, len(solves))
+	for i := range solveToClump {
+		solveToClump[i] = -1
+	}
+	solveGroups := make([]solveGroup, 0, len(solves))
+
+	// Fixed clump distance in pixels to keep behavior predictable.
+	clumpGap := 8.0
+
+	for i := 0; i < len(rawSolveX); {
+		j := i + 1
+		for j < len(rawSolveX) {
+			if rawSolveX[j]-rawSolveX[j-1] > clumpGap {
+				break
 			}
+			j++
+		}
 
-			playerPointX := func(solveIdx int) float64 {
-				if solveIdx < 0 || solveIdx >= len(solveToClump) {
-					return pointX(solveIdx)
-				}
+		clumpIdx := len(solveGroups)
+		for k := i; k < j; k++ {
+			solveToClump[k] = clumpIdx
+		}
 
-				clumpIdx := solveToClump[solveIdx]
-				if clumpIdx < 0 || clumpIdx >= len(clumpLastSolveIdxByUser) {
-					return pointX(solveIdx)
-				}
+		keep := j - 1
+		keepSolveIdx[keep] = true
 
-				if lastSolveIdx, ok := clumpLastSolveIdxByUser[clumpIdx][s.userID]; ok {
-					return pointX(lastSolveIdx)
-				}
+		groupX := rawSolveX[keep]
+		count := j - i
+		solveGroups = append(solveGroups, solveGroup{
+			x:     groupX,
+			count: count,
+		})
+		i = j
+	}
 
+	clumpSolvedByUser := make([]map[string]bool, len(solveGroups))
+	clumpLastSolveIdxByUser := make([]map[string]int, len(solveGroups))
+	for i, solve := range solves {
+		clumpIdx := solveToClump[i]
+		if clumpIdx < 0 || clumpIdx >= len(clumpSolvedByUser) {
+			continue
+		}
+		if clumpSolvedByUser[clumpIdx] == nil {
+			clumpSolvedByUser[clumpIdx] = make(map[string]bool)
+		}
+		userID := solve.progress.user.ID
+		clumpSolvedByUser[clumpIdx][userID] = true
+		if clumpLastSolveIdxByUser[clumpIdx] == nil {
+			clumpLastSolveIdxByUser[clumpIdx] = make(map[string]int)
+		}
+		clumpLastSolveIdxByUser[clumpIdx][userID] = i
+	}
+
+	pointX := func(idx int) float64 {
+		if idx >= 0 && idx < len(rawSolveX) {
+			return rawSolveX[idx]
+		}
+		return left
+	}
+
+	rankY := func(rank int) float64 {
+		if rankLimit <= 1 {
+			return top
+		}
+		ratio := float64(rank-1) / float64(rankLimit-1)
+		return top + ratio*plotH
+	}
+
+	var b strings.Builder
+	b.Grow(64 * 1024)
+	fmt.Fprintf(&b, "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"%d\" height=\"%d\" viewBox=\"0 0 %d %d\" font-weight=\"700\">", width, height, width, height)
+
+	for _, grp := range solveGroups {
+		opacity := 0.16 + 0.02*float64(grp.count-1)
+		if opacity > 0.52 {
+			opacity = 0.52
+		}
+		strokeW := 1.0
+		if grp.count > 1 {
+			strokeW = 1.2
+		}
+		fmt.Fprintf(&b, "<line x1=\"%.2f\" y1=\"%.2f\" x2=\"%.2f\" y2=\"%.2f\" stroke=\"%s\" stroke-opacity=\"%.2f\" stroke-width=\"%.1f\"/>", grp.x, top, grp.x, top+plotH, gridCol, opacity, strokeW)
+	}
+
+	for rank := 1; rank <= rankLimit; rank++ {
+		y := rankY(rank)
+		strokeOpacity := "0.22"
+		if rank == 1 || rank == rankLimit || rank == 10 || rank == 25 {
+			strokeOpacity = "0.36"
+		}
+		fmt.Fprintf(&b, "<line x1=\"%.2f\" y1=\"%.2f\" x2=\"%.2f\" y2=\"%.2f\" stroke=\"%s\" stroke-opacity=\"%s\" stroke-width=\"1\"/>", left, y, left+plotW, y, gridCol, strokeOpacity)
+	}
+
+	guideX := left + plotW
+	fmt.Fprintf(&b, "<line x1=\"%.2f\" y1=\"%.2f\" x2=\"%.2f\" y2=\"%.2f\" stroke=\"%s\" stroke-opacity=\"0.45\" stroke-width=\"2\" stroke-dasharray=\"4 4\"/>", guideX, top, guideX, top+plotH, gridCol)
+
+	for _, mark := range unlockMarks {
+		if mark.unlock.Before(start) || mark.unlock.After(end) {
+			continue
+		}
+
+		x := timeX(mark.unlock)
+		fmt.Fprintf(&b, "<line x1=\"%.2f\" y1=\"%.2f\" x2=\"%.2f\" y2=\"%.2f\" stroke=\"%s\" stroke-opacity=\"0.8\" stroke-width=\"2.2\"/>", x, top, x, top+plotH, textCol)
+
+		label := html.EscapeString(mark.name)
+		y := top + plotH + 14
+		fmt.Fprintf(&b, "<text x=\"%.2f\" y=\"%.2f\" text-anchor=\"start\" transform=\"rotate(15 %.2f %.2f)\" fill=\"%s\" font-size=\"13\" font-family=\"monospace\">%s</text>", x+2, y, x+2, y, textCol, label)
+	}
+
+	fmt.Fprintf(&b, "<line x1=\"%.2f\" y1=\"%.2f\" x2=\"%.2f\" y2=\"%.2f\" stroke=\"%s\" stroke-opacity=\"0.7\" stroke-width=\"1.5\"/>", left, top, left, top+plotH, gridCol)
+	fmt.Fprintf(&b, "<line x1=\"%.2f\" y1=\"%.2f\" x2=\"%.2f\" y2=\"%.2f\" stroke=\"%s\" stroke-opacity=\"0.7\" stroke-width=\"1.5\"/>", left, top+plotH, left+plotW, top+plotH, gridCol)
+
+	rankLabels := []int{1}
+	for _, rank := range []int{10, 25, 50} {
+		if rank > 1 && rank < rankLimit {
+			rankLabels = append(rankLabels, rank)
+		}
+	}
+	if rankLimit > 1 {
+		rankLabels = append(rankLabels, rankLimit)
+	}
+	slices.Sort(rankLabels)
+	rankLabels = slices.Compact(rankLabels)
+	for _, rank := range rankLabels {
+		y := rankY(rank)
+		fmt.Fprintf(&b, "<text x=\"%.2f\" y=\"%.2f\" text-anchor=\"end\" dominant-baseline=\"middle\" fill=\"%s\" font-size=\"13\" font-family=\"monospace\">%d</text>", left-3, y, textCol, rank)
+	}
+
+	seriesList := make([]*chartSeries, 0, len(series))
+	for _, s := range series {
+		if len(s.points) == 0 {
+			continue
+		}
+		seriesList = append(seriesList, s)
+	}
+	slices.SortFunc(seriesList, func(a, b *chartSeries) int {
+		la := a.points[len(a.points)-1].rank
+		lb := b.points[len(b.points)-1].rank
+		return cmp.Or(cmp.Compare(la, lb), cmp.Compare(strings.ToLower(a.name), strings.ToLower(b.name)))
+	})
+
+	lineColors := make(map[string]string, len(seriesList))
+	baseHue := 212.0
+	for i, s := range seriesList {
+		hue := math.Mod(baseHue+float64(i)*137.507764, 360)
+		sat := 74
+		light := 44
+		switch i % 3 {
+		case 1:
+			sat = 82
+			light = 40
+		case 2:
+			sat = 68
+			light = 50
+		}
+		lineColors[s.userID] = fmt.Sprintf("hsl(%.1f %d%% %d%%)", hue, sat, light)
+	}
+
+	for _, s := range seriesList {
+		color := lineColors[s.userID]
+
+		playerSolvedInClump := func(solveIdx int) bool {
+			if solveIdx < 0 || solveIdx >= len(solveToClump) {
+				return false
+			}
+			clumpIdx := solveToClump[solveIdx]
+			if clumpIdx < 0 || clumpIdx >= len(clumpSolvedByUser) {
+				return false
+			}
+			return clumpSolvedByUser[clumpIdx][s.userID]
+		}
+
+		playerPointX := func(solveIdx int) float64 {
+			if solveIdx < 0 || solveIdx >= len(solveToClump) {
 				return pointX(solveIdx)
 			}
 
-			displayPoints := make([]chartPoint, 0, len(s.points))
-			for _, p := range s.points {
-				if keepSolveIdx[p.idx] {
-					displayPoints = append(displayPoints, p)
-				}
-			}
-			if len(displayPoints) == 0 {
-				continue
+			clumpIdx := solveToClump[solveIdx]
+			if clumpIdx < 0 || clumpIdx >= len(clumpLastSolveIdxByUser) {
+				return pointX(solveIdx)
 			}
 
-			firstSolveIdx := -1
-			for i, p := range displayPoints {
-				if playerSolvedInClump(p.idx) {
-					firstSolveIdx = i
-					break
-				}
-			}
-			if firstSolveIdx < 0 {
-				continue
+			if lastSolveIdx, ok := clumpLastSolveIdxByUser[clumpIdx][s.userID]; ok {
+				return pointX(lastSolveIdx)
 			}
 
-			startIdx := firstSolveIdx
-			for startIdx < len(displayPoints) {
-				endIdx := startIdx
-				for endIdx+1 < len(displayPoints) && solveToClump[displayPoints[endIdx+1].idx] == solveToClump[displayPoints[endIdx].idx]+1 {
-					endIdx++
-				}
-
-				if endIdx > startIdx {
-					b.WriteString("<polyline fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"")
-					fmt.Fprintf(&b, " stroke=\"%s\" stroke-opacity=\"0.78\" stroke-width=\"1.7\" points=\"", color)
-					for i := startIdx; i <= endIdx; i++ {
-						p := displayPoints[i]
-						fmt.Fprintf(&b, "%.2f,%.2f ", playerPointX(p.idx), rankY(p.rank))
-					}
-					b.WriteString("\"/>")
-				}
-
-				startIdx = endIdx + 1
-			}
-
-			last := displayPoints[len(displayPoints)-1]
-			for _, p := range displayPoints {
-				if !playerSolvedInClump(p.idx) {
-					continue
-				}
-				fmt.Fprintf(&b, "<circle cx=\"%.2f\" cy=\"%.2f\" r=\"3.4\" fill=\"%s\" stroke=\"#fff\" stroke-width=\"0.9\"/>", playerPointX(p.idx), rankY(p.rank), color)
-			}
-
-			lastX := playerPointX(last.idx)
-			y := rankY(last.rank)
-			rightX := left + plotW
-			if lastX < rightX {
-				fmt.Fprintf(&b, "<line x1=\"%.2f\" y1=\"%.2f\" x2=\"%.2f\" y2=\"%.2f\" stroke=\"%s\" stroke-opacity=\"0.78\" stroke-width=\"1.7\" stroke-linecap=\"round\"/>", lastX, y, rightX, y, color)
-			}
-
-			fmt.Fprintf(&b, "<text x=\"%.2f\" y=\"%.2f\" text-anchor=\"start\" dominant-baseline=\"middle\" fill=\"%s\" font-size=\"13\" font-family=\"monospace\">%s</text>", rightX+4, y, color, html.EscapeString(s.name))
+			return pointX(solveIdx)
 		}
 
-		b.WriteString("</svg>")
+		displayPoints := make([]chartPoint, 0, len(s.points))
+		for _, p := range s.points {
+			if keepSolveIdx[p.idx] {
+				displayPoints = append(displayPoints, p)
+			}
+		}
+		if len(displayPoints) == 0 {
+			continue
+		}
 
-		return []byte(b.String())
+		firstSolveIdx := -1
+		for i, p := range displayPoints {
+			if playerSolvedInClump(p.idx) {
+				firstSolveIdx = i
+				break
+			}
+		}
+		if firstSolveIdx < 0 {
+			continue
+		}
+
+		startIdx := firstSolveIdx
+		for startIdx < len(displayPoints) {
+			endIdx := startIdx
+			for endIdx+1 < len(displayPoints) && solveToClump[displayPoints[endIdx+1].idx] == solveToClump[displayPoints[endIdx].idx]+1 {
+				endIdx++
+			}
+
+			if endIdx > startIdx {
+				b.WriteString("<polyline fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"")
+				fmt.Fprintf(&b, " stroke=\"%s\" stroke-opacity=\"0.78\" stroke-width=\"1.7\" points=\"", color)
+				for i := startIdx; i <= endIdx; i++ {
+					p := displayPoints[i]
+					fmt.Fprintf(&b, "%.2f,%.2f ", playerPointX(p.idx), rankY(p.rank))
+				}
+				b.WriteString("\"/>")
+			}
+
+			startIdx = endIdx + 1
+		}
+
+		last := displayPoints[len(displayPoints)-1]
+		for _, p := range displayPoints {
+			if !playerSolvedInClump(p.idx) {
+				continue
+			}
+			fmt.Fprintf(&b, "<circle cx=\"%.2f\" cy=\"%.2f\" r=\"3.4\" fill=\"%s\" stroke=\"#fff\" stroke-width=\"0.9\"/>", playerPointX(p.idx), rankY(p.rank), color)
+		}
+
+		lastX := playerPointX(last.idx)
+		y := rankY(last.rank)
+		rightX := left + plotW
+		if lastX < rightX {
+			fmt.Fprintf(&b, "<line x1=\"%.2f\" y1=\"%.2f\" x2=\"%.2f\" y2=\"%.2f\" stroke=\"%s\" stroke-opacity=\"0.78\" stroke-width=\"1.7\" stroke-linecap=\"round\"/>", lastX, y, rightX, y, color)
+		}
+
+		fmt.Fprintf(&b, "<text x=\"%.2f\" y=\"%.2f\" text-anchor=\"start\" dominant-baseline=\"middle\" fill=\"%s\" font-size=\"13\" font-family=\"monospace\">%s</text>", rightX+4, y, color, html.EscapeString(s.name))
 	}
 
+	b.WriteString("</svg>")
+
+	return []byte(b.String())
+}
+
+func leaderboardChart(a *auth.Auth, event puzzles.Event) http.Handler {
 	writeResponse := func(w http.ResponseWriter, r *http.Request, svg []byte, cacheControl string) {
 		w.Header().Set("Content-Type", "image/svg+xml; charset=utf-8")
 		w.Header().Set("Cache-Control", cacheControl)
@@ -913,7 +922,7 @@ func leaderboardChart(a *auth.Auth, event puzzles.Event) http.Handler {
 			cacheControl = "public, max-age=300, stale-while-revalidate=300, stale-if-error=86400"
 		}
 
-		svg := buildChart(now)
+		svg := buildLeaderboardChart(now, a, event)
 		writeResponse(w, r, svg, cacheControl)
 	})
 }

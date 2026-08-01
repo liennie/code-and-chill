@@ -35,6 +35,7 @@ type pageData struct {
 	User *userData
 
 	Leaderboard []leaderboardData
+	LeaderboardChart template.HTML
 
 	Dark    bool
 	Title   string
