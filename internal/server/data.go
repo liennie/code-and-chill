@@ -98,6 +98,7 @@ var extraFuncs = template.FuncMap{
 		gm := goldmark.New(
 			goldmark.WithExtensions(
 				extension.Strikethrough,
+				extension.Table,
 				&mdext.InlineAttrExtender{},
 				&mdext.SpanExtender{},
 				&mdext.CodeSpanExtender{},
