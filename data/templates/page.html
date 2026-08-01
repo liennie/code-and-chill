@@ -11,7 +11,7 @@
 	<link rel="stylesheet" href="/fonts.css">
 	<link rel="stylesheet" href="/style.css">
 	<script src="/script.js" defer async></script>
-	{{- if and .User .User.Admin ($.Request.URL.Path | hasPrefix "/admin") }}
+	{{- if and .User .User.Admin }}
 	<script src="/admin.js" defer async></script>
 	{{- end }}
 </head>

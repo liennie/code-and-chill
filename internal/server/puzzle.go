@@ -422,7 +422,35 @@ func prepareSolves(a *auth.Auth, event puzzles.Event) ([]*userProgress, []*userS
 func leaderboardMiddleware(a *auth.Auth, event puzzles.Event, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		pd := pageDataFromContext(r.Context())
-		pd.LeaderboardChart = template.HTML(buildLeaderboardChart(nowForChart(pd.Now), a, event))
+
+		chartNow := nowForChart(pd.Now)
+		chartAt := chartNow
+		if pd.User != nil && pd.User.Admin {
+			chartMin := chartNow
+			chartMax := chartNow
+			if len(event.Puzzles) > 0 {
+				chartMin = event.Puzzles[0].Unlock
+				for _, puzzle := range event.Puzzles {
+					if puzzle.Unlock.Before(chartMin) {
+						chartMin = puzzle.Unlock
+					}
+				}
+				chartMax = event.Puzzles[len(event.Puzzles)-1].Unlock.Add(48 * time.Hour)
+			}
+
+			if chartAt.Before(chartMin) {
+				chartAt = chartMin
+			}
+			if chartAt.After(chartMax) {
+				chartAt = chartMax
+			}
+
+			pd.LeaderboardChartAtMin = chartMin.Unix()
+			pd.LeaderboardChartAtMax = chartMax.Unix()
+			pd.LeaderboardChartAt = chartAt.Unix()
+		}
+
+		pd.LeaderboardChart = template.HTML(buildLeaderboardChart(chartAt, a, event))
 
 		ups, solves, points := prepareSolves(a, event)
 
@@ -507,11 +535,11 @@ func buildLeaderboardChart(now time.Time, a *auth.Auth, event puzzles.Event) []b
 	solves = filterSolvesAtOrBefore(solves, now)
 
 	const (
-		width   = 900
+		width   = 880
 		left    = 18.0
 		right   = 210.0
 		top     = 28.0
-		bottom  = 110.0
+		bottom  = 70.0
 		maxRank = 50
 		textCol = "#5865f2"
 		gridCol = "#808080"
@@ -520,7 +548,7 @@ func buildLeaderboardChart(now time.Time, a *auth.Auth, event puzzles.Event) []b
 
 	plotW := float64(width) - left - right
 
-	if len(solves) == 0 {
+	if len(ups) == 0 {
 		height := 420
 		return []byte(fmt.Sprintf("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"%d\" height=\"%d\" viewBox=\"0 0 %d %d\"><text x=\"50%%\" y=\"50%%\" text-anchor=\"middle\" fill=\"%s\" font-size=\"24\" font-family=\"monospace\" font-weight=\"700\">No leaderboard data yet</text></svg>", width, height, width, height, textCol))
 	}
@@ -540,25 +568,22 @@ func buildLeaderboardChart(now time.Time, a *auth.Auth, event puzzles.Event) []b
 	}
 	unlockMarks := make([]unlockMark, 0, len(event.Puzzles))
 
-	start := solves[0].time
+	start := event.Puzzles[0].Unlock
 	end := leaderboardAxisEndTime(event, now)
-	if len(event.Puzzles) > 0 {
-		start = event.Puzzles[0].Unlock
-		for _, puzzle := range event.Puzzles {
-			unlockMarks = append(unlockMarks, unlockMark{
-				name:   puzzle.Name,
-				unlock: puzzle.Unlock,
-			})
-
-			if puzzle.Unlock.Before(start) {
-				start = puzzle.Unlock
-			}
-		}
-
-		slices.SortFunc(unlockMarks, func(a, b unlockMark) int {
-			return a.unlock.Compare(b.unlock)
+	for _, puzzle := range event.Puzzles {
+		unlockMarks = append(unlockMarks, unlockMark{
+			name:   puzzle.Name,
+			unlock: puzzle.Unlock,
 		})
+
+		if puzzle.Unlock.Before(start) {
+			start = puzzle.Unlock
+		}
 	}
+
+	slices.SortFunc(unlockMarks, func(a, b unlockMark) int {
+		return a.unlock.Compare(b.unlock)
+	})
 
 	if end.Before(start) {
 		end = start

@@ -23,9 +23,22 @@
 </table>
 
 {{- if .LeaderboardChart }}
-{{ .LeaderboardChart }}
+<div id="leaderboard-chart-host">
+	{{ .LeaderboardChart }}
+</div>
 {{- else }}
-<img src="/{{ $.Event.Path }}/leaderboard/chart.svg" alt="leaderboard chart">
+<div id="leaderboard-chart-host">
+	<img src="/{{ $.Event.Path }}/leaderboard/chart.svg" alt="leaderboard chart">
+</div>
+{{- end }}
+
+{{- if and .User .User.Admin }}
+<div id="leaderboard-chart-controls" data-chart-src="/{{ $.Event.Path }}/leaderboard/chart.svg" data-now-unix="{{ .Now.Unix }}">
+	<label for="leaderboard-chart-at">Chart time</label>
+	<input id="leaderboard-chart-at" type="range" min="{{ .LeaderboardChartAtMin }}" max="{{ .LeaderboardChartAtMax }}" value="{{ .LeaderboardChartAt }}" step="600" style="display:block; width:100%; box-sizing:border-box;">
+	<button id="leaderboard-chart-now" type="button">Set to current time</button>
+	<output id="leaderboard-chart-at-value" for="leaderboard-chart-at"></output>
+</div>
 {{- end }}
 
 {{- else -}}
