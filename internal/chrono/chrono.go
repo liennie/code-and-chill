@@ -6,11 +6,17 @@ import (
 	"time"
 )
 
+func localTime(t time.Time) time.Time {
+	return t.In(time.Local)
+}
+
 func RFC3339Time(t time.Time) string {
 	return t.Format(time.RFC3339)
 }
 
 func HumanTime(t time.Time) string {
+	t = localTime(t)
+
 	if t.Second() == 0 {
 		return t.Format("Mon, Jan 02, 15:04")
 	}
@@ -47,7 +53,8 @@ func formatHMS(d time.Duration) string {
 }
 
 func UnlockTime(t time.Time) string {
-	now := time.Now()
+	t = localTime(t)
+	now := localTime(time.Now())
 
 	diff := t.Sub(now)
 	if diff <= 0 {
