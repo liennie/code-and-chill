@@ -50,7 +50,7 @@ html.dark {
 	--p-link-hover: #8791f6;
 }
 
-body, div, pre, code, span, em, strong, a, input, button, header, nav, aside, section, article, i {
+body, div, pre, code, span, em, strong, a, input, button, input::file-selector-button, header, nav, aside, section, article, i {
 	--td: 0.2s;
 	transition: color var(--td), background-color var(--td), border-color var(--td), box-shadow var(--td);
 }
@@ -372,21 +372,49 @@ article pre code {
 	border: 0;
 }
 
-article input {
-	background: var(--bg-code);
-	min-width: 20ch;
+article input, article button {
+	color: inherit;
+	background: var(--bg-btn);
+	padding: 0.4rem;
+	border: 1px solid var(--line);
 	font-family: inherit;
 	font-size: inherit;
+
+	&:hover, &:focus {
+		background: var(--bg-btn-hover);
+	}
+}
+
+article button {
+	cursor: pointer;
+}
+
+article input {
+	min-width: 20ch;
 }
 
 article input[type="checkbox"] {
 	min-width: auto;
 }
 
-article button {
-	background: var(--bg-code);
+article input[type="file"] {
+	background: transparent;
+	border: 0;
+	padding: 0;
+	cursor: pointer;
+}
+
+article input[type="file"]::file-selector-button {
+	color: inherit;
+	background: var(--bg-btn);
+	padding: 0.4rem;
+	border: 1px solid var(--line);
 	font-family: inherit;
 	font-size: inherit;
+}
+
+article input[type="file"]:hover::file-selector-button {
+	background: var(--bg-btn-hover);
 }
 
 article a {
@@ -529,21 +557,6 @@ div.answer {
 
 div.answer:last-child {
 	padding-bottom: 0;
-}
-
-article input, article button {
-	color: inherit;
-	background: var(--bg-btn);
-	padding: 0.4rem;
-	border: 1px solid var(--line);
-
-	&:hover, &:focus {
-		background: var(--bg-btn-hover);
-	}
-}
-
-article button {
-	cursor: pointer;
 }
 
 i.discord-icon {

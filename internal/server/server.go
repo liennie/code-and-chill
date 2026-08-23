@@ -237,22 +237,59 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 
 		// admin
 		reg("GET", "/admin", "html/admin/admin.html", adminMux(
-			adminMiddleware(auth, event, page(htmlDataFunc(http.StatusOK, "Admin", readFile(fsys, "html/admin/admin.html"))), notFoundHandler),
+			page(htmlDataFunc(http.StatusOK, "Admin", readFile(fsys, "html/admin/admin.html"))),
+			notFoundHandler,
+		))
+
+		reg("GET", "/admin/users", "html/admin/users.html", adminMux(
+			adminUserListMiddleware(auth, page(htmlDataFunc(http.StatusOK, "Admin :: Users", readFile(fsys, "html/admin/users.html")))),
 			notFoundHandler,
 		))
 
 		reg("GET", "/admin/user/{user}", "html/admin/user.html", adminMux(
-			adminMiddleware(auth, event, page(htmlDataFunc(http.StatusOK, "Admin :: User", readFile(fsys, "html/admin/user.html"))), notFoundHandler),
+			adminUserMiddleware(auth, event, page(htmlDataFunc(http.StatusOK, "Admin :: User", readFile(fsys, "html/admin/user.html"))), notFoundHandler),
+			notFoundHandler,
+		))
+
+		reg("GET", "/admin/puzzles", "html/admin/puzzles.html", adminMux(
+			adminPuzzleListMiddleware(event, page(htmlDataFunc(http.StatusOK, "Admin :: Puzzles", readFile(fsys, "html/admin/puzzles.html")))),
 			notFoundHandler,
 		))
 
 		reg("GET", "/admin/puzzle/{puzzle}", "html/admin/puzzle.html", adminMux(
-			adminMiddleware(auth, event, page(htmlDataFunc(http.StatusOK, "Admin :: Puzzle", readFile(fsys, "html/admin/puzzle.html"))), notFoundHandler),
+			adminPuzzleMiddleware(auth, event, page(htmlDataFunc(http.StatusOK, "Admin :: Puzzle", readFile(fsys, "html/admin/puzzle.html"))), notFoundHandler),
 			notFoundHandler,
 		))
 
 		reg("GET", "/admin/puzzle/{puzzle}/input/{index}", "adminPuzzleInputHandler", adminMux(
 			adminPuzzleInputHandler(event, notFoundHandler),
+			notFoundHandler,
+		))
+
+		pres := newAdminPresentationContainer("/" + e + "/admin/presentation")
+
+		reg("GET", "/admin/presentation", "html/admin/presentation.html", adminMux(
+			pres.middleware(page(htmlDataFunc(http.StatusOK, "Admin :: Presentation", readFile(fsys, "html/admin/presentation.html")))),
+			notFoundHandler,
+		))
+
+		reg("POST", "/admin/presentation/upload", "adminPresentationContainer.uploadHandler", adminMux(
+			pres.uploadHandler(),
+			notFoundHandler,
+		))
+
+		reg("GET", "/admin/presentation/download", "adminPresentationContainer.downloadHandler", adminMux(
+			pres.downloadHandler(notFoundHandler),
+			notFoundHandler,
+		))
+
+		reg("GET", "/admin/presentation/render", "adminPresentationContainer.renderHandler", adminMux(
+			leaderboardMiddleware(auth, event, pres.renderHandler(notFoundHandler)),
+			notFoundHandler,
+		))
+
+		reg("POST", "/admin/presentation/clear", "adminPresentationContainer.clearHandler", adminMux(
+			pres.clearHandler(),
 			notFoundHandler,
 		))
 	}

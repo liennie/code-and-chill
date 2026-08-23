@@ -537,7 +537,7 @@ func buildLeaderboardChart(now time.Time, a *auth.Auth, event puzzles.Event) []b
 	const (
 		width   = 880
 		left    = 18.0
-		right   = 210.0
+		right   = 180.0
 		top     = 28.0
 		bottom  = 70.0
 		maxRank = 50
@@ -550,7 +550,7 @@ func buildLeaderboardChart(now time.Time, a *auth.Auth, event puzzles.Event) []b
 
 	if len(ups) == 0 {
 		height := 420
-		return []byte(fmt.Sprintf("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"%d\" height=\"%d\" viewBox=\"0 0 %d %d\"><text x=\"50%%\" y=\"50%%\" text-anchor=\"middle\" fill=\"%s\" font-size=\"24\" font-family=\"monospace\" font-weight=\"700\">No leaderboard data yet</text></svg>", width, height, width, height, textCol))
+		return fmt.Appendf(nil, "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"%d\" height=\"%d\" viewBox=\"0 0 %d %d\"><text x=\"50%%\" y=\"50%%\" text-anchor=\"middle\" fill=\"%s\" font-size=\"24\" font-family=\"monospace\" font-weight=\"700\">No leaderboard data yet</text></svg>", width, height, width, height, textCol)
 	}
 
 	rankLimit := min(maxRank, len(ups))

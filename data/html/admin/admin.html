@@ -1,41 +1,7 @@
 <h1 id="admin">Admin</h1>
 
-<h2 id="users">Users</h2>
-
-<p><span id="user-error" class="error"></span></p>
-
-<table style="--c2:center; --c3:center;">
-	<thead>
-		<tr>
-			<th>Name</th>
-			<th>Admin</th>
-			<th>Hidden</th>
-		</tr>
-	</thead>
-	<tbody>
-		{{- range .Admin.Users }}
-		<tr>
-			<td><img src="{{ .AvatarURL }}" alt="{{ .Name }} avatar" class="avatar"> <a href="/{{ $.Event.Path }}/admin/user/{{ .ID }}" {{- if gt (.Name | len) 32 }} title="{{ .Name }}" {{- end }}>{{ .Name | abbrev 32 | cleanUTF }}</a></td>
-			<td><input type="checkbox" disabled {{- if .Admin }} checked {{- end }}></td>
-			<td><input type="checkbox" class="user-checkbox" data-user="{{ .ID }}" data-value="hidden" disabled {{- if .Hidden }} checked {{- end }}></td>
-		</tr>
-		{{- end }}
-	</tbody>
-</table>
-
-<h2 id="puzzles">Puzzles</h2>
-
-<table>
-	<thead>
-		<tr>
-			<th>Name</th>
-		</tr>
-	</thead>
-	<tbody>
-		{{- range .Admin.Puzzles }}
-		<tr>
-			<td><a href="/{{ $.Event.Path }}/admin/puzzle/{{ .Path }}">{{ .Name }}</a></td>
-		</tr>
-		{{- end }}
-	</tbody>
-</table>
+<ul>
+	<li><a href="/{{ $.Event.Path }}/admin/users">Users</a></li>
+	<li><a href="/{{ $.Event.Path }}/admin/puzzles">Puzzles</a></li>
+	<li><a href="/{{ $.Event.Path }}/admin/presentation">Presentation</a></li>
+</ul>

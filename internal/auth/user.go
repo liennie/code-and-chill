@@ -9,11 +9,11 @@ import (
 	"github.com/liennie/code-and-chill/internal/db"
 )
 
-type ErrUserNotFound struct {
+type UserNotFoundError struct {
 	ID string
 }
 
-func (e *ErrUserNotFound) Error() string {
+func (e *UserNotFoundError) Error() string {
 	return fmt.Sprintf("no user with id %q", e.ID)
 }
 
@@ -84,7 +84,7 @@ func (a *Auth) User(id string) (*User, error) {
 		return nil, err
 	}
 	if user == nil {
-		return nil, &ErrUserNotFound{id}
+		return nil, &UserNotFoundError{id}
 	}
 	return user, nil
 }
@@ -95,7 +95,7 @@ func (a *Auth) UpdateUser(id string, f func(*User) error) error {
 
 		user := bucket.Get(id)
 		if user == nil {
-			return &ErrUserNotFound{id}
+			return &UserNotFoundError{id}
 		}
 
 		if err := f(user); err != nil {

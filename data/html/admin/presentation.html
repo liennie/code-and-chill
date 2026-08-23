@@ -1,0 +1,31 @@
+<h1 id="presentation"><a href="/{{ $.Event.Path }}/admin">Admin</a>::Presentation</h1>
+
+{{ $status := $.Request.URL.Query.Get "status" -}}
+{{ if eq $status "parse-err" -}}
+<p><span class="error">Form parse error</span></p>
+{{ else if eq $status "no-file" -}}
+<p><span class="error">No file uploaded</span></p>
+{{ else if eq $status "too-many-files" -}}
+<p><span class="error">Too many files uploaded</span></p>
+{{ else if eq $status "open-err" -}}
+<p><span class="error">Open file error</span></p>
+{{ else if eq $status "read-err" -}}
+<p><span class="error">Read file error</span></p>
+{{ else if eq $status "zip-err" -}}
+<p><span class="error">Zip reader error</span></p>
+{{ end -}}
+
+{{ if .Admin.PresFileName -}}
+<p>Uploaded file: <a href="/{{ $.Event.Path }}/admin/presentation/download">{{ .Admin.PresFileName }}</a></p>
+<button form="render">Render</button>
+<button form="clear">Clear</button>
+
+<form id="render" method="get" action="/{{ $.Event.Path }}/admin/presentation/render"></form>
+<form id="clear" method="post" action="/{{ $.Event.Path }}/admin/presentation/clear"></form>
+{{ else -}}
+
+<form method="post" action="/{{ $.Event.Path }}/admin/presentation/upload" enctype="multipart/form-data">
+	<input name="presentation" type="file" accept="application/vnd.oasis.opendocument.presentation">
+	<button>Upload</button>
+</form>
+{{ end -}}

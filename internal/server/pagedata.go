@@ -112,6 +112,8 @@ type adminData struct {
 
 	Puzzle           *puzzles.Puzzle
 	PuzzleInputUsers [][]puzzleInputData
+
+	PresFileName string
 }
 
 type puzzleInputData struct {

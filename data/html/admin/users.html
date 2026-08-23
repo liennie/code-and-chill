@@ -1,0 +1,22 @@
+<h1 id="users"><a href="/{{ $.Event.Path }}/admin">Admin</a>::Users</h1>
+
+<p><span id="user-error" class="error"></span></p>
+
+<table style="--c2:center; --c3:center;">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Admin</th>
+			<th>Hidden</th>
+		</tr>
+	</thead>
+	<tbody>
+		{{- range .Admin.Users }}
+		<tr>
+			<td><img src="{{ .AvatarURL }}" alt="{{ .Name }} avatar" class="avatar"> <a href="/{{ $.Event.Path }}/admin/user/{{ .ID }}" {{- if gt (.Name | len) 32 }} title="{{ .Name }}" {{- end }}>{{ .Name | abbrev 32 | cleanUTF }}</a></td>
+			<td><input type="checkbox" disabled {{- if .Admin }} checked {{- end }}></td>
+			<td><input type="checkbox" class="user-checkbox" data-user="{{ .ID }}" data-value="hidden" disabled {{- if .Hidden }} checked {{- end }}></td>
+		</tr>
+		{{- end }}
+	</tbody>
+</table>

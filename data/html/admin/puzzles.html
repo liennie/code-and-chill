@@ -1,0 +1,16 @@
+<h1 id="puzzles"><a href="/{{ $.Event.Path }}/admin">Admin</a>::Puzzles</h1>
+
+<table>
+	<thead>
+		<tr>
+			<th>Name</th>
+		</tr>
+	</thead>
+	<tbody>
+		{{- range .Admin.Puzzles }}
+		<tr>
+			<td><a href="/{{ $.Event.Path }}/admin/puzzle/{{ .Path }}">{{ .Name }}</a></td>
+		</tr>
+		{{- end }}
+	</tbody>
+</table>

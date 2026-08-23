@@ -5,6 +5,7 @@ import (
 	"crypto/md5"
 	"encoding/base64"
 	"fmt"
+	"html"
 	"html/template"
 	"io"
 	"io/fs"
@@ -146,6 +147,7 @@ var extraFuncs = template.FuncMap{
 	},
 
 	"queryEsc": url.QueryEscape,
+	"htmlEsc":  html.EscapeString,
 
 	"choose": func(cond bool, t, f any) any {
 		if cond {
