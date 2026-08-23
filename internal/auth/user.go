@@ -21,10 +21,11 @@ type User struct {
 	ID           string `json:"-"`
 	Name         string `json:"name"`
 	AvatarURL    string `json:"avatar_url"`
-	RandomAvatar bool   `json:"random_avatar"`
+	RandomAvatar bool   `json:"random_avatar,omitempty"`
 	Token        string `json:"token"`
-	Admin        bool   `json:"admin"`
-	Hidden       bool   `json:"hidden"`
+	Admin        bool   `json:"admin,omitempty"`
+	Hidden       bool   `json:"hidden,omitempty"`
+	Tester       bool   `json:"tester,omitempty"`
 }
 
 var _ db.KeySetter = (*User)(nil)

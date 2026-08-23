@@ -65,6 +65,7 @@ func puzzlesMiddleware(event puzzles.Event, next http.Handler) http.Handler {
 		}
 		pd.PuzzleAlign = maxLen + 2
 
+		user := userFromContext(r.Context())
 		progress := progressFromContext(r.Context())
 
 		pd.Puzzles = make([]puzzleData, 0, len(event.Puzzles))
@@ -75,7 +76,7 @@ func puzzlesMiddleware(event puzzles.Event, next http.Handler) http.Handler {
 				Total: len(puzzle.Parts),
 			}
 
-			if puzzle.Unlock.After(pd.Now) {
+			if puzzle.Locked(pd.Now, user) {
 				pzd.Locked = true
 				pzd.Unlock = &puzzle.Unlock
 			} else {
@@ -102,11 +103,11 @@ func puzzleDataFunc(puzzle puzzles.Puzzle, locked dataFunc) dataFunc {
 		}
 		pd.Title = puzzle.Name
 
-		if puzzle.Unlock.After(pd.Now) {
+		user := userFromContext(r.Context())
+		if puzzle.Locked(pd.Now, user) {
 			return locked(r)
 		}
 
-		user := userFromContext(r.Context())
 		progress := progressFromContext(r.Context())
 		pd.Content.Parts = make([]partData, 0, len(puzzle.Parts))
 		for i, part := range puzzle.Parts {
@@ -143,10 +144,11 @@ func puzzleDataFunc(puzzle puzzles.Puzzle, locked dataFunc) dataFunc {
 func latestPuzzleRedirect(event puzzles.Event) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		pd := pageDataFromContext(r.Context())
+		user := userFromContext(r.Context())
 
 		for i := len(event.Puzzles) - 1; i >= 0; i-- {
 			puzzle := event.Puzzles[i]
-			if puzzle.Unlock.After(pd.Now) {
+			if puzzle.Locked(pd.Now, user) {
 				continue
 			}
 
@@ -174,13 +176,13 @@ func puzzleInputHandler(puzzle puzzles.Puzzle, locked http.Handler, unauth http.
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		pd := pageDataFromContext(r.Context())
+		user := userFromContext(r.Context())
 
-		if puzzle.Unlock.After(pd.Now) {
+		if puzzle.Locked(pd.Now, user) {
 			locked.ServeHTTP(w, r)
 			return
 		}
 
-		user := userFromContext(r.Context())
 		if user == nil {
 			// this should never happen
 			unauth.ServeHTTP(w, r)
@@ -214,11 +216,11 @@ func puzzleAnswerDataFunc(a *auth.Auth, event puzzles.Event, pidx int, puzzle pu
 			Name: puzzle.Name,
 		}
 
-		if puzzle.Unlock.After(pd.Now) {
+		user := userFromContext(r.Context())
+		if puzzle.Locked(pd.Now, user) {
 			return dataFuncs.locked(r)
 		}
 
-		user := userFromContext(r.Context())
 		if user == nil {
 			// this should never happen
 			return dataFuncs.unauth(r)

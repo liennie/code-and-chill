@@ -33,6 +33,7 @@ type APIUpdateUserRequest struct {
 	Token        *string `json:"token"`
 	Admin        *bool   `json:"admin"`
 	Hidden       *bool   `json:"hidden"`
+	Tester       *bool   `json:"tester"`
 }
 
 type APIUpdateUserResponse struct {
@@ -163,6 +164,9 @@ func apiUpdateUser(a *auth.Auth) http.Handler {
 			}
 			if req.Hidden != nil {
 				u.Hidden = *req.Hidden
+			}
+			if req.Tester != nil {
+				u.Tester = *req.Tester
 			}
 
 			user = u

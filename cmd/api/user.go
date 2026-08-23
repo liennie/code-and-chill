@@ -20,10 +20,17 @@ import (
 )
 
 func UserString(user *auth.User) string {
+	var prefix string
 	if user.Admin {
-		return fmt.Sprintf("<ADMIN> %s", user.Name)
+		prefix += "<ADMIN> "
 	}
-	return user.Name
+	if user.Tester {
+		prefix += "<TESTER> "
+	}
+	if user.Hidden {
+		prefix += "<HIDDEN> "
+	}
+	return prefix + user.Name
 }
 
 func DecodeResponse[T any](resp *http.Response) (T, error) {
@@ -134,14 +141,24 @@ func (c *GetUserCmd) Do(ctx context.Context, p *arg.Parser, cli *http.Client, ar
 }
 
 type UpdateUserCmd struct {
-	ID         string `arg:"required,positional"`
-	SetAdmin   bool   `arg:"-a,--admin"`
-	UnsetAdmin bool   `arg:"-u,--unset-admin"`
+	ID          string `arg:"required,positional"`
+	SetAdmin    bool   `arg:"-A,--admin"`
+	UnsetAdmin  bool   `arg:"-a,--unset-admin"`
+	SetHidden   bool   `arg:"--hidden"`
+	UnsetHidden bool   `arg:"--unset-hidden"`
+	SetTester   bool   `arg:"-T,--tester"`
+	UnsetTester bool   `arg:"-t,--unset-tester"`
 }
 
 func (c *UpdateUserCmd) Do(ctx context.Context, p *arg.Parser, cli *http.Client, args Args) error {
 	if c.SetAdmin && c.UnsetAdmin {
-		p.Fail("only one of -a or -u can be set")
+		p.Fail("only one of -A/--admin or -a/--unset-admin can be set")
+	}
+	if c.SetHidden && c.UnsetHidden {
+		p.Fail("only one of --hidden or --unset-hidden can be set")
+	}
+	if c.SetTester && c.UnsetTester {
+		p.Fail("only one of -T/--tester or -t/--unset-tester can be set")
 	}
 
 	u := &url.URL{
@@ -155,6 +172,16 @@ func (c *UpdateUserCmd) Do(ctx context.Context, p *arg.Parser, cli *http.Client,
 		req.Admin = new(true)
 	} else if c.UnsetAdmin {
 		req.Admin = new(false)
+	}
+	if c.SetHidden {
+		req.Hidden = new(true)
+	} else if c.UnsetHidden {
+		req.Hidden = new(false)
+	}
+	if c.SetTester {
+		req.Tester = new(true)
+	} else if c.UnsetTester {
+		req.Tester = new(false)
 	}
 
 	body, err := json.Marshal(req)

@@ -13,6 +13,9 @@
 			<th>Hidden</th>
 			<td><input type="checkbox" class="user-checkbox" data-user="{{ .Admin.User.ID }}" data-value="hidden" disabled {{- if .Admin.User.Hidden }} checked {{- end }}></td>
 		<tr>
+			<th>Tester</th>
+			<td><input type="checkbox" class="user-checkbox" data-user="{{ .Admin.User.ID }}" data-value="tester" disabled {{- if .Admin.User.Tester }} checked {{- end }}></td>
+		<tr>
 			<th>ID</th>
 			<td>{{ .Admin.User.ID }}</td>
 		<tr>

@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/liennie/code-and-chill/internal/auth"
 	"github.com/liennie/code-and-chill/internal/ctxlog"
 
 	"github.com/goccy/go-yaml"
@@ -219,6 +220,10 @@ type Puzzle struct {
 	Unlock time.Time
 	Parts  []Part
 	Inputs []Input
+}
+
+func (p Puzzle) Locked(now time.Time, user *auth.User) bool {
+	return p.Unlock.After(now) && (user == nil || !user.Tester)
 }
 
 type Part struct {
