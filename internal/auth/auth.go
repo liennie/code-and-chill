@@ -11,18 +11,20 @@ import (
 type Auth struct {
 	Discord DiscordAuth
 
-	db             *db.DB
-	bucketUser     *db.BucketKey[User]
-	bucketProgress *db.BucketKey[UserProgress]
+	db               *db.DB
+	bucketUser       *db.BucketKey[User]
+	bucketUserAvatar *db.BucketKey[UserAvatar]
+	bucketProgress   *db.BucketKey[UserProgress]
 }
 
 func New(config Config, ddb *db.DB) *Auth {
 	return &Auth{
 		Discord: newDiscordAuth(config.Discord, ddb),
 
-		db:             ddb,
-		bucketUser:     db.NewBucketKey[User](ddb, db.BucketUser),
-		bucketProgress: db.NewBucketKey[UserProgress](ddb, db.BucketProgress),
+		db:               ddb,
+		bucketUser:       db.NewBucketKey[User](ddb, db.BucketUser),
+		bucketUserAvatar: db.NewBucketKey[UserAvatar](ddb, db.BucketUserAvatar),
+		bucketProgress:   db.NewBucketKey[UserProgress](ddb, db.BucketProgress),
 	}
 }
 

@@ -21,6 +21,7 @@ type User struct {
 	ID           string `json:"-"`
 	Name         string `json:"name"`
 	AvatarURL    string `json:"avatar_url"`
+	AvatarSource string `json:"avatar_source,omitempty"`
 	RandomAvatar bool   `json:"random_avatar,omitempty"`
 	Token        string `json:"token"`
 	Admin        bool   `json:"admin,omitempty"`
@@ -32,6 +33,19 @@ var _ db.KeySetter = (*User)(nil)
 
 func (u *User) SetKey(key string) {
 	u.ID = key
+}
+
+// AvatarPathPrefix is the URL prefix under which cached user avatars are
+// served by the HTTP handler. The full URL for a given user is
+// AvatarPathPrefix + userID.
+const AvatarPathPrefix = "/avatar/"
+
+// UserAvatar holds the cached image data for a user's avatar together with
+// its MIME content type and a short ETag derived from the data.
+type UserAvatar struct {
+	Data        []byte `json:"data"`
+	ContentType string `json:"content_type"`
+	ETag        string `json:"etag"`
 }
 
 type UserProgress struct {
@@ -88,6 +102,20 @@ func (a *Auth) User(id string) (*User, error) {
 		return nil, &UserNotFoundError{id}
 	}
 	return user, nil
+}
+
+// UserAvatar returns the cached avatar image for the given user id, or nil if
+// none is stored.
+func (a *Auth) UserAvatar(id string) (*UserAvatar, error) {
+	var avatar *UserAvatar
+	err := a.db.View(func(tx *db.Tx) error {
+		avatar = a.bucketUserAvatar.Open(tx).Get(id)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return avatar, nil
 }
 
 func (a *Auth) UpdateUser(id string, f func(*User) error) error {

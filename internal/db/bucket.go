@@ -14,6 +14,7 @@ var (
 	BucketSessionExpire = []byte("session_expire")
 
 	BucketUser        = []byte("user")
+	BucketUserAvatar  = []byte("user_avatar")
 	BucketDiscordUser = []byte("discord_user")
 
 	BucketProgress = []byte("progress")
@@ -24,6 +25,7 @@ var allBuckets = [][]byte{
 	BucketSessionExpire,
 
 	BucketUser,
+	BucketUserAvatar,
 	BucketDiscordUser,
 
 	BucketProgress,

@@ -2,9 +2,12 @@ package auth
 
 import (
 	"context"
+	"crypto/md5"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -24,6 +27,7 @@ type DiscordAuth struct {
 
 	db                *db.DB
 	bucketUser        *db.BucketKey[User]
+	bucketUserAvatar  *db.BucketKey[UserAvatar]
 	bucketDiscordUser *db.BucketKey[dbDiscordUser]
 }
 
@@ -52,6 +56,7 @@ func newDiscordAuth(config DiscordConfig, ddb *db.DB) DiscordAuth {
 
 		db:                ddb,
 		bucketUser:        db.NewBucketKey[User](ddb, db.BucketUser),
+		bucketUserAvatar:  db.NewBucketKey[UserAvatar](ddb, db.BucketUserAvatar),
 		bucketDiscordUser: db.NewBucketKey[dbDiscordUser](ddb, db.BucketDiscordUser),
 	}
 }
@@ -107,7 +112,7 @@ func (a *DiscordAuth) Exchange(ctx context.Context, code string, token string) (
 		return nil, fmt.Errorf("discord get user: %w", err)
 	}
 
-	return a.updateDB(user, token)
+	return a.updateDB(ctx, cli, user, token)
 }
 
 type discordError struct {
@@ -301,7 +306,53 @@ type dbDiscordUser struct {
 	ID string `json:"id"`
 }
 
-func (a *DiscordAuth) updateDB(discordUser *discordUser, token string) (*User, error) {
+// avatarMaxBytes caps the size of avatar images we will download and cache.
+const avatarMaxBytes = 1 << 20 // 1 MiB
+
+// fetchAvatar downloads the image at src and returns the raw bytes and
+// Content-Type. It refuses non-image content types and payloads larger than
+// avatarMaxBytes.
+func fetchAvatar(ctx context.Context, cli *http.Client, src string) ([]byte, string, error) {
+	req, err := http.NewRequestWithContext(ctx, "GET", src, nil)
+	if err != nil {
+		return nil, "", fmt.Errorf("new request: %w", err)
+	}
+
+	resp, err := cli.Do(req)
+	if err != nil {
+		return nil, "", fmt.Errorf("client: %w", err)
+	}
+	defer ctxlog.CloseErr(ctx, "avatar body", resp.Body)
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, "", fmt.Errorf("status %d: %s", resp.StatusCode, resp.Status)
+	}
+
+	ct := resp.Header.Get("Content-Type")
+	if ct == "" {
+		return nil, "", fmt.Errorf("missing content-type")
+	}
+	if !strings.HasPrefix(ct, "image/") {
+		return nil, "", fmt.Errorf("unexpected content-type %q", ct)
+	}
+
+	data, err := io.ReadAll(io.LimitReader(resp.Body, avatarMaxBytes+1))
+	if err != nil {
+		return nil, "", fmt.Errorf("read body: %w", err)
+	}
+	if len(data) > avatarMaxBytes {
+		return nil, "", fmt.Errorf("avatar too large (> %d bytes)", avatarMaxBytes)
+	}
+
+	return data, ct, nil
+}
+
+func avatarETag(data []byte) string {
+	sum := md5.Sum(data)
+	return base64.RawURLEncoding.EncodeToString(sum[:])
+}
+
+func (a *DiscordAuth) updateDB(ctx context.Context, cli *http.Client, discordUser *discordUser, token string) (*User, error) {
 	username := discordUser.GlobalName
 	if username == "" {
 		username = fmt.Sprintf("%s#%s", discordUser.Username, discordUser.Discriminator)
@@ -311,6 +362,7 @@ func (a *DiscordAuth) updateDB(discordUser *discordUser, token string) (*User, e
 	err := a.db.Update(func(tx *db.Tx) error {
 		discordBucket := a.bucketDiscordUser.Open(tx)
 		userBucket := a.bucketUser.Open(tx)
+		avatarBucket := a.bucketUserAvatar.Open(tx)
 
 		discordUserID := discordBucket.Get(discordUser.ID)
 		if discordUserID != nil {
@@ -332,14 +384,52 @@ func (a *DiscordAuth) updateDB(discordUser *discordUser, token string) (*User, e
 			}
 		}
 
-		user.Name = username
+		// Decide the source URL we want the avatar to point at.
+		var source string
+		random := false
 		if discordUser.Avatar != nil {
-			user.AvatarURL = fmt.Sprintf(discordAvatarURL, discordUser.ID, *discordUser.Avatar)
-			user.RandomAvatar = false
-		} else if !user.RandomAvatar {
-			user.AvatarURL = randomAvatar()
-			user.RandomAvatar = true
+			source = fmt.Sprintf(discordAvatarURL, discordUser.ID, *discordUser.Avatar)
+		} else if user.RandomAvatar && user.AvatarSource != "" {
+			source = user.AvatarSource
+			random = true
+		} else {
+			source = randomAvatar()
+			random = true
 		}
+		user.RandomAvatar = random
+
+		cached := avatarBucket.Get(user.ID)
+		needFetch := cached == nil || user.AvatarSource != source
+		if needFetch {
+			data, ct, ferr := fetchAvatar(ctx, cli, source)
+			if ferr != nil {
+				logger := ctxlog.Get(ctx)
+				logger.Error("fetch avatar", "url", source, "error", ferr)
+
+				if cached == nil {
+					// No cached bytes to fall back to — keep the external URL
+					// so the browser can still try to load it directly.
+					user.AvatarSource = ""
+					user.AvatarURL = source
+				}
+				// else: keep the previously cached bytes and existing
+				// AvatarSource/AvatarURL untouched.
+			} else {
+				etag := avatarETag(data)
+				err := avatarBucket.Put(user.ID, &UserAvatar{
+					Data:        data,
+					ContentType: ct,
+					ETag:        etag,
+				})
+				if err != nil {
+					return err
+				}
+				user.AvatarSource = source
+				user.AvatarURL = AvatarPathPrefix + user.ID + "?v=" + etag
+			}
+		}
+
+		user.Name = username
 		user.Token = token
 
 		return userBucket.Put(user.ID, user)

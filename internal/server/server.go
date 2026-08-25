@@ -154,6 +154,8 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 		discordAuthCallback(auth)),
 	))
 
+	reg("GET", "/avatar/{id}", "avatarHandler", avatarHandler(auth))
+
 	reg("GET", "/admin.js", "extra/admin.js", rootMiddleware(adminMux(
 		cachedHandler(dataFile(fsys, "extra/admin.js")),
 		notFoundHandler,
