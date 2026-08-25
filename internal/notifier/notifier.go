@@ -46,7 +46,7 @@ func (n *Notifier) Notify(ctx context.Context, pzls *puzzles.Puzzles, event puzz
 
 	errs := []error{}
 
-	title := fmt.Sprintf("%s | %s :: %s", puzzle.Name, pzls.Name, event.Name)
+	title := fmt.Sprintf("%s | %s :: %s", puzzle.Name, pzls.Name, strings.ReplaceAll(event.Name, "::", " :: "))
 	snippet := snippetFromMD(puzzle.Parts[0].Text)
 	link := n.BaseURI.JoinPath(event.Path, "puzzle", puzzle.Path).String()
 

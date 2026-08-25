@@ -43,7 +43,7 @@ type pageData struct {
 
 	Dark    bool
 	Title   string
-	Content contentData
+	Content template.HTML
 
 	Admin *adminData
 }
@@ -66,6 +66,8 @@ type currentPuzzleData struct {
 	Anchor    string
 	Timeout   time.Time
 	Finished  bool
+
+	Parts []partData
 }
 
 type puzzleData struct {
@@ -91,16 +93,10 @@ type leaderboardData struct {
 	Score  int
 }
 
-type contentData struct {
-	Parts []partData
-}
-
 type partData struct {
-	Anchor     string
-	MD         string
-	HTML       template.HTML
-	Answer     string
-	WantAnswer bool
+	Anchor string
+	MD     string
+	Answer string
 }
 
 type adminData struct {

@@ -94,8 +94,8 @@ func puzzlesMiddleware(event puzzles.Event, next http.Handler) http.Handler {
 	})
 }
 
-func puzzleDataFunc(puzzle puzzles.Puzzle, locked dataFunc) dataFunc {
-	return func(r *http.Request) (int, any) {
+func puzzleDataFunc(puzzle puzzles.Puzzle, locked, content dataFunc) dataFunc {
+	return func(r *http.Request) int {
 		pd := pageDataFromContext(r.Context())
 		pd.Puzzle = currentPuzzleData{
 			Path: puzzle.Path,
@@ -109,7 +109,7 @@ func puzzleDataFunc(puzzle puzzles.Puzzle, locked dataFunc) dataFunc {
 		}
 
 		progress := progressFromContext(r.Context())
-		pd.Content.Parts = make([]partData, 0, len(puzzle.Parts))
+		pd.Puzzle.Parts = make([]partData, 0, len(puzzle.Parts))
 		for i, part := range puzzle.Parts {
 			solved := false
 			if progress != nil {
@@ -122,11 +122,10 @@ func puzzleDataFunc(puzzle puzzles.Puzzle, locked dataFunc) dataFunc {
 				answer = puzzle.Inputs[input].Answers[i]
 			}
 
-			pd.Content.Parts = append(pd.Content.Parts, partData{
-				Anchor:     part.ID,
-				MD:         part.Text,
-				Answer:     answer,
-				WantAnswer: true,
+			pd.Puzzle.Parts = append(pd.Puzzle.Parts, partData{
+				Anchor: part.ID,
+				MD:     part.Text,
+				Answer: answer,
 			})
 
 			if !solved {
@@ -137,7 +136,7 @@ func puzzleDataFunc(puzzle puzzles.Puzzle, locked dataFunc) dataFunc {
 			pd.Puzzle.Finished = len(progress.Puzzles[puzzle.ID].Parts) >= len(puzzle.Parts)
 		}
 
-		return http.StatusOK, pd
+		return content(r)
 	}
 }
 
@@ -209,7 +208,7 @@ type puzzleAnswerDataFuncs struct {
 }
 
 func puzzleAnswerDataFunc(a *auth.Auth, event puzzles.Event, pidx int, puzzle puzzles.Puzzle, dataFuncs puzzleAnswerDataFuncs) dataFunc {
-	return func(r *http.Request) (int, any) {
+	return func(r *http.Request) int {
 		pd := pageDataFromContext(r.Context())
 		pd.Puzzle = currentPuzzleData{
 			Path: puzzle.Path,

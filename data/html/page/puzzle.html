@@ -1,0 +1,43 @@
+{{- $return := $.Request.URL.Query.Get "return" | default $.Request.URL.Path | trimPrefix "/" -}}
+
+{{- range $idx, $_ := $.Puzzle.Parts }}
+
+{{- .MD | renderMD }}
+
+{{- if .Answer }}
+<div class="answer">
+	<p>Your answer was <code>{{ .Answer }}</code>.</p>
+	<p>You can still <a href="/{{ $.Event.Path }}/puzzle/{{ $.Puzzle.Path }}/input" download="{{ $.Event.Path }}.{{ $.Puzzle.Path }}.input.txt">download your input</a>.</p>
+	{{- if and $.Puzzle.Finished (ge $idx (sub (len $.Puzzle.Parts) 1)) }}
+	<p><em>All parts of this puzzle are solved.</em></p>
+	<ul>
+		<li>Return to the <a href="/{{ $.Event.Path }}">homepage</a></li>
+		<li>Visit the <a href="/{{ $.Event.Path }}/latest">latest puzzle</a></li>
+		<li>Explore other puzzles</li>
+		<li>Take a break and come back later :)</li>
+	</ul>
+	{{- end }}
+</div>
+
+{{- else if $.User }}
+<form id="{{ .Anchor }}-answer" class="answer" action="/{{ $.Event.Path }}/puzzle/{{ $.Puzzle.Path }}/answer" method="post">
+	{{- if $idx }}
+	<p>If you lost your input, you can <a href="/{{ $.Event.Path }}/puzzle/{{ $.Puzzle.Path }}/input" download="{{ $.Event.Path }}.{{ $.Puzzle.Path }}.input.txt">download it again</a>.</p>
+	{{- else }}
+	<p><a href="/{{ $.Event.Path }}/puzzle/{{ $.Puzzle.Path }}/input" download="{{ $.Event.Path }}.{{ $.Puzzle.Path }}.input.txt">Download your input</a> for this puzzle.</p>
+	{{- end }}
+	<input type="hidden" name="part" value="{{ $idx }}">
+	<label>Answer (part {{ $idx | add 1 }}):
+		{{- $answer := $.Request.URL.Query.Get "a" }}
+		<input name="answer" autocomplete="off" {{- if $answer }} value="{{ $answer }}" {{- end }}>
+	</label>
+	<button type="submit">Submit</button>
+</form>
+
+{{- else }}
+<div class="answer">
+	<p>You must <a href="/{{ $.Event.Path }}/login/discord{{ if $return }}?return={{ $return }}{{ end }}"><i class="discord-icon"></i>log in</a> to submit an answer.</p>
+</div>
+{{- end }}
+
+{{- end }}

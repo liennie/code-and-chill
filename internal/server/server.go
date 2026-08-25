@@ -173,6 +173,7 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 
 	// events
 	lockedDataFunc := htmlDataFunc(http.StatusNotFound, "Puzzle locked", readFile(fsys, "html/puzzle/locked.html"))
+	puzzleContentDataFunc := htmlDataFunc(http.StatusOK, "", readFile(fsys, "html/page/puzzle.html"))
 	for _, event := range pzls.Events {
 		e = event.Path
 
@@ -216,7 +217,7 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 		for pidx, puzzle := range event.Puzzles {
 			p := puzzle.Path
 
-			reg("GET", "/puzzle/"+p, "puzzleDataFunc", page(puzzleDataFunc(puzzle, lockedDataFunc)))
+			reg("GET", "/puzzle/"+p, "puzzleDataFunc", page(puzzleDataFunc(puzzle, lockedDataFunc, puzzleContentDataFunc)))
 			reg("GET", "/puzzle/"+p+"/input", "puzzleInputHandler", userMux(
 				puzzleInputHandler(puzzle, page(lockedDataFunc), unauthorizedHandler),
 				unauthorizedHandler,

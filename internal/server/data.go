@@ -96,26 +96,7 @@ func cachedHandler(content []byte, ct string) http.Handler {
 
 var extraFuncs = template.FuncMap{
 	"renderMD": func(md string) (template.HTML, error) {
-		gm := goldmark.New(
-			goldmark.WithExtensions(
-				extension.Strikethrough,
-				extension.Table,
-				&mdext.InlineAttrExtender{},
-				&mdext.SpanExtender{},
-				&mdext.CodeSpanExtender{},
-				&mdext.CodeBlockExtender{},
-			),
-			goldmark.WithParserOptions(
-				parser.WithAutoHeadingID(),
-				parser.WithAttribute(),
-			),
-			goldmark.WithRendererOptions(),
-		)
-		var buf bytes.Buffer
-		if err := gm.Convert([]byte(md), &buf); err != nil {
-			return "", fmt.Errorf("markdown: %w", err)
-		}
-		return template.HTML(buf.String()), nil
+		return renderMarkdown(md)
 	},
 
 	"rfc3339Time":    chrono.RFC3339Time,
@@ -200,19 +181,47 @@ var extraFuncs = template.FuncMap{
 
 		return notCorrect
 	},
+
+	"spreadQDots": func(s string) string {
+		return strings.ReplaceAll(s, "::", " :: ")
+	},
 }
 
-type dataFunc func(r *http.Request) (int, any)
+type dataFunc func(r *http.Request) int
+
+func renderMarkdown(md string) (template.HTML, error) {
+	gm := goldmark.New(
+		goldmark.WithExtensions(
+			extension.Strikethrough,
+			extension.Table,
+			&mdext.InlineAttrExtender{},
+			&mdext.SpanExtender{},
+			&mdext.CodeSpanExtender{},
+			&mdext.CodeBlockExtender{},
+		),
+		goldmark.WithParserOptions(
+			parser.WithAutoHeadingID(),
+			parser.WithAttribute(),
+		),
+		goldmark.WithRendererOptions(),
+	)
+	var buf bytes.Buffer
+	if err := gm.Convert([]byte(md), &buf); err != nil {
+		return "", fmt.Errorf("markdown: %w", err)
+	}
+	return template.HTML(buf.String()), nil
+}
 
 func templateHandler(content []byte, ct string) func(dataFunc) http.Handler {
 	t := template.Must(template.New("page").Funcs(sprig.HtmlFuncMap()).Funcs(extraFuncs).Parse(string(content)))
 
 	return func(dataFunc dataFunc) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			status, data := dataFunc(r)
+			status := dataFunc(r)
+			pd := pageDataFromContext(r.Context())
 
 			buf := &bytes.Buffer{}
-			if err := t.Execute(buf, data); err != nil {
+			if err := t.Execute(buf, pd); err != nil {
 				logger := ctxlog.Get(r.Context())
 				logger.Error("failed to exec template", "error", err)
 				panic(err)
@@ -231,7 +240,7 @@ func mdDataFunc(status int, title string, content []byte) dataFunc {
 		panic(fmt.Errorf("title %q: %w", title, err))
 	}
 
-	return func(r *http.Request) (int, any) {
+	return func(r *http.Request) int {
 		pd := pageDataFromContext(r.Context())
 		if pd.Title != "" {
 			pd.Title = title + " :: " + pd.Title
@@ -246,10 +255,14 @@ func mdDataFunc(status int, title string, content []byte) dataFunc {
 			panic(err)
 		}
 
-		pd.Content.Parts = []partData{{
-			MD: buf.String(),
-		}}
-		return status, pd
+		html, err := renderMarkdown(buf.String())
+		if err != nil {
+			logger := ctxlog.Get(r.Context())
+			logger.Error("failed to render md", "error", err)
+			panic(err)
+		}
+		pd.Content = html
+		return status
 	}
 }
 
@@ -259,12 +272,14 @@ func htmlDataFunc(status int, title string, content []byte) dataFunc {
 		panic(fmt.Errorf("title %q: %w", title, err))
 	}
 
-	return func(r *http.Request) (int, any) {
+	return func(r *http.Request) int {
 		pd := pageDataFromContext(r.Context())
-		if pd.Title != "" {
-			pd.Title = title + " :: " + pd.Title
-		} else {
-			pd.Title = title
+		if title != "" {
+			if pd.Title != "" {
+				pd.Title = title + " :: " + pd.Title
+			} else {
+				pd.Title = title
+			}
 		}
 
 		buf := &strings.Builder{}
@@ -274,9 +289,7 @@ func htmlDataFunc(status int, title string, content []byte) dataFunc {
 			panic(err)
 		}
 
-		pd.Content.Parts = []partData{{
-			HTML: template.HTML(buf.String()),
-		}}
-		return status, pd
+		pd.Content = template.HTML(buf.String())
+		return status
 	}
 }
