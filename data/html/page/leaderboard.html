@@ -14,7 +14,11 @@
 		{{- range $idx, $_ := .Leaderboard }}
 		<tr {{- if and $.User (eq .User.ID $.User.ID)}} class="user" {{- end }}>
 			<td>{{ $idx | add 1 }}</td>
+			{{- if and $.User $.User.Admin }}
+			<td><img src="{{ .User.Avatar }}" alt="{{ .User.Name }} avatar" class="avatar"> <a href="/{{ $.Event.Path }}/admin/user/{{ .User.ID }}" {{- if gt (.User.Name | len) 32 }} title="{{ .User.Name }}" {{- end }}>{{ .User.Name | abbrev 32 | cleanUTF }}</a></td>
+			{{- else }}
 			<td><img src="{{ .User.Avatar }}" alt="{{ .User.Name }} avatar" class="avatar"> <span {{- if gt (.User.Name | len) 32 }} title="{{ .User.Name }}" {{- end }}>{{ .User.Name | abbrev 32 | cleanUTF }}</span></td>
+			{{- end }}
 			<td>{{ .Solved }}</td>
 			<td>{{ .Score }}</td>
 		</tr>
