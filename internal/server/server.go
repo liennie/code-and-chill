@@ -20,6 +20,7 @@ import (
 	"github.com/liennie/code-and-chill/internal/auth"
 	"github.com/liennie/code-and-chill/internal/ctxlog"
 	"github.com/liennie/code-and-chill/internal/db"
+	"github.com/liennie/code-and-chill/internal/notifier"
 	"github.com/liennie/code-and-chill/internal/puzzles"
 	"github.com/liennie/code-and-chill/internal/session"
 
@@ -36,7 +37,7 @@ type Server struct {
 	apiHandler      http.Handler
 }
 
-func New(config Config, db *db.DB, session *session.Store, auth *auth.Auth, puzzles *puzzles.Puzzles) *Server {
+func New(config Config, db *db.DB, session *session.Store, auth *auth.Auth, puzzles *puzzles.Puzzles, notif *notifier.Notifier) *Server {
 	if config.Port == 0 {
 		panic("server: port is required")
 	}
@@ -56,7 +57,7 @@ func New(config Config, db *db.DB, session *session.Store, auth *auth.Auth, puzz
 
 	return &Server{
 		addr:            net.JoinHostPort(config.Host, strconv.Itoa(config.Port)),
-		handler:         newHandler(config, db, session, auth, puzzles),
+		handler:         newHandler(config, db, session, auth, puzzles, notif),
 		tlsLoader:       loader,
 		httpsRedirect:   config.HTTPSRedirect,
 		shutdownTimeout: config.ShutdownTimeout,
@@ -84,7 +85,7 @@ func handlerRegistrar(prefix string, mux *http.ServeMux) func(method, path, src 
 	}
 }
 
-func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Auth, pzls *puzzles.Puzzles) (h http.Handler) {
+func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Auth, pzls *puzzles.Puzzles, notif *notifier.Notifier) (h http.Handler) {
 	fsys := os.DirFS(filepath.FromSlash(config.DataDir))
 
 	// handlers
@@ -290,6 +291,16 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 
 		reg("POST", "/admin/presentation/clear", "adminPresentationContainer.clearHandler", adminMux(
 			pres.clearHandler(),
+			notFoundHandler,
+		))
+
+		reg("GET", "/admin/notifier", "html/admin/notifier.html", adminMux(
+			adminPuzzleListMiddleware(event, page(htmlDataFunc(http.StatusOK, "Admin :: Notifier", readFile(fsys, "html/admin/notifier.html")))),
+			notFoundHandler,
+		))
+
+		reg("POST", "/admin/notifier/test/{puzzle}", "adminNotifierTestHandler", adminMux(
+			adminNotifierTestHandler(notif, pzls, event),
 			notFoundHandler,
 		))
 	}

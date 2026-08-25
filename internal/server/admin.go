@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"cmp"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -14,10 +15,12 @@ import (
 	"strconv"
 	"strings"
 	"text/template"
+	"time"
 
 	"github.com/Masterminds/sprig/v3"
 	"github.com/liennie/code-and-chill/internal/auth"
 	"github.com/liennie/code-and-chill/internal/ctxlog"
+	"github.com/liennie/code-and-chill/internal/notifier"
 	"github.com/liennie/code-and-chill/internal/puzzles"
 )
 
@@ -434,5 +437,74 @@ func (a *adminPresentationContainer) clearHandler() http.Handler {
 		a.fileName = ""
 		a.content = nil
 		http.Redirect(w, r, a.retStatus("clear-ok"), http.StatusSeeOther)
+	})
+}
+
+type adminNotifierTestResponse struct {
+	OK      bool   `json:"ok"`
+	Message string `json:"message,omitempty"`
+	Error   string `json:"error,omitempty"`
+}
+
+func adminNotifierTestHandler(notif *notifier.Notifier, pzls *puzzles.Puzzles, event puzzles.Event) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		enc := json.NewEncoder(w)
+
+		if notif == nil {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			enc.Encode(adminNotifierTestResponse{
+				Error: "notifier is not configured",
+			})
+			return
+		}
+
+		path := r.PathValue("puzzle")
+		var puzzle puzzles.Puzzle
+		found := false
+		if path == "__test__" {
+			puzzle = puzzles.Puzzle{
+				ID:     "test",
+				Path:   "test",
+				Name:   "Test Puzzle",
+				Unlock: time.Now(),
+				Parts: []puzzles.Part{{
+					ID:   "1",
+					Text: "# Test Puzzle\n\nThis is a notifier test triggered from the admin page. Ignore this message.\n",
+				}},
+			}
+			found = true
+		} else {
+			for _, p := range event.Puzzles {
+				if p.Path == path {
+					puzzle = p
+					found = true
+					break
+				}
+			}
+		}
+		if !found {
+			w.WriteHeader(http.StatusNotFound)
+			enc.Encode(adminNotifierTestResponse{
+				Error: fmt.Sprintf("puzzle %q not found", path),
+			})
+			return
+		}
+
+		err := notif.Notify(r.Context(), pzls, event, puzzle)
+		if err != nil {
+			ctxlog.Get(r.Context()).Error("notifier test", "error", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			enc.Encode(adminNotifierTestResponse{
+				Error: err.Error(),
+			})
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		enc.Encode(adminNotifierTestResponse{
+			OK:      true,
+			Message: fmt.Sprintf("Test notification sent for %q.", puzzle.Name),
+		})
 	})
 }

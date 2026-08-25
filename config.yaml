@@ -34,7 +34,7 @@ notifier:
   discord:
     token: secret/discord.token.txt
     channels:
-      test:
+      gt7:
         notifications: "1472419290568331458"
         forum: "1472400581229547621"
 

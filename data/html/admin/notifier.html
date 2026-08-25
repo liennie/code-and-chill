@@ -1,0 +1,31 @@
+<h1 id="notifier"><a href="/{{ $.Event.Path }}/admin">Admin</a>::Notifier</h1>
+
+<p>Send a test notification for a puzzle in the <em class="secondary-color">{{ $.Event.Name }}</em> event.</p>
+
+<table>
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th></th>
+			<th></th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td><em>Fake test puzzle</em></td>
+			<td>
+				<button class="notifier-test" data-event="{{ $.Event.Path }}" data-puzzle="__test__">Notify</button>
+			</td>
+			<td><span class="notifier-test-status" role="status" aria-live="polite"></span></td>
+		</tr>
+		{{- range .Admin.Puzzles }}
+		<tr>
+			<td><a href="/{{ $.Event.Path }}/admin/puzzle/{{ .Path }}">{{ .Name }}</a></td>
+			<td>
+				<button class="notifier-test" data-event="{{ $.Event.Path }}" data-puzzle="{{ .Path }}">Notify</button>
+			</td>
+			<td><span class="notifier-test-status" role="status" aria-live="polite"></span></td>
+		</tr>
+		{{- end }}
+	</tbody>
+</table>

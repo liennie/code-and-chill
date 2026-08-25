@@ -62,6 +62,60 @@
 		render();
 	}
 
+	function startNotifierTest() {
+		const buttons = document.querySelectorAll('.notifier-test');
+		if (!buttons.length) {
+			return;
+		}
+
+		buttons.forEach((button) => {
+			const eventPath = button.getAttribute('data-event');
+			const puzzlePath = button.getAttribute('data-puzzle');
+			if (!eventPath || !puzzlePath) {
+				return;
+			}
+
+			const row = button.closest('tr');
+			const status = row ? row.querySelector('.notifier-test-status') : null;
+
+			button.addEventListener('click', async function () {
+				button.disabled = true;
+				if (status) {
+					status.textContent = 'Sending…';
+					status.className = 'notifier-test-status';
+				}
+
+				try {
+					const response = await fetch(`/${encodeURIComponent(eventPath)}/admin/notifier/test/${encodeURIComponent(puzzlePath)}`, {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+						},
+					});
+					const data = await response.json().catch(() => ({}));
+					if (response.ok && data.ok) {
+						if (status) {
+							status.textContent = data.message || 'Sent.';
+							status.className = 'notifier-test-status success';
+						}
+					} else {
+						if (status) {
+							status.textContent = data.error || `Request failed (${response.status})`;
+							status.className = 'notifier-test-status error';
+						}
+					}
+				} catch (err) {
+					if (status) {
+						status.textContent = 'Network error';
+						status.className = 'notifier-test-status error';
+					}
+				} finally {
+					button.disabled = false;
+				}
+			});
+		});
+	}
+
 	function start() {
 		const checkboxes = document.querySelectorAll('.user-checkbox');
 		const errorSpan = document.getElementById('user-error');
@@ -109,6 +163,7 @@
 		});
 
 		startLeaderboardChartControls();
+		startNotifierTest();
 	};
 
 	if (document.readyState === 'loading') {
