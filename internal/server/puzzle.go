@@ -20,34 +20,34 @@ import (
 	"github.com/liennie/code-and-chill/internal/puzzles"
 )
 
-func eventsMiddleware(events []puzzles.Event, next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		pd := pageDataFromContext(r.Context())
+// func eventsMiddleware(events []puzzles.Event, next http.Handler) http.Handler {
+// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// 		pd := pageDataFromContext(r.Context())
 
-		maxLen := 0
-		for _, event := range events {
-			if len(event.Name) > maxLen {
-				maxLen = len(event.Name)
-			}
-		}
-		pd.EventAlign = maxLen + 2
+// 		maxLen := 0
+// 		for _, event := range events {
+// 			if len(event.Name) > maxLen {
+// 				maxLen = len(event.Name)
+// 			}
+// 		}
+// 		pd.EventAlign = maxLen + 2
 
-		pd.Events = make([]eventData, 0, len(events))
-		for _, event := range events {
-			// TODO solved from user
+// 		pd.Events = make([]eventData, 0, len(events))
+// 		for _, event := range events {
+// 			// TODO solved from user
 
-			evd := eventData{
-				Path:  event.Path,
-				Name:  event.Name,
-				Total: event.Total,
-			}
+// 			evd := eventData{
+// 				Path:  event.Path,
+// 				Name:  event.Name,
+// 				Total: event.Total,
+// 			}
 
-			pd.Events = append(pd.Events, evd)
-		}
+// 			pd.Events = append(pd.Events, evd)
+// 		}
 
-		next.ServeHTTP(w, r)
-	})
-}
+// 		next.ServeHTTP(w, r)
+// 	})
+// }
 
 func puzzlesMiddleware(event puzzles.Event, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -55,6 +55,14 @@ func puzzlesMiddleware(event puzzles.Event, next http.Handler) http.Handler {
 		pd.Event = eventData{
 			Path: event.Path,
 			Name: event.Name,
+		}
+
+		pd.Event.Contacts = make([]contactData, 0, len(event.Contacts))
+		for _, contact := range event.Contacts {
+			pd.Event.Contacts = append(pd.Event.Contacts, contactData{
+				Title: contact.Title,
+				Link: contact.Link,
+			})
 		}
 
 		maxLen := 0

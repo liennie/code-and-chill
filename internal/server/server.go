@@ -251,7 +251,7 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 		))
 
 		reg("GET", "/admin/user/{user}", "html/admin/user.html", adminMux(
-			adminUserMiddleware(auth, event, page(htmlDataFunc(http.StatusOK, "Admin :: User", readFile(fsys, "html/admin/user.html"))), notFoundHandler),
+			adminUserMiddleware(auth, event, page(htmlDataFunc(http.StatusOK, "Admin :: Users", readFile(fsys, "html/admin/user.html"))), notFoundHandler),
 			notFoundHandler,
 		))
 
@@ -261,7 +261,7 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 		))
 
 		reg("GET", "/admin/puzzle/{puzzle}", "html/admin/puzzle.html", adminMux(
-			adminPuzzleMiddleware(auth, event, page(htmlDataFunc(http.StatusOK, "Admin :: Puzzle", readFile(fsys, "html/admin/puzzle.html"))), notFoundHandler),
+			adminPuzzleMiddleware(auth, event, page(htmlDataFunc(http.StatusOK, "Admin :: Puzzles", readFile(fsys, "html/admin/puzzle.html"))), notFoundHandler),
 			notFoundHandler,
 		))
 

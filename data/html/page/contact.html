@@ -2,6 +2,8 @@
 
 <p>We'd love to hear from you! Whether you have <em>questions</em>, <em>feedback</em>, or found a <em>bug</em>, here's how you can reach us:</p>
 
-<h2 id="discord">Discord</h2>
-
-<!-- TODO discord link (or just name + pfp) -->
+<ul>
+	{{- range .Event.Contacts }}
+	<li><a href="{{ .Link }}" target="_blank">{{ if hasPrefix "https://discord.com" .Link }}<i class="discord-icon"></i>{{ end }}{{ .Title }}</a></li>
+	{{- end }}
+</ul>

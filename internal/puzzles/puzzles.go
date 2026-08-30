@@ -82,11 +82,22 @@ func LoadEvent(event EventPathConfig) Event {
 	fsys := os.DirFS(filepath.Dir(filepath.FromSlash(event.Config)))
 
 	e := Event{
-		ID:      ec.ID,
-		Path:    event.Path,
-		Name:    ec.Name,
-		Puzzles: make([]Puzzle, 0, len(ec.Puzzles)),
-		Total:   0,
+		ID:       ec.ID,
+		Path:     event.Path,
+		Name:     ec.Name,
+		Puzzles:  make([]Puzzle, 0, len(ec.Puzzles)),
+		Total:    0,
+		Contacts: make([]Contact, 0, len(ec.Contacts)),
+	}
+
+	for i, contact := range ec.Contacts {
+		if contact.Title == "" {
+			panic(fmt.Errorf("puzzles: event %q contact %d has empty title", event.Config, i))
+		}
+		if contact.Link == "" {
+			panic(fmt.Errorf("puzzles: event %q contact %d has empty link", event.Config, i))
+		}
+		e.Contacts = append(e.Contacts, Contact(contact))
 	}
 
 	puzzlePaths := map[string]struct{}{}
@@ -206,11 +217,17 @@ func loadPuzzleConfig(fsys fs.FS, filename string) (PuzzleConfig, error) {
 }
 
 type Event struct {
-	ID      string
-	Path    string
-	Name    string
-	Puzzles []Puzzle
-	Total   int
+	ID       string
+	Path     string
+	Name     string
+	Puzzles  []Puzzle
+	Total    int
+	Contacts []Contact
+}
+
+type Contact struct {
+	Title string
+	Link  string
 }
 
 type Puzzle struct {

@@ -16,9 +16,15 @@ type EventPathConfig struct {
 }
 
 type EventConfig struct {
-	ID      string             `yaml:"id"`
-	Name    string             `yaml:"name"`
-	Puzzles []PuzzlePathConfig `yaml:"puzzles"`
+	ID       string             `yaml:"id"`
+	Name     string             `yaml:"name"`
+	Puzzles  []PuzzlePathConfig `yaml:"puzzles"`
+	Contacts []ContactConfig    `yaml:"contacts"`
+}
+
+type ContactConfig struct {
+	Title string `yaml:"title"`
+	Link  string `yaml:"link"`
 }
 
 type PuzzlePathConfig struct {

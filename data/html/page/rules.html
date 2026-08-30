@@ -10,7 +10,11 @@
 	<li>Locked puzzles will appear greyed out until they're available.</li>
 </ul>
 
-<!-- TODO explain that i64 is sufficient and all solutions can run under X seconds -->
+<h2 id="performance-and-precision">Performance and precision</h2>
+<ul>
+	<li>Every puzzle is solvable using 64-bit integers - no intermediate or final value will overflow.</li>
+	<li>An efficient solution to all puzzles runs in <em>under a few seconds</em> on modest hardware. If your program takes much longer, your approach is probably not the intended one.</li>
+</ul>
 
 <h2 id="submissions">Submissions</h2>
 <ul>

@@ -49,10 +49,12 @@ type pageData struct {
 }
 
 type eventData struct {
-	Path   string
-	Name   string
-	Solved int
-	Total  int
+	Path     string
+	Name     string
+	Contacts []contactData
+
+	// Solved int
+	// Total  int
 }
 
 type currentPuzzleData struct {
@@ -77,6 +79,11 @@ type puzzleData struct {
 	Total  int
 	Locked bool
 	Unlock *time.Time
+}
+
+type contactData struct {
+	Title string
+	Link  string
 }
 
 type userData struct {

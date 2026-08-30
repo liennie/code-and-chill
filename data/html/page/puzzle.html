@@ -1,5 +1,7 @@
 {{- $return := $.Request.URL.Query.Get "return" | default $.Request.URL.Path | trimPrefix "/" -}}
 
+{{- if and $.User $.User.Admin }}<a href="/{{ $.Event.Path }}/admin/puzzle/{{ $.Puzzle.Path }}">Admin::Puzzles::{{ $.Puzzle.Name }}</a>{{ end }}
+
 {{- range $idx, $_ := $.Puzzle.Parts }}
 
 {{- .MD | renderMD }}
@@ -20,7 +22,7 @@
 </div>
 
 {{- else if $.User }}
-<form id="{{ .Anchor }}-answer" class="answer" action="/{{ $.Event.Path }}/puzzle/{{ $.Puzzle.Path }}/answer" method="post">
+<form id="answer-{{ .Anchor }}" class="answer" action="/{{ $.Event.Path }}/puzzle/{{ $.Puzzle.Path }}/answer" method="post">
 	{{- if $idx }}
 	<p>If you lost your input, you can <a href="/{{ $.Event.Path }}/puzzle/{{ $.Puzzle.Path }}/input" download="{{ $.Event.Path }}.{{ $.Puzzle.Path }}.input.txt">download it again</a>.</p>
 	{{- else }}

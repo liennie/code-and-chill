@@ -2,7 +2,7 @@
 
 <p>Your answer <code>{{ $.Puzzle.Submitted }}</code> cannot be submitted just yet. You recently submitted an incorrect answer and must wait <em data-timeout="{{ $.Puzzle.Timeout | rfc3339Time }}" title="{{ $.Puzzle.Timeout | humanTime }}">{{ $.Puzzle.Timeout.Sub $.Now | formatDuration }}</em> before trying again.</p>
 
-<p><a href="/{{ $.Event.Path }}/puzzle/{{ $.Puzzle.Path }}?a={{ $.Puzzle.Submitted | queryEsc }}#{{ $.Puzzle.Anchor }}-answer">Return to the puzzle</a>.</p>
+<p><a href="/{{ $.Event.Path }}/puzzle/{{ $.Puzzle.Path }}?a={{ $.Puzzle.Submitted | queryEsc }}#answer-{{ $.Puzzle.Anchor }}">Return to the puzzle</a>.</p>
 
 <p>Do not attempt automated or brute-force methods - see the <a href="/{{ $.Event.Path }}/rules#fair-play">rules</a> for permitted behavior.</p>
 
