@@ -185,6 +185,22 @@ var extraFuncs = template.FuncMap{
 	"spreadQDots": func(s string) string {
 		return strings.ReplaceAll(s, "::", " :: ")
 	},
+
+	"icon": func(s string) template.HTML {
+		u, err := url.Parse(s)
+		if err != nil {
+			return ""
+		}
+
+		switch u.Host {
+		case "discord.com":
+			return `<i class="discord icon"></i>`
+		case "github.com":
+			return `<i class="github icon"></i>`
+		}
+
+		return ""
+	},
 }
 
 type dataFunc func(r *http.Request) int

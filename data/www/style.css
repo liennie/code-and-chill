@@ -559,15 +559,23 @@ div.answer:last-child {
 	padding-bottom: 0;
 }
 
-i.discord-icon {
+i.icon {
 	width: 2ch;
 	height: 2ch;
 	margin-right: 1ch;
 	vertical-align: middle;
 	background-color: currentColor;
+	display: inline-block;
+}
+
+i.icon.discord {
 	-webkit-mask: url("/icon-discord.svg") no-repeat center / contain;
 	mask: url("/icon-discord.svg") no-repeat center / contain;
-	display: inline-block;
+}
+
+i.icon.github {
+	-webkit-mask: url("/icon-github.svg") no-repeat center / contain;
+	mask: url("/icon-github.svg") no-repeat center / contain;
 }
 
 @media (max-width:700px) {

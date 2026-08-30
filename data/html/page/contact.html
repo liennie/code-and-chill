@@ -4,6 +4,6 @@
 
 <ul>
 	{{- range .Event.Contacts }}
-	<li><a href="{{ .Link }}" target="_blank">{{ if hasPrefix "https://discord.com" .Link }}<i class="discord-icon"></i>{{ end }}{{ .Title }}</a></li>
+	<li><a href="{{ .Link }}" target="_blank">{{ icon .Link }}{{ .Title }}</a></li>
 	{{- end }}
 </ul>
