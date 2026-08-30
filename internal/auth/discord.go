@@ -69,6 +69,21 @@ const discordUserEndpoint = discordAPIBaseURL + "/users/@me"
 const discordGuildMemberEndpoint = discordAPIBaseURL + "/users/@me/guilds/%s/member"
 const discordAvatarURL = "https://cdn.discordapp.com/avatars/%s/%s.png?size=32"
 
+// discordUserAgent follows the format required by
+// https://docs.discord.com/developers/reference#user-agent
+const discordUserAgent = "DiscordBot (https://github.com/liennie/code-and-chill, 1.0)"
+
+type userAgentTransport struct {
+	base      http.RoundTripper
+	userAgent string
+}
+
+func (t *userAgentTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	req = req.Clone(req.Context())
+	req.Header.Set("User-Agent", t.userAgent)
+	return t.base.RoundTrip(req)
+}
+
 func (a *DiscordAuth) AuthURL(state string) string {
 	scope := "identify"
 	if a.guildID != "" {
@@ -88,8 +103,11 @@ func (a *DiscordAuth) AuthURL(state string) string {
 func (a *DiscordAuth) Exchange(ctx context.Context, code string, token string) (*User, error) {
 	cli := &http.Client{
 		Timeout: a.exchangeTimeout,
+		Transport: &userAgentTransport{
+			base:      http.DefaultTransport,
+			userAgent: discordUserAgent,
+		},
 	}
-	// TODO https://docs.discord.com/developers/reference#user-agent
 
 	t, err := a.exchange(ctx, cli, code)
 	if err != nil {
