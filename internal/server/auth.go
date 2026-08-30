@@ -173,6 +173,7 @@ func userMiddleware(a *auth.Auth, event puzzles.Event, next http.Handler) http.H
 					Name:   user.Name,
 					Avatar: user.AvatarURL,
 					Admin:  user.Admin,
+					Hidden: user.Hidden,
 				}
 
 				progress, err := a.Progress(event.ID, su.ID)

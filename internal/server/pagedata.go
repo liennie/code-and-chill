@@ -82,8 +82,9 @@ type puzzleData struct {
 }
 
 type contactData struct {
-	Title string
-	Link  string
+	Title   string
+	Link    string
+	Private bool
 }
 
 type userData struct {

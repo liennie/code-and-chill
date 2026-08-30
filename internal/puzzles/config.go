@@ -23,8 +23,9 @@ type EventConfig struct {
 }
 
 type ContactConfig struct {
-	Title string `yaml:"title"`
-	Link  string `yaml:"link"`
+	Title   string `yaml:"title"`
+	Link    string `yaml:"link"`
+	Private bool   `yaml:"private"`
 }
 
 type PuzzlePathConfig struct {

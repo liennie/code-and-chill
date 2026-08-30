@@ -4,6 +4,14 @@
 
 <ul>
 	{{- range .Event.Contacts }}
+	{{- if .Private }}
+	<li><del>{{ icon .Link }}{{ .Title }}</del></li>
+	{{- else }}
 	<li><a href="{{ .Link }}" target="_blank">{{ icon .Link }}{{ .Title }}</a></li>
 	{{- end }}
+	{{- end }}
 </ul>
+
+{{- if or (not $.User) ($.User.Hidden) }}
+<p>Note: You must be logged in and a member of the Garage Discord server to see all links.</p>
+{{- end }}

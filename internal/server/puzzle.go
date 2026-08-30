@@ -57,14 +57,6 @@ func puzzlesMiddleware(event puzzles.Event, next http.Handler) http.Handler {
 			Name: event.Name,
 		}
 
-		pd.Event.Contacts = make([]contactData, 0, len(event.Contacts))
-		for _, contact := range event.Contacts {
-			pd.Event.Contacts = append(pd.Event.Contacts, contactData{
-				Title: contact.Title,
-				Link: contact.Link,
-			})
-		}
-
 		maxLen := 0
 		for _, puzzle := range event.Puzzles {
 			if len(puzzle.Name) > maxLen {
@@ -75,6 +67,16 @@ func puzzlesMiddleware(event puzzles.Event, next http.Handler) http.Handler {
 
 		user := userFromContext(r.Context())
 		progress := progressFromContext(r.Context())
+
+		pd.Event.Contacts = make([]contactData, 0, len(event.Contacts))
+		for _, contact := range event.Contacts {
+			private := contact.Private && (user == nil || user.Hidden)
+			pd.Event.Contacts = append(pd.Event.Contacts, contactData{
+				Title:   contact.Title,
+				Link:    contact.Link,
+				Private: private,
+			})
+		}
 
 		pd.Puzzles = make([]puzzleData, 0, len(event.Puzzles))
 		for _, puzzle := range event.Puzzles {

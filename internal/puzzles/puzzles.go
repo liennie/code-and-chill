@@ -226,8 +226,9 @@ type Event struct {
 }
 
 type Contact struct {
-	Title string
-	Link  string
+	Title   string
+	Link    string
+	Private bool
 }
 
 type Puzzle struct {
