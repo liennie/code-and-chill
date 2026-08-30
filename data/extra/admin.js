@@ -116,6 +116,94 @@
 		});
 	}
 
+	function startResetProgress() {
+		const button = document.getElementById('user-reset-progress');
+		if (!button) {
+			return;
+		}
+
+		const userId = button.getAttribute('data-user');
+		if (!userId) {
+			return;
+		}
+
+		const initialText = button.getAttribute('data-initial-text') || button.textContent;
+		const clicksRequired = Math.max(1, Number(button.getAttribute('data-clicks-required')) || 4);
+		const status = document.getElementById('user-reset-progress-status');
+
+		let clicks = 0;
+		let resetTimer = null;
+
+		const setStatus = (text, cls) => {
+			if (!status) return;
+			status.textContent = text || '';
+			status.className = cls || '';
+		};
+
+		const reset = () => {
+			clicks = 0;
+			button.textContent = initialText;
+			if (resetTimer !== null) {
+				clearTimeout(resetTimer);
+				resetTimer = null;
+			}
+		};
+
+		const armAutoReset = () => {
+			if (resetTimer !== null) {
+				clearTimeout(resetTimer);
+			}
+			resetTimer = setTimeout(reset, 5000);
+		};
+
+		button.addEventListener('click', async function () {
+			if (button.disabled) {
+				return;
+			}
+
+			clicks += 1;
+			const remaining = clicksRequired - clicks;
+			if (remaining > 0) {
+				button.textContent = `Click ${remaining} more time${remaining === 1 ? '' : 's'} to reset progress`;
+				setStatus('', '');
+				armAutoReset();
+				return;
+			}
+
+			if (resetTimer !== null) {
+				clearTimeout(resetTimer);
+				resetTimer = null;
+			}
+
+			button.disabled = true;
+			button.textContent = 'Resetting…';
+			setStatus('', '');
+
+			try {
+				const response = await fetch(`/api/user/${encodeURIComponent(userId)}/reset-progress`, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: '{}',
+				});
+				const data = await response.json().catch(() => ({}));
+				if (response.ok && data.ok) {
+					button.textContent = 'Progress reset';
+					setStatus('Reload the page to see the updated progress.', 'success');
+				} else {
+					setStatus(data.error || `Request failed (${response.status})`, 'error');
+					reset();
+					button.disabled = false;
+				}
+			} catch (err) {
+				setStatus('Network error', 'error');
+				reset();
+				button.disabled = false;
+			}
+		});
+	}
+
 	function start() {
 		const checkboxes = document.querySelectorAll('.user-checkbox');
 		const errorSpan = document.getElementById('user-error');
@@ -164,6 +252,7 @@
 
 		startLeaderboardChartControls();
 		startNotifierTest();
+		startResetProgress();
 	};
 
 	if (document.readyState === 'loading') {

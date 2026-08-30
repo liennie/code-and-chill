@@ -32,6 +32,19 @@
 
 <h2 id="progress">Progress</h2>
 
+{{ if eq $.User.ID $.Admin.User.ID }}
+<table>
+	<tbody>
+		<tr>
+			<td><button type="button" id="user-reset-progress" data-user="{{ .Admin.User.ID }}" data-initial-text="Reset progress" data-clicks-required="4">Reset progress</button></td>
+		</tr>
+		<tr>
+			<td><span id="user-reset-progress-status"></span></td>
+		</tr>
+	</tbody>
+</table>
+{{ end }}
+
 <table>
 	<tbody>
 		<tr>

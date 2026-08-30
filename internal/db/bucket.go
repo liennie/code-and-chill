@@ -209,6 +209,20 @@ func (b *Bucket[V]) All() iter.Seq2[string, *V] {
 	return b.Range("", "")
 }
 
+func (b *Bucket[V]) Keys() iter.Seq[string] {
+	return func(yield func(string) bool) {
+		c := b.b.Cursor()
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			if v != nil {
+				continue
+			}
+			if !yield(string(k)) {
+				return
+			}
+		}
+	}
+}
+
 func (b *Bucket[V]) DeleteRange(from, to string) error {
 	start, cont := rangeFuncs(from, to)
 	c := b.b.Cursor()

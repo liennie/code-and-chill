@@ -40,6 +40,10 @@ type APIUpdateUserResponse struct {
 	User *auth.User `json:"user"`
 }
 
+type APIResetUserProgressResponse struct {
+	OK bool `json:"ok"`
+}
+
 func apiHandler(auth *auth.Auth) http.Handler {
 	mux := http.NewServeMux()
 
@@ -48,6 +52,7 @@ func apiHandler(auth *auth.Auth) http.Handler {
 	mux.Handle("GET /users", apiListUsers(auth))
 	mux.Handle("GET /user/{id}", apiGetUser(auth))
 	mux.Handle("POST /user/{id}", apiUpdateUser(auth))
+	mux.Handle("POST /user/{id}/reset-progress", apiResetUserProgress(auth))
 
 	// TODO progress handlers
 
@@ -184,5 +189,25 @@ func apiUpdateUser(a *auth.Auth) http.Handler {
 		enc.Encode(APIUpdateUserResponse{
 			User: user,
 		})
+	})
+}
+
+func apiResetUserProgress(a *auth.Auth) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		enc := json.NewEncoder(w)
+
+		err := a.DeleteProgress(r.PathValue("id"))
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			enc.Encode(APIError{
+				Err: fmt.Errorf("reset user progress: %w", err).Error(),
+			})
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		enc.Encode(APIResetUserProgressResponse{OK: true})
 	})
 }

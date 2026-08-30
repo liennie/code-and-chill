@@ -204,9 +204,36 @@ func (c *UpdateUserCmd) Do(ctx context.Context, p *arg.Parser, cli *http.Client,
 	return nil
 }
 
+type ResetProgressCmd struct {
+	ID string `arg:"required,positional"`
+}
+
+func (c *ResetProgressCmd) Do(ctx context.Context, p *arg.Parser, cli *http.Client, args Args) error {
+	u := &url.URL{
+		Scheme: "http",
+		Host:   net.JoinHostPort("localhost", strconv.Itoa(args.Port)),
+		Path:   path.Join("/user", c.ID, "reset-progress"),
+	}
+
+	resp, err := cli.Post(u.String(), "application/json", bytes.NewReader([]byte(`{}`)))
+	if err != nil {
+		return fmt.Errorf("client: %w", err)
+	}
+	defer resp.Body.Close()
+
+	_, err = DecodeResponse[server.APIResetUserProgressResponse](resp)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("%s: progress reset\n", c.ID)
+	return nil
+}
+
 type UserCmd struct {
-	Find   *FindUsersCmd  `arg:"subcommand:find"`
-	List   *ListUsersCmd  `arg:"subcommand:list"`
-	Get    *GetUserCmd    `arg:"subcommand:get"`
-	Update *UpdateUserCmd `arg:"subcommand:update"`
+	Find          *FindUsersCmd     `arg:"subcommand:find"`
+	List          *ListUsersCmd     `arg:"subcommand:list"`
+	Get           *GetUserCmd       `arg:"subcommand:get"`
+	Update        *UpdateUserCmd    `arg:"subcommand:update"`
+	ResetProgress *ResetProgressCmd `arg:"subcommand:reset-progress"`
 }

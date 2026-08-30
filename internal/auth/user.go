@@ -198,3 +198,24 @@ func (a *Auth) UpdateProgress(event, user string, f func(*UserProgress) error) e
 		return eventBucket.Put(user, progress)
 	})
 }
+
+// DeleteProgress removes the user's progress entry from every event.
+func (a *Auth) DeleteProgress(user string) error {
+	return a.db.Update(func(tx *db.Tx) error {
+		if u := a.bucketUser.Open(tx).Get(user); u == nil {
+			return &UserNotFoundError{user}
+		}
+
+		bucket := a.bucketProgress.Open(tx)
+		for event := range bucket.Keys() {
+			eventBucket := bucket.Bucket(event)
+			if eventBucket == nil {
+				continue
+			}
+			if err := eventBucket.Delete(user); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
