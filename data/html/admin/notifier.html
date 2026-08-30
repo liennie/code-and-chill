@@ -1,5 +1,20 @@
 <h1 id="notifier"><a href="/{{ $.Event.Path }}/admin">Admin</a>::Notifier</h1>
 
+<section id="notifier-setup">
+	<h2>Setup</h2>
+	<p>Create the <em>Notifications</em> and <em>General discussion</em> threads in the configured Discord forum for the <em class="secondary-color">{{ $.Event.Name }}</em> event. Each click creates new threads - run this once and clean up duplicates in Discord if you misclick.</p>
+	<p><button id="notifier-setup-button" data-event="{{ $.Event.Path }}">Set up forum threads</button></p>
+	<div id="notifier-setup-status" role="status" aria-live="polite"></div>
+	<dl id="notifier-setup-result" hidden>
+		<dt>Notifications thread ID</dt>
+		<dd><code class="notifications-id"></code></dd>
+		<dt>General discussion thread ID</dt>
+		<dd><code class="general-id"></code></dd>
+	</dl>
+</section>
+
+<h2>Test</h2>
+
 <p>Send a test notification for a puzzle in the <em class="secondary-color">{{ $.Event.Name }}</em> event.</p>
 
 <table>

@@ -40,6 +40,16 @@ func New(config Config) *Notifier {
 }
 
 func (n *Notifier) Notify(ctx context.Context, pzls *puzzles.Puzzles, event puzzles.Event, puzzle puzzles.Puzzle) error {
+	return n.notify(ctx, pzls, event, puzzle, false)
+}
+
+// NotifyTest sends the same notification as Notify but deletes the created
+// thread and notification message afterwards, leaving the target channels clean.
+func (n *Notifier) NotifyTest(ctx context.Context, pzls *puzzles.Puzzles, event puzzles.Event, puzzle puzzles.Puzzle) error {
+	return n.notify(ctx, pzls, event, puzzle, true)
+}
+
+func (n *Notifier) notify(ctx context.Context, pzls *puzzles.Puzzles, event puzzles.Event, puzzle puzzles.Puzzle, cleanup bool) error {
 	if n == nil {
 		return fmt.Errorf("notifier is not configured")
 	}
@@ -57,11 +67,23 @@ func (n *Notifier) Notify(ctx context.Context, pzls *puzzles.Puzzles, event puzz
 			puzzle.Name,
 			snippet,
 			link,
+			cleanup,
 		)
 		errs = append(errs, err)
 	}
 
 	return errors.Join(errs...)
+}
+
+func (n *Notifier) Setup(ctx context.Context, event puzzles.Event) (SetupResult, error) {
+	if n == nil {
+		return SetupResult{}, fmt.Errorf("notifier is not configured")
+	}
+	if n.Discord == nil {
+		return SetupResult{}, fmt.Errorf("discord notifier is not configured")
+	}
+
+	return n.Discord.setup(ctx, event.Path, event.Name)
 }
 
 func snippetFromMD(md string) string {

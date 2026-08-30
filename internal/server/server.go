@@ -306,6 +306,11 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 			adminNotifierTestHandler(notif, pzls, event),
 			notFoundHandler,
 		))
+
+		reg("POST", "/admin/notifier/setup", "adminNotifierSetupHandler", adminMux(
+			adminNotifierSetupHandler(notif, event),
+			notFoundHandler,
+		))
 	}
 
 	// global middleware

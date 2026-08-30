@@ -116,6 +116,63 @@
 		});
 	}
 
+	function startNotifierSetup() {
+		const button = document.getElementById('notifier-setup-button');
+		if (!button) {
+			return;
+		}
+
+		const eventPath = button.getAttribute('data-event');
+		if (!eventPath) {
+			return;
+		}
+
+		const status = document.getElementById('notifier-setup-status');
+		const result = document.getElementById('notifier-setup-result');
+		const notifIdEl = result ? result.querySelector('.notifications-id') : null;
+		const generalIdEl = result ? result.querySelector('.general-id') : null;
+
+		const setStatus = (text, cls) => {
+			if (!status) return;
+			status.textContent = text || '';
+			status.className = cls || '';
+		};
+
+		const showIds = (data) => {
+			if (!result || !notifIdEl || !generalIdEl) return;
+			if (!data.notificationsThreadId && !data.generalThreadId) return;
+			notifIdEl.textContent = data.notificationsThreadId || '(not created)';
+			generalIdEl.textContent = data.generalThreadId || '(not created)';
+			result.hidden = false;
+		};
+
+		button.addEventListener('click', async function () {
+			button.disabled = true;
+			setStatus('Setting up…', '');
+
+			try {
+				const response = await fetch(`/${encodeURIComponent(eventPath)}/admin/notifier/setup`, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+				});
+				const data = await response.json().catch(() => ({}));
+				if (response.ok && data.ok) {
+					setStatus(data.message || 'Threads created.', 'success');
+					showIds(data);
+				} else {
+					setStatus(data.error || `Request failed (${response.status})`, 'error');
+					showIds(data);
+				}
+			} catch (err) {
+				setStatus('Network error', 'error');
+			} finally {
+				button.disabled = false;
+			}
+		});
+	}
+
 	function startResetProgress() {
 		const button = document.getElementById('user-reset-progress');
 		if (!button) {
@@ -252,6 +309,7 @@
 
 		startLeaderboardChartControls();
 		startNotifierTest();
+		startNotifierSetup();
 		startResetProgress();
 	};
 

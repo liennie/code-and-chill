@@ -491,7 +491,7 @@ func adminNotifierTestHandler(notif *notifier.Notifier, pzls *puzzles.Puzzles, e
 			return
 		}
 
-		err := notif.Notify(r.Context(), pzls, event, puzzle)
+		err := notif.NotifyTest(r.Context(), pzls, event, puzzle)
 		if err != nil {
 			ctxlog.Get(r.Context()).Error("notifier test", "error", err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -505,6 +505,49 @@ func adminNotifierTestHandler(notif *notifier.Notifier, pzls *puzzles.Puzzles, e
 		enc.Encode(adminNotifierTestResponse{
 			OK:      true,
 			Message: fmt.Sprintf("Test notification sent for %q.", puzzle.Name),
+		})
+	})
+}
+
+type adminNotifierSetupResponse struct {
+	OK                    bool   `json:"ok"`
+	Message               string `json:"message,omitempty"`
+	Error                 string `json:"error,omitempty"`
+	NotificationsThreadID string `json:"notificationsThreadId,omitempty"`
+	GeneralThreadID       string `json:"generalThreadId,omitempty"`
+}
+
+func adminNotifierSetupHandler(notif *notifier.Notifier, event puzzles.Event) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		enc := json.NewEncoder(w)
+
+		if notif == nil {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			enc.Encode(adminNotifierSetupResponse{
+				Error: "notifier is not configured",
+			})
+			return
+		}
+
+		result, err := notif.Setup(r.Context(), event)
+		if err != nil {
+			ctxlog.Get(r.Context()).Error("notifier setup", "error", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			enc.Encode(adminNotifierSetupResponse{
+				Error:                 err.Error(),
+				NotificationsThreadID: result.NotificationsThreadID,
+				GeneralThreadID:       result.GeneralThreadID,
+			})
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		enc.Encode(adminNotifierSetupResponse{
+			OK:                    true,
+			Message:               fmt.Sprintf("Forum threads created for %q.", event.Name),
+			NotificationsThreadID: result.NotificationsThreadID,
+			GeneralThreadID:       result.GeneralThreadID,
 		})
 	})
 }
