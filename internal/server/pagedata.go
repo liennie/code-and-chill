@@ -46,6 +46,8 @@ type pageData struct {
 	Content template.HTML
 
 	Admin *adminData
+
+	ETags map[string]string
 }
 
 type eventData struct {

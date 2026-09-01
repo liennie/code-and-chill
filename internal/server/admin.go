@@ -214,7 +214,7 @@ func adminPuzzleInputHandler(event puzzles.Event, notfound http.Handler) http.Ha
 	for _, puzzle := range event.Puzzles {
 		handlers[puzzle.Path] = make([]http.Handler, len(puzzle.Inputs))
 		for i, input := range puzzle.Inputs {
-			handlers[puzzle.Path][i] = cachedHandler(input.Text, "text/plain; charset=utf-8")
+			_, handlers[puzzle.Path][i] = cachedHandler(input.Text, "text/plain; charset=utf-8")
 		}
 	}
 

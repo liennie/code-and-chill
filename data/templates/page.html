@@ -4,15 +4,15 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width,initial-scale=1">
-	<link rel="icon" href="/favicon.ico">
+	{{ versioned "/favicon.ico" $.ETags }}
 	<title>{{ if $.Title }}{{ $.Title }} | {{ end }}{{ $.Name }} :: {{ $.Event.Name | spreadQDots }}</title>
 	<link rel="preload" href="/JetBrainsMono-VariableFont_wght.ttf" as="font" type="font/ttf" crossorigin>
 	<link rel="preload" href="/JetBrainsMono-Italic-VariableFont_wght.ttf" as="font" type="font/ttf" crossorigin>
-	<link rel="stylesheet" href="/fonts.css">
-	<link rel="stylesheet" href="/style.css">
-	<script src="/script.js" defer async></script>
+	{{ versioned "/fonts.css" $.ETags }}
+	{{ versioned "/style.css" $.ETags }}
+	{{ versioned "/script.js" $.ETags "defer" "async" }}
 	{{- if and .User .User.Admin }}
-	<script src="/admin.js" defer async></script>
+	{{ versioned "/admin.js" $.ETags "defer" "async" }}
 	{{- end }}
 </head>
 

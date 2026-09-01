@@ -63,17 +63,31 @@ var maxAge = map[string]int{
 	"text/javascript; charset=utf-8": 1 * 24 * 60 * 60,
 }
 
-func cachedHandler(content []byte, ct string) http.Handler {
-	h := md5.New()
-	h.Write(content)
-	etag := base64.RawURLEncoding.EncodeToString(h.Sum(nil))
+var immutable = map[string]bool{
+	"font/ttf":                       true,
+	"image/x-icon":                   true,
+	"text/css; charset=utf-8":        true,
+	"text/javascript; charset=utf-8": true,
+}
 
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func cachedHandler(content []byte, ct string) (string, http.Handler) {
+	sum := md5.Sum(content)
+	etag := base64.RawURLEncoding.EncodeToString(sum[:])
+
+	return etag, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if ct != "" {
 			w.Header().Set("Content-Type", ct)
 
+			cc := make([]string, 0, 2)
 			if maxAge, ok := maxAge[ct]; ok {
-				w.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d", maxAge))
+				cc = append(cc, fmt.Sprintf("max-age=%d", maxAge))
+			}
+			if immutable[ct] {
+				cc = append(cc, "immutable")
+			}
+
+			if len(cc) > 0 {
+				w.Header().Set("Cache-Control", strings.Join(cc, ", "))
 			}
 		}
 		w.Header().Set("ETag", etag)
@@ -202,6 +216,34 @@ var extraFuncs = template.FuncMap{
 
 		return ""
 	},
+
+	"versioned": func(res string, etags map[string]string, attrs ...string) template.HTML {
+		ext := path.Ext(res)
+
+		etag, ok := etags[res]
+		if ok {
+			res = fmt.Sprintf("%s?v=%s", res, etag)
+		}
+
+		a := strings.Join(attrs, " ")
+		if a != "" {
+			a = " " + a
+		}
+
+		switch ext {
+		case ".js":
+			return template.HTML(fmt.Sprintf(`<script src="%s"%s></script>`, res, a))
+
+		case ".css":
+			return template.HTML(fmt.Sprintf(`<link rel="stylesheet" href="%s"%s>`, res, a))
+
+		case ".ico":
+			return template.HTML(fmt.Sprintf(`<link rel="icon" href="%s"%s>`, res, a))
+
+		default:
+			panic(fmt.Errorf("unsupported ext: %q", ext))
+		}
+	},
 }
 
 type dataFunc func(r *http.Request) int
@@ -309,4 +351,13 @@ func htmlDataFunc(status int, title string, content []byte) dataFunc {
 		pd.Content = template.HTML(buf.String())
 		return status
 	}
+}
+
+func etagsMiddleware(etags map[string]string, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		pd := pageDataFromContext(r.Context())
+		pd.ETags = etags
+
+		next.ServeHTTP(w, r)
+	})
 }

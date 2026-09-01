@@ -99,18 +99,7 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 	notFoundHandler := page(htmlDataFunc(http.StatusNotFound, "404: Not Found", readFile(fsys, "html/404.html")))
 	internalErrorHandler := page(htmlDataFunc(http.StatusInternalServerError, "500: Internal Server Error", readFile(fsys, "html/500.html")))
 
-	eventMiddleware := func(event puzzles.Event) func(http.Handler) http.Handler {
-		return func(handler http.Handler) http.Handler {
-			handler = puzzlesMiddleware(event, handler)
-			handler = darkModeMiddleware(handler)
-			handler = userMiddleware(auth, event, handler)
-			handler = sessionMiddleware(session, handler)
-			handler = recoverMiddleware(handler, internalErrorHandler)
-			handler = pageDataMiddleware(pzls.Name, handler)
-			return handler
-		}
-	}
-	rootMiddleware := eventMiddleware(pzls.Default)
+	etags := map[string]string{}
 
 	// static
 	const wwwDir = "www"
@@ -127,12 +116,33 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 			panic(fmt.Errorf("%q is not a subpath of %q", p, wwwDir))
 		}
 
-		reg("GET", subPath, p, cachedHandler(dataFile(fsys, p)))
+		etag, handler := cachedHandler(dataFile(fsys, p))
+		reg("GET", subPath, p, handler)
+
+		etags[subPath] = etag
+
 		return nil
 	})
 	if err != nil {
 		panic(fmt.Errorf("server: walk www directory: %w", err))
 	}
+
+	adminJSETag, adminJSHandler := cachedHandler(dataFile(fsys, "extra/admin.js"))
+	etags["/admin.js"] = adminJSETag
+
+	eventMiddleware := func(event puzzles.Event) func(http.Handler) http.Handler {
+		return func(handler http.Handler) http.Handler {
+			handler = etagsMiddleware(etags, handler)
+			handler = puzzlesMiddleware(event, handler)
+			handler = darkModeMiddleware(handler)
+			handler = userMiddleware(auth, event, handler)
+			handler = sessionMiddleware(session, handler)
+			handler = recoverMiddleware(handler, internalErrorHandler)
+			handler = pageDataMiddleware(pzls.Name, handler)
+			return handler
+		}
+	}
+	rootMiddleware := eventMiddleware(pzls.Default)
 
 	// root
 	e := pzls.Default.Path
@@ -157,7 +167,7 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 	reg("GET", "/avatar/{id}", "avatarHandler", avatarHandler(auth))
 
 	reg("GET", "/admin.js", "extra/admin.js", rootMiddleware(adminMux(
-		cachedHandler(dataFile(fsys, "extra/admin.js")),
+		adminJSHandler,
 		notFoundHandler,
 	)))
 
