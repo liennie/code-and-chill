@@ -1,4 +1,11 @@
-<h1 id="title">{{ $.Name }}::<span class="secondary-color">{{ $.Event.Name }}</span></h1>
+<h1 id="title">
+	{{- $.Name }}::
+	{{- $seg := splitList "::" $.Event.Name }}
+	{{- range $i, $_ := $seg }}
+	{{- if $i }}::{{ end -}}
+	<span class="secondary-color">{{ . }}</span>
+	{{- end -}}
+</h1>
 
 <p>Get ready for a series of coding puzzles released <em>one at a time</em>! Each puzzle unlocks on schedule - solve them to climb the <a href="/{{ $.Event.Path }}/leaderboard">leaderboard</a> and uncover the full story as it unfolds.</p>
 

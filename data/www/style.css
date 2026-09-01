@@ -203,6 +203,7 @@ a {
 .leftmenu h1 {
 	margin-top: 0;
 	font-weight: 800;
+	color: var(--color-em);
 }
 
 .leftmenu ul {

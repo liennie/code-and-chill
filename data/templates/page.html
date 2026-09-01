@@ -48,7 +48,14 @@
 
 		<main class="content">
 			<aside class="leftmenu">
-				<h1 class="secondary-color">{{ $.Event.Name }}</h1>
+				<h1>
+					{{- $seg := splitList "::" $.Event.Name }}
+					{{- range $i, $_ := $seg }}
+					{{- if $i }}::{{ end }}
+					{{- if or $i (eq (len $seg) 1) }}<span class="secondary-color">{{ . }}</span>
+					{{- else }}{{ . }}{{ end }}
+					{{- end -}}
+				</h1>
 				<ul>
 					{{- range .Puzzles }}
 					{{- $tag := choose .Locked "span" "a" }}
