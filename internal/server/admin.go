@@ -139,9 +139,11 @@ func adminPuzzleProgressData(puzzle puzzles.Puzzle, userID string, progress *aut
 		InputIndex: ii,
 	}
 	if progress != nil {
-		for _, t := range progress.Puzzles[puzzle.ID].Parts {
+		pp := progress.Puzzles[puzzle.ID]
+		for _, t := range pp.Parts {
 			ppd.Solves = append(ppd.Solves, t.Time)
 		}
+		ppd.Incorrect = pp.Incorrect
 	}
 
 	return ppd

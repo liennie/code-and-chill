@@ -69,12 +69,20 @@
 	</thead>
 	<tbody>
 		{{- range .Admin.Progress.Puzzles }}
+		{{- $puzzle := . }}
 		<tr>
 			<td><a href="/{{ $.Event.Path }}/admin/puzzle/{{ .Path }}#{{ .Input | base }}">{{ .Name }}</a></td>
 			<td><a href="/{{ $.Event.Path }}/admin/puzzle/{{ .Path }}/input/{{ .InputIndex }}">{{ .Input | base }}</a></td>
-			{{- $puzzle := . }}
 			{{- range .Solves }}
 			<td><span title="{{ . | humanTime }}">{{ solveTime . $puzzle.Unlock }}</span></td>
+			{{- end }}
+			{{- if len .Incorrect }}
+			<td>
+				{{- range $i, $_ := .Incorrect }}
+				{{- if $i }}<br>{{ end }}
+				<span data-spoiler="{{ . }}" data-pad="start">**********</span>
+				{{- end }}
+			</td>
 			{{- end }}
 		</tr>
 		{{- end }}

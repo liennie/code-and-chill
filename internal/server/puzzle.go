@@ -305,6 +305,13 @@ func puzzleAnswerDataFunc(a *auth.Auth, event puzzles.Event, pidx int, puzzle pu
 					progress.Timeout = pd.Now.Add(5 * time.Minute)
 				}
 
+				pp.Incorrect = slices.DeleteFunc(pp.Incorrect, func(s string) bool { return s == answer })
+				pp.Incorrect = append(pp.Incorrect, answer)
+				if len(pp.Incorrect) > auth.MaxIncorrectKept {
+					pp.Incorrect = pp.Incorrect[len(pp.Incorrect)-auth.MaxIncorrectKept:]
+				}
+				progress.Puzzles[puzzle.ID] = pp
+
 				pd.Puzzle.Correct = correctAnswer
 				pd.Puzzle.Incorrect = progress.Incorrect
 				pd.Puzzle.Anchor = puzzle.Parts[part].ID
@@ -318,6 +325,7 @@ func puzzleAnswerDataFunc(a *auth.Auth, event puzzles.Event, pidx int, puzzle pu
 			pp.Parts = append(pp.Parts, auth.PartProgress{
 				Time: pd.Now,
 			})
+			pp.Incorrect = nil
 			progress.Puzzles[puzzle.ID] = pp
 
 			if pidx >= 0 && pidx < len(pd.Puzzles) {

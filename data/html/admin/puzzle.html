@@ -54,6 +54,14 @@
 			{{- range .Progress.Solves }}
 			<td><span title="{{ . | humanTime }}">{{ solveTime . $.Admin.Puzzle.Unlock }}</span></td>
 			{{- end }}
+			{{- if len .Progress.Incorrect }}
+			<td>
+				{{- range $i, $_ := .Progress.Incorrect }}
+				{{- if $i }}<br>{{ end }}
+				<span data-spoiler="{{ . }}" data-pad="start">**********</span>
+				{{- end }}
+			</td>
+			{{- end }}
 		</tr>
 		{{- end }}
 		<tr style="height: 2ch;"></tr>

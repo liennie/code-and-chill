@@ -140,6 +140,7 @@ type puzzleProgressData struct {
 	Input      string
 	InputIndex uint
 	Solves     []time.Time
+	Incorrect  []string
 }
 
 type pageDataCtxKey struct{}

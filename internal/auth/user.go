@@ -54,8 +54,13 @@ type UserProgress struct {
 	Puzzles   map[string]PuzzleProgress `json:"puzzles"`
 }
 
+// MaxIncorrectKept is the maximum number of recent incorrect answers stored
+// for the part a user is currently trying to solve.
+const MaxIncorrectKept = 5
+
 type PuzzleProgress struct {
-	Parts []PartProgress `json:"parts"`
+	Parts     []PartProgress `json:"parts"`
+	Incorrect []string       `json:"incorrect,omitempty"`
 }
 
 type PartProgress struct {
