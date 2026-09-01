@@ -103,6 +103,7 @@ var extraFuncs = template.FuncMap{
 	"humanTime":      chrono.HumanTime,
 	"unlockTime":     chrono.UnlockTime,
 	"formatDuration": chrono.FormatDuration,
+	"solveTime":      chrono.SolveTime,
 
 	"puzzleClass": func(puzzle puzzleData) string {
 		if puzzle.Locked {

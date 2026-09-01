@@ -77,6 +77,12 @@ func UnlockTime(t time.Time) string {
 }
 
 func FormatDuration(d time.Duration) string {
+	sign := ""
+	if d < 0 {
+		d = -d
+		sign = "-"
+	}
+
 	d = d.Round(time.Second)
 
 	dd := d / (24 * time.Hour)
@@ -92,15 +98,23 @@ func FormatDuration(d time.Duration) string {
 
 	switch {
 	case dd > 0:
-		return fmt.Sprintf("%dd %02dh %02dm %02ds", dd, hh, mm, ss)
+		return fmt.Sprintf("%s%dd %02dh %02dm %02ds", sign, dd, hh, mm, ss)
 
 	case hh > 0:
-		return fmt.Sprintf("%dh %02dm %02ds", hh, mm, ss)
+		return fmt.Sprintf("%s%dh %02dm %02ds", sign, hh, mm, ss)
 
 	case mm > 0:
-		return fmt.Sprintf("%dm %02ds", mm, ss)
+		return fmt.Sprintf("%s%dm %02ds", sign, mm, ss)
 
 	default:
-		return fmt.Sprintf("%ds", ss)
+		return fmt.Sprintf("%s%ds", sign, ss)
 	}
+}
+
+func SolveTime(solve, unlock time.Time) string {
+	dur := solve.Sub(unlock)
+	if dur < 0 {
+		return HumanTime(solve)
+	}
+	return FormatDuration(dur)
 }

@@ -74,7 +74,7 @@
 			<td><a href="/{{ $.Event.Path }}/admin/puzzle/{{ .Path }}/input/{{ .InputIndex }}">{{ .Input | base }}</a></td>
 			{{- $puzzle := . }}
 			{{- range .Solves }}
-			<td><span title="{{ . | humanTime }}">{{ .Sub $puzzle.Unlock | formatDuration }}</span></td>
+			<td><span title="{{ . | humanTime }}">{{ solveTime . $puzzle.Unlock }}</span></td>
 			{{- end }}
 		</tr>
 		{{- end }}
