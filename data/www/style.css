@@ -366,6 +366,10 @@ article code {
 	white-space: pre;
 }
 
+article table code {
+	margin: 0;
+}
+
 article pre code {
 	background: transparent;
 	padding: 0;

@@ -1,4 +1,4 @@
-{{- $return := $.Request.URL.Query.Get "return" | default $.Request.URL.Path | trimPrefix "/" -}}
+{{- $return := $.Request.URL.Path | trimPrefix "/" -}}
 
 {{- if and $.User $.User.Admin }}<a href="/{{ $.Event.Path }}/admin/puzzle/{{ $.Puzzle.Path }}">Admin::Puzzles::{{ $.Puzzle.Name }}</a>{{ end }}
 
