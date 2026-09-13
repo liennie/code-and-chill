@@ -32,7 +32,9 @@ type UserSummary struct {
 	AvatarContentType string `json:"avatarContentType"`
 	Parts             int    `json:"parts"`
 	Score             int    `json:"score"`
-	PosChange         int    `json:"posChange"` // compared to now() - 1h
+	Position          int    `json:"position"`
+	PrevPosition      int    `json:"prevPosition"` // rank at now() - 1h; 0 if not ranked then
+	PosChange         int    `json:"posChange"`    // compared to now() - 1h
 }
 
 type SolveSummary struct {
@@ -155,8 +157,10 @@ func summaryHandler(a *auth.Auth, event puzzles.Event) http.Handler {
 		// Leaderboard entries.
 		for i, up := range upsNow {
 			currRank := i + 1
+			prevRank := 0
 			posChange := 0
 			if prev, ok := rankPrev[up.user.ID]; ok {
+				prevRank = prev
 				posChange = prev - currRank
 			}
 
@@ -176,6 +180,8 @@ func summaryHandler(a *auth.Auth, event puzzles.Event) http.Handler {
 				AvatarContentType: avatarContentType,
 				Parts:             up.solved,
 				Score:             up.score,
+				Position:          currRank,
+				PrevPosition:      prevRank,
 				PosChange:         posChange,
 			})
 		}
@@ -265,6 +271,14 @@ var summaryDocBody = []byte(`{
       "score": {
         "type": "integer",
         "description": "Total score the user has earned in this event."
+      },
+      "position": {
+        "type": "integer",
+        "description": "Current rank at request time, starting at 1."
+      },
+      "prevPosition": {
+        "type": "integer",
+        "description": "Rank one hour before the request, starting at 1. 0 when the user was not ranked one hour ago."
       },
       "posChange": {
         "type": "integer",
