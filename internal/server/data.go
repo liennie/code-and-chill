@@ -9,6 +9,7 @@ import (
 	"html/template"
 	"io"
 	"io/fs"
+	"math/rand/v2"
 	"mime"
 	"net/http"
 	"net/url"
@@ -181,11 +182,11 @@ var extraFuncs = template.FuncMap{
 			return notCorrect
 		}
 
-		if submitted > correct+10 {
+		if submitted > correct+10+rand.IntN(40) {
 			return "too high"
 		}
 
-		if submitted < correct-10 {
+		if submitted < correct-10-rand.IntN(40) {
 			return "too low"
 		}
 
