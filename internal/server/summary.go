@@ -1,7 +1,6 @@
 package server
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"net/http"
 	"slices"
@@ -26,15 +25,13 @@ type PuzzleSummary struct {
 }
 
 type UserSummary struct {
-	Name              string `json:"name"`
-	DiscordID         string `json:"discordId"`
-	AvatarData        string `json:"avatarData"`
-	AvatarContentType string `json:"avatarContentType"`
-	Parts             int    `json:"parts"`
-	Score             int    `json:"score"`
-	Position          int    `json:"position"`
-	PrevPosition      int    `json:"prevPosition"` // rank at now() - 1h; 0 if not ranked then
-	PosChange         int    `json:"posChange"`    // compared to now() - 1h
+	Name         string `json:"name"`
+	DiscordID    string `json:"discordId"`
+	Parts        int    `json:"parts"`
+	Score        int    `json:"score"`
+	Position     int    `json:"position"`
+	PrevPosition int    `json:"prevPosition"` // rank at now() - 1h; 0 if not ranked then
+	PosChange    int    `json:"posChange"`    // compared to now() - 1h
 }
 
 type SolveSummary struct {
@@ -164,25 +161,14 @@ func summaryHandler(a *auth.Auth, event puzzles.Event) http.Handler {
 				posChange = prev - currRank
 			}
 
-			var avatarData, avatarContentType string
-			av, err := a.UserAvatar(up.user.ID)
-			if err != nil {
-				logger.Error("get user avatar", "id", up.user.ID, "error", err)
-			} else if av != nil && len(av.Data) > 0 {
-				avatarData = base64.StdEncoding.EncodeToString(av.Data)
-				avatarContentType = av.ContentType
-			}
-
 			summary.Leaderboard = append(summary.Leaderboard, UserSummary{
-				Name:              up.user.Name,
-				DiscordID:         discordIDs[up.user.ID],
-				AvatarData:        avatarData,
-				AvatarContentType: avatarContentType,
-				Parts:             up.solved,
-				Score:             up.score,
-				Position:          currRank,
-				PrevPosition:      prevRank,
-				PosChange:         posChange,
+				Name:         up.user.Name,
+				DiscordID:    discordIDs[up.user.ID],
+				Parts:        up.solved,
+				Score:        up.score,
+				Position:     currRank,
+				PrevPosition: prevRank,
+				PosChange:    posChange,
 			})
 		}
 
@@ -255,14 +241,6 @@ var summaryDocBody = []byte(`{
       "discordId": {
         "type": "string",
         "description": "Discord user ID (snowflake) linked to this account. Empty string when the user has no linked Discord account."
-      },
-      "avatarData": {
-        "type": "string (base64)",
-        "description": "Base64-encoded avatar image bytes. Empty string when no cached avatar is available."
-      },
-      "avatarContentType": {
-        "type": "string",
-        "description": "MIME content type for avatarData. Empty string when avatarData is empty."
       },
       "parts": {
         "type": "integer",
