@@ -202,6 +202,8 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 		reg("GET", "/leaderboard/chart.svg", "leaderboardChart", leaderboardChart(auth, event))
 		reg("GET", "/contact", "html/page/contact.html", page(htmlDataFunc(http.StatusOK, "Contact", readFile(fsys, "html/page/contact.html"))))
 		reg("GET", "/latest", "latestPuzzleRedirect", latestPuzzleRedirect(event))
+		reg("GET", "/summary.json", "summaryHandler", summaryHandler(auth, event))
+		reg("GET", "/summary.json/doc", "summaryDocHandler", summaryDocHandler())
 
 		// reg("GET", "/login", "html/page/login.html", userMux(
 		// 	returnRedirect(e),
