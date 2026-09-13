@@ -15,8 +15,8 @@ import (
 type Summary struct {
 	CurrentPuzzle *PuzzleSummary `json:"currentPuzzle"`
 	NextPuzzle    *PuzzleSummary `json:"nextPuzzle"`
-	Leaderboard   []UserSummary  `json:"leaderboard"` // up to 5 top
-	LastSolves    []SolveSummary `json:"lastSolves"`  // up to 5 last
+	Leaderboard   []UserSummary  `json:"leaderboard"`
+	LastSolves    []SolveSummary `json:"lastSolves"` // up to 5 last
 }
 
 type PuzzleSummary struct {
@@ -44,7 +44,7 @@ type SolveSummary struct {
 	Time       time.Time `json:"time"`
 }
 
-const summaryTopN = 5
+const summaryLastSolves = 5
 
 func summaryHandler(a *auth.Auth, event puzzles.Event) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -152,12 +152,8 @@ func summaryHandler(a *auth.Auth, event puzzles.Event) http.Handler {
 			rankPrev[up.user.ID] = i + 1
 		}
 
-		// Top leaderboard entries.
-		top := upsNow
-		if len(top) > summaryTopN {
-			top = top[:summaryTopN]
-		}
-		for i, up := range top {
+		// Leaderboard entries.
+		for i, up := range upsNow {
 			currRank := i + 1
 			posChange := 0
 			if prev, ok := rankPrev[up.user.ID]; ok {
@@ -189,7 +185,7 @@ func summaryHandler(a *auth.Auth, event puzzles.Event) http.Handler {
 		for _, p := range event.Puzzles {
 			puzzleName[p.ID] = p.Name
 		}
-		start := max(0, nowCount-summaryTopN)
+		start := max(0, nowCount-summaryLastSolves)
 		for i := nowCount - 1; i >= start; i-- {
 			s := solvesNow[i]
 			summary.LastSolves = append(summary.LastSolves, SolveSummary{
@@ -223,7 +219,7 @@ var summaryDocBody = []byte(`{
     },
     "leaderboard": {
       "type": "UserSummary[]",
-      "description": "The top 5 users, ranked by parts solved, score, and last solve time."
+      "description": "All ranked users, ordered by parts solved, score, and last solve time."
     },
     "lastSolves": {
       "type": "SolveSummary[]",
