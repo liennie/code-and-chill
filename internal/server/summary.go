@@ -27,6 +27,7 @@ type PuzzleSummary struct {
 
 type UserSummary struct {
 	Name              string `json:"name"`
+	DiscordID         string `json:"discordId"`
 	AvatarData        string `json:"avatarData"`
 	AvatarContentType string `json:"avatarContentType"`
 	Parts             int    `json:"parts"`
@@ -36,6 +37,7 @@ type UserSummary struct {
 
 type SolveSummary struct {
 	UserName   string    `json:"userName"`
+	DiscordID  string    `json:"discordId"`
 	PuzzleName string    `json:"puzzleName"`
 	Part       int       `json:"part"`
 	Score      int       `json:"points"`
@@ -52,6 +54,12 @@ func summaryHandler(a *auth.Auth, event puzzles.Event) http.Handler {
 		prevTime := now.Add(-time.Hour)
 
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+		discordIDs, err := a.Discord.UserIDs()
+		if err != nil {
+			logger.Error("get discord ids", "error", err)
+			discordIDs = map[string]string{}
+		}
 
 		summary := Summary{
 			Leaderboard: []UserSummary{},
@@ -167,6 +175,7 @@ func summaryHandler(a *auth.Auth, event puzzles.Event) http.Handler {
 
 			summary.Leaderboard = append(summary.Leaderboard, UserSummary{
 				Name:              up.user.Name,
+				DiscordID:         discordIDs[up.user.ID],
 				AvatarData:        avatarData,
 				AvatarContentType: avatarContentType,
 				Parts:             up.solved,
@@ -185,6 +194,7 @@ func summaryHandler(a *auth.Auth, event puzzles.Event) http.Handler {
 			s := solvesNow[i]
 			summary.LastSolves = append(summary.LastSolves, SolveSummary{
 				UserName:   s.progress.user.Name,
+				DiscordID:  discordIDs[s.progress.user.ID],
 				PuzzleName: puzzleName[s.puzzle],
 				Part:       s.part + 1,
 				Score:      scoreOfSolve[i],
@@ -240,6 +250,10 @@ var summaryDocBody = []byte(`{
         "type": "string",
         "description": "Display name of the user."
       },
+      "discordId": {
+        "type": "string",
+        "description": "Discord user ID (snowflake) linked to this account. Empty string when the user has no linked Discord account."
+      },
       "avatarData": {
         "type": "string (base64)",
         "description": "Base64-encoded avatar image bytes. Empty string when no cached avatar is available."
@@ -265,6 +279,10 @@ var summaryDocBody = []byte(`{
       "userName": {
         "type": "string",
         "description": "Display name of the user who made the solve."
+      },
+      "discordId": {
+        "type": "string",
+        "description": "Discord user ID (snowflake) linked to the solver's account. Empty string when the user has no linked Discord account."
       },
       "puzzleName": {
         "type": "string",

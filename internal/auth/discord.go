@@ -458,3 +458,23 @@ func (a *DiscordAuth) updateDB(ctx context.Context, cli *http.Client, discordUse
 
 	return user, nil
 }
+
+// UserIDs returns a map from application user ID to Discord user ID for
+// every Discord-linked account.
+func (a *DiscordAuth) UserIDs() (map[string]string, error) {
+	ids := map[string]string{}
+	err := a.db.View(func(tx *db.Tx) error {
+		bucket := a.bucketDiscordUser.Open(tx)
+		for discordID, u := range bucket.All() {
+			if u == nil {
+				continue
+			}
+			ids[u.ID] = discordID
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return ids, nil
+}
