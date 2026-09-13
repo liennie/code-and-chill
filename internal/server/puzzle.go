@@ -299,11 +299,7 @@ func puzzleAnswerDataFunc(a *auth.Auth, event puzzles.Event, pidx int, puzzle pu
 
 			if answer != correctAnswer {
 				progress.Incorrect++
-				if progress.Incorrect < 5 {
-					progress.Timeout = pd.Now.Add(time.Minute)
-				} else {
-					progress.Timeout = pd.Now.Add(5 * time.Minute)
-				}
+				progress.Timeout = pd.Now.Add(30 * time.Second)
 
 				pp.Incorrect = slices.DeleteFunc(pp.Incorrect, func(s string) bool { return s == answer })
 				pp.Incorrect = append(pp.Incorrect, answer)

@@ -9,7 +9,6 @@ import (
 	"html/template"
 	"io"
 	"io/fs"
-	"math/rand/v2"
 	"mime"
 	"net/http"
 	"net/url"
@@ -172,10 +171,6 @@ var extraFuncs = template.FuncMap{
 	"incorrectMsg": func(puzzle currentPuzzleData) string {
 		const notCorrect = "not correct"
 
-		if puzzle.Incorrect > 2 && rand.IntN(3) != 0 {
-			return notCorrect
-		}
-
 		correct, err := strconv.Atoi(puzzle.Correct)
 		if err != nil {
 			return notCorrect
@@ -186,11 +181,11 @@ var extraFuncs = template.FuncMap{
 			return notCorrect
 		}
 
-		if submitted > (correct + rand.IntN(9000) + 1000) {
+		if submitted > correct+10 {
 			return "too high"
 		}
 
-		if submitted < (correct - rand.IntN(9000) - 1000) {
+		if submitted < correct-10 {
 			return "too low"
 		}
 
