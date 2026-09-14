@@ -1,0 +1,24 @@
+<h1 id="solves"><a href="/{{ $.Event.Path }}/admin">Admin</a>::Solves</h1>
+
+<table style="--c4:right; --c5:right;">
+	<thead>
+		<tr>
+			<th>Player</th>
+			<th>Time</th>
+			<th>Puzzle</th>
+			<th>Part</th>
+			<th>Points</th>
+		</tr>
+	</thead>
+	<tbody>
+		{{- range .Admin.LastSolves }}
+		<tr>
+			<td><img src="{{ .User.AvatarURL }}" alt="{{ .User.Name }} avatar" class="avatar"> <a href="/{{ $.Event.Path }}/admin/user/{{ .User.ID }}" {{- if gt (.User.Name | len) 32 }} title="{{ .User.Name }}" {{- end }}>{{ .User.Name | abbrev 32 | cleanUTF }}</a></td>
+			<td><span title="{{ .Time | humanTime }}">{{ solveTime .Time .Puzzle.Unlock }}</span></td>
+			<td><a href="/{{ $.Event.Path }}/admin/puzzle/{{ .Puzzle.Path }}">{{ .Puzzle.Name }}</a></td>
+			<td>{{ .Part | add1 }}</td>
+			<td>{{ .Score }}</td>
+		</tr>
+		{{- end }}
+	</tbody>
+</table>

@@ -36,6 +36,60 @@ func adminMux(admin http.Handler, notadmin http.Handler) http.Handler {
 	})
 }
 
+// adminLastSolvesLimit caps the number of rows shown on the admin "Solves"
+// page.
+const adminLastSolvesLimit = 50
+
+func adminLastSolvesData(a *auth.Auth, event puzzles.Event) []adminSolveData {
+	_, solves, points := prepareSolves(a, event)
+
+	puzzleByID := make(map[string]puzzles.Puzzle, len(event.Puzzles))
+	for _, p := range event.Puzzles {
+		puzzleByID[p.ID] = p
+	}
+
+	// Score per solve, in the same oldest-first order points are awarded.
+	scores := make([]int, len(solves))
+	for i, s := range solves {
+		pk := pointKey{puzzle: s.puzzle, part: s.part}
+		scores[i] = points[pk]
+		points[pk]--
+	}
+
+	// solves is sorted oldest first; walk backwards for newest first.
+	start := max(0, len(solves)-adminLastSolvesLimit)
+	result := make([]adminSolveData, 0, len(solves)-start)
+	for i := len(solves) - 1; i >= start; i-- {
+		s := solves[i]
+		puzzle, ok := puzzleByID[s.puzzle]
+		if !ok {
+			continue
+		}
+
+		result = append(result, adminSolveData{
+			User:   s.progress.user,
+			Puzzle: puzzle,
+			Part:   s.part,
+			Time:   s.time,
+			Score:  scores[i],
+		})
+	}
+
+	return result
+}
+
+func adminSolvesMiddleware(a *auth.Auth, event puzzles.Event, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		pd := pageDataFromContext(r.Context())
+
+		pd.Admin = &adminData{
+			LastSolves: adminLastSolvesData(a, event),
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
 func adminUserListMiddleware(a *auth.Auth, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		pd := pageDataFromContext(r.Context())

@@ -272,6 +272,11 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 			notFoundHandler,
 		))
 
+		reg("GET", "/admin/solves", "html/admin/solves.html", adminMux(
+			adminSolvesMiddleware(auth, event, page(htmlDataFunc(http.StatusOK, "Admin :: Solves", readFile(fsys, "html/admin/solves.html")))),
+			notFoundHandler,
+		))
+
 		reg("GET", "/admin/puzzle/{puzzle}", "html/admin/puzzle.html", adminMux(
 			adminPuzzleMiddleware(auth, event, page(htmlDataFunc(http.StatusOK, "Admin :: Puzzles", readFile(fsys, "html/admin/puzzle.html"))), notFoundHandler),
 			notFoundHandler,

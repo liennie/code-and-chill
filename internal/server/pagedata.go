@@ -119,7 +119,17 @@ type adminData struct {
 	Puzzle           *puzzles.Puzzle
 	PuzzleInputUsers [][]puzzleInputData
 
+	LastSolves []adminSolveData
+
 	PresFileName string
+}
+
+type adminSolveData struct {
+	User   *auth.User
+	Puzzle puzzles.Puzzle
+	Part   int
+	Time   time.Time
+	Score  int
 }
 
 type puzzleInputData struct {
