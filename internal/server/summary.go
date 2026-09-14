@@ -12,16 +12,23 @@ import (
 )
 
 type Summary struct {
-	CurrentPuzzle *PuzzleSummary `json:"currentPuzzle"`
-	NextPuzzle    *PuzzleSummary `json:"nextPuzzle"`
-	Leaderboard   []UserSummary  `json:"leaderboard"`
-	LastSolves    []SolveSummary `json:"lastSolves"` // up to 5 last
+	PreviousPuzzles []PuzzleSummary `json:"previousPuzzles"`
+	CurrentPuzzle   *PuzzleSummary  `json:"currentPuzzle"`
+	NextPuzzle      *PuzzleSummary  `json:"nextPuzzle"`
+	Leaderboard     []UserSummary   `json:"leaderboard"`
+	LastSolves      []SolveSummary  `json:"lastSolves"` // up to 5 last
 }
 
 type PuzzleSummary struct {
-	Name       string    `json:"name"`
-	UnlockTime time.Time `json:"unlockTime"`
-	Solvers    *[2]int   `json:"solvers"` // number of solvers per part
+	Name       string              `json:"name"`
+	UnlockTime time.Time           `json:"unlockTime"`
+	Solvers    *[2]int             `json:"solvers"`    // number of solvers per part
+	SolverList *[2][]SolverSummary `json:"solverList"` // per-part solver details
+}
+
+type SolverSummary struct {
+	DiscordID string    `json:"discordId"`
+	Time      time.Time `json:"time"`
 }
 
 type UserSummary struct {
@@ -35,7 +42,6 @@ type UserSummary struct {
 }
 
 type SolveSummary struct {
-	UserName   string    `json:"userName"`
 	DiscordID  string    `json:"discordId"`
 	PuzzleName string    `json:"puzzleName"`
 	Part       int       `json:"part"`
@@ -61,8 +67,9 @@ func summaryHandler(a *auth.Auth, event puzzles.Event) http.Handler {
 		}
 
 		summary := Summary{
-			Leaderboard: []UserSummary{},
-			LastSolves:  []SolveSummary{},
+			PreviousPuzzles: []PuzzleSummary{},
+			Leaderboard:     []UserSummary{},
+			LastSolves:      []SolveSummary{},
 		}
 
 		// Current and next puzzles by unlock time.
@@ -98,26 +105,45 @@ func summaryHandler(a *auth.Auth, event puzzles.Event) http.Handler {
 		}
 		slices.SortFunc(upsNow, (*userProgress).Compare)
 
-		if currentIdx >= 0 {
-			p := event.Puzzles[currentIdx]
-			ps := &PuzzleSummary{
+		buildUnlocked := func(p puzzles.Puzzle) PuzzleSummary {
+			ps := PuzzleSummary{
 				Name:       p.Name,
 				UnlockTime: p.Unlock,
 			}
 			var solvers [2]int
+			var solverList [2][]SolverSummary
 			for _, up := range upsNow {
 				pp := up.puzzles[p.ID]
 				for j := range pp.Parts {
 					if j >= len(solvers) {
 						break
 					}
-					if !pp.Parts[j].Time.After(now) {
-						solvers[j]++
+					if pp.Parts[j].Time.After(now) {
+						continue
 					}
+					solvers[j]++
+					solverList[j] = append(solverList[j], SolverSummary{
+						DiscordID: discordIDs[up.user.ID],
+						Time:      pp.Parts[j].Time,
+					})
 				}
 			}
+			for j := range solverList {
+				slices.SortFunc(solverList[j], func(a, b SolverSummary) int {
+					return a.Time.Compare(b.Time)
+				})
+			}
 			ps.Solvers = &solvers
-			summary.CurrentPuzzle = ps
+			ps.SolverList = &solverList
+			return ps
+		}
+
+		if currentIdx >= 0 {
+			ps := buildUnlocked(event.Puzzles[currentIdx])
+			summary.CurrentPuzzle = &ps
+			for i := 0; i < currentIdx; i++ {
+				summary.PreviousPuzzles = append(summary.PreviousPuzzles, buildUnlocked(event.Puzzles[i]))
+			}
 		}
 		if nextIdx >= 0 {
 			p := event.Puzzles[nextIdx]
@@ -181,7 +207,6 @@ func summaryHandler(a *auth.Auth, event puzzles.Event) http.Handler {
 		for i := nowCount - 1; i >= start; i-- {
 			s := solvesNow[i]
 			summary.LastSolves = append(summary.LastSolves, SolveSummary{
-				UserName:   s.progress.user.Name,
 				DiscordID:  discordIDs[s.progress.user.ID],
 				PuzzleName: puzzleName[s.puzzle],
 				Part:       s.part + 1,
@@ -201,6 +226,10 @@ func summaryHandler(a *auth.Auth, event puzzles.Event) http.Handler {
 var summaryDocBody = []byte(`{
   "description": "Event summary snapshot returned by /{event}/summary.json.",
   "fields": {
+    "previousPuzzles": {
+      "type": "PuzzleSummary[]",
+      "description": "All puzzles that were unlocked before the current puzzle, in event order. Empty when no puzzle is unlocked or only the current one is."
+    },
     "currentPuzzle": {
       "type": "PuzzleSummary | null",
       "description": "The most recently unlocked puzzle at request time. null when no puzzle is unlocked yet."
@@ -231,6 +260,20 @@ var summaryDocBody = []byte(`{
       "solvers": {
         "type": "[integer, integer] | null",
         "description": "Number of unique solvers for part 1 and part 2 at request time. null when the puzzle is not yet unlocked."
+      },
+      "solverList": {
+        "type": "[SolverSummary[], SolverSummary[]] | null",
+        "description": "Per-part list of solvers with Discord ID and solve time, ordered by solve time ascending. null when the puzzle is not yet unlocked."
+      }
+    },
+    "SolverSummary": {
+      "discordId": {
+        "type": "string",
+        "description": "Discord user ID (snowflake) of the solver. Empty string when the user has no linked Discord account."
+      },
+      "time": {
+        "type": "string (RFC 3339 timestamp)",
+        "description": "The time the solver completed this part."
       }
     },
     "UserSummary": {
@@ -264,10 +307,6 @@ var summaryDocBody = []byte(`{
       }
     },
     "SolveSummary": {
-      "userName": {
-        "type": "string",
-        "description": "Display name of the user who made the solve."
-      },
       "discordId": {
         "type": "string",
         "description": "Discord user ID (snowflake) linked to the solver's account. Empty string when the user has no linked Discord account."
