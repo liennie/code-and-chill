@@ -2,6 +2,6 @@
 <div class="slide-title">
 	<h1 style="--name-len: {{ add (len .Fastest.User) 3 }}">⚡️ {{ .Fastest.User }}</h1>
 	<p class="subtitle"><span class="secondary-color">{{ solveTime .Fastest.Time .Fastest.Unlock }}</span></p>
-	<p class="subtitle">{{ .Fastest.Puzzle }}, Part {{ .Fastest.Part }}</p>
+	<p class="subtitle-row">{{ .Fastest.Puzzle }}, Part {{ .Fastest.Part }}</p>
 </div>
 {{ end }}

@@ -50,22 +50,46 @@ body {
 /* Shrinks to fit long names/titles on one line: --name-len (character count,
    set inline per slide when the text might be long) drives the font-size,
    clamped to a sane range. CSS can't measure rendered text length itself, so
-   the length has to come from the template that already knows the text. */
+   the length has to come from the template that already knows the text.
+   Fixed height + matching line-height centers the (single-line, nowrap)
+   text vertically within it, so whatever follows below never shifts
+   position as the font-size grows or shrinks. Plain line-height (rather
+   than display:flex) keeps normal inline flow, so spacing between text and
+   inline elements like <span> isn't affected. */
 .slide-title h1,
 .slide-centered h1,
 .slide-place h1 {
 	margin: 0;
+	height: 140pt;
+	line-height: 140pt;
 	font-family: "JetBrains Mono", monospace;
 	font-weight: 800;
 	font-size: clamp(28pt, calc(85vw / (var(--name-len, 10) * 0.62)), 104pt);
 	color: #fff;
 	text-align: center;
 	white-space: nowrap;
+	overflow: hidden;
 }
 
 .slide-title .subtitle,
 .slide-title h2 {
 	margin: 1rem 0 0;
+	font-family: "JetBrains Mono", monospace;
+	font-weight: 800;
+	font-size: 56pt;
+	color: #adadad;
+	text-align: center;
+}
+
+/* Same fixed-box idea as the name above, for rows whose text length varies
+   (e.g. a puzzle name that may wrap to one or two lines) so later rows don't
+   shift depending on that. */
+.slide-title .subtitle-row {
+	margin: 1rem 0 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 145pt;
 	font-family: "JetBrains Mono", monospace;
 	font-weight: 800;
 	font-size: 56pt;
