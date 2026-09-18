@@ -291,7 +291,7 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 		))
 
 		reg("GET", "/admin/slides", "html/admin/slides.html", adminMux(
-			adminSlidesListMiddleware(slideDeckNames, page(htmlDataFunc(http.StatusOK, "Admin :: Slides", readFile(fsys, "html/admin/slides.html")))),
+			adminSlidesListMiddleware(slideDeckNames, page(htmlDataFunc(http.StatusOK, "Admin :: Presentation", readFile(fsys, "html/admin/slides.html")))),
 			notFoundHandler,
 		))
 
@@ -299,7 +299,7 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 			deck := loadSlideDeck(fsys, deckName, "/"+e+"/admin/slides")
 
 			reg("GET", "/admin/slides/"+deckName, "slideDeck.handler", adminMux(
-				leaderboardMiddleware(auth, event, deck.handler(slidesSkeleton, "Admin :: Slides :: "+deckName, etags)),
+				leaderboardMiddleware(auth, event, deck.handler(slidesSkeleton, "Admin :: Presentation :: "+deckName, etags)),
 				notFoundHandler,
 			))
 		}
