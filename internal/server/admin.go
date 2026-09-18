@@ -296,6 +296,65 @@ func adminPuzzleInputHandler(event puzzles.Event, notfound http.Handler) http.Ha
 	})
 }
 
+// presentationData holds pre-calculated values for presentation templates.
+// Fields are flat, grouping related values into small substructs, so
+// templates can use short paths such as .Leaderboard.First.Name.
+type presentationData struct {
+	Event presentationEventData
+	Now   time.Time
+
+	LB presentationLeaderboardData
+
+	Solvers     int
+	Part1Solves int
+	Part2Solves int
+}
+
+type presentationEventData struct {
+	Name string
+}
+
+type presentationLeaderboardData struct {
+	First  *presentationPlaceData
+	Second *presentationPlaceData
+	Third  *presentationPlaceData
+}
+
+type presentationPlaceData struct {
+	Name  string
+	Parts int
+	Score int
+}
+
+func newPresentationData(pd *pageData) presentationData {
+	place := func(i int) *presentationPlaceData {
+		if i >= len(pd.Leaderboard) || pd.Leaderboard[i].Solved == 0 {
+			return nil
+		}
+		lb := pd.Leaderboard[i]
+		return &presentationPlaceData{
+			Name:  lb.User.Name,
+			Parts: lb.Solved,
+			Score: lb.Score,
+		}
+	}
+
+	return presentationData{
+		Event: presentationEventData{
+			Name: pd.Event.Name,
+		},
+		Now: pd.Now,
+		LB: presentationLeaderboardData{
+			First:  place(0),
+			Second: place(1),
+			Third:  place(2),
+		},
+		Solvers:     pd.Solvers,
+		Part1Solves: pd.Part1Solves,
+		Part2Solves: pd.Part2Solves,
+	}
+}
+
 type adminPresentationContainer struct {
 	ret         string
 	retHasQuery bool
@@ -439,6 +498,7 @@ func (a *adminPresentationContainer) renderHandler(notFound http.Handler) http.H
 		}
 
 		pd := pageDataFromContext(r.Context())
+		pdata := newPresentationData(pd)
 
 		dst := &bytes.Buffer{}
 		dstZip := zip.NewWriter(dst)
@@ -460,7 +520,7 @@ func (a *adminPresentationContainer) renderHandler(notFound http.Handler) http.H
 					panic(fmt.Errorf("create %q: %w", f.Name, err))
 				}
 
-				err = t.Execute(w, pd)
+				err = t.Execute(w, pdata)
 				if err != nil {
 					panic(fmt.Errorf("execute %q: %w", f.Name, err))
 				}
@@ -477,9 +537,6 @@ func (a *adminPresentationContainer) renderHandler(notFound http.Handler) http.H
 		if err != nil {
 			panic(fmt.Errorf("close zip: %w", err))
 		}
-
-		// pd := pageDataFromContext(r.Context())
-		// t.Execute()
 
 		w.Header().Set("Content-Type", a.contentType)
 		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", a.fileName))

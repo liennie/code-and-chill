@@ -41,6 +41,10 @@ type pageData struct {
 	LeaderboardChartAtMax int64
 	LeaderboardChartAt    int64
 
+	Solvers     int
+	Part1Solves int
+	Part2Solves int
+
 	Dark    bool
 	Title   string
 	Content template.HTML

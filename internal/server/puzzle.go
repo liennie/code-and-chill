@@ -470,6 +470,13 @@ func leaderboardMiddleware(a *auth.Auth, event puzzles.Event, next http.Handler)
 		ups, solves, points := prepareSolves(a, event)
 
 		for _, solve := range solves {
+			switch solve.part {
+			case 0:
+				pd.Part1Solves++
+			case 1:
+				pd.Part2Solves++
+			}
+
 			up := solve.progress
 
 			up.solved++
@@ -487,6 +494,9 @@ func leaderboardMiddleware(a *auth.Auth, event puzzles.Event, next http.Handler)
 		}
 
 		slices.SortFunc(ups, (*userProgress).Compare)
+
+		pd.Solvers = len(ups)
+
 		if len(ups) > 50 {
 			ups = ups[:50]
 		}
