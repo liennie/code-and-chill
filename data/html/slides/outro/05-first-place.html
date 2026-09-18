@@ -1,0 +1,15 @@
+{{ if .LB.First }}
+<div class="slide-place">
+	<h1 style="--name-len: {{ add (len .LB.First.Name) 3 }}">🥇 {{ .LB.First.Name }}</h1>
+	<div class="stats">
+		<div class="stat">
+			<div class="value">{{ .LB.First.Parts }}</div>
+			<div class="label"><span class="secondary-color">Parts solved</span></div>
+		</div>
+		<div class="stat">
+			<div class="value">{{ .LB.First.Score }}</div>
+			<div class="label"><span class="secondary-color">Score</span></div>
+		</div>
+	</div>
+</div>
+{{ end }}

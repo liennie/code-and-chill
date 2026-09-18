@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<title>{{ .Title }}</title>
+	{{ versioned "/presentation.css" .ETags }}
+	{{ versioned "/presentation.js" .ETags "defer" }}
+</head>
+
+<body data-back="{{ .Back }}">
+	<a href="{{ .Back }}" class="leave" title="Leave presentation">&times;</a>
+	{{- range .Slides }}
+	<section class="slide">{{ . }}</section>
+	{{- end }}
+</body>
+
+</html>

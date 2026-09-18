@@ -1,0 +1,153 @@
+html, body {
+	height: 100%;
+	margin: 0;
+}
+
+body {
+	background: #1b1e22;
+	overflow: hidden;
+}
+
+/* Click-based fallback for leaving the presentation, in case Escape is
+   intercepted by the OS or browser before it reaches the page. */
+.leave {
+	position: fixed;
+	top: 0.5rem;
+	right: 0.75rem;
+	z-index: 10;
+	font-family: "JetBrains Mono", monospace;
+	font-size: 1.5rem;
+	line-height: 1;
+	color: #adadad;
+	text-decoration: none;
+	opacity: 0.25;
+}
+
+.leave:hover {
+	opacity: 1;
+	color: #fff;
+}
+
+.secondary-color {
+	color: #5865f2;
+}
+
+.slide {
+	display: none;
+	position: fixed;
+	inset: 0;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	padding: 4rem;
+}
+
+.slide.active {
+	display: flex;
+}
+
+.slide-title h1,
+.slide-centered h1 {
+	margin: 0;
+	font-family: "JetBrains Mono", monospace;
+	font-weight: 800;
+	font-size: 104pt;
+	color: #fff;
+	text-align: center;
+}
+
+.slide-title .subtitle,
+.slide-title h2 {
+	margin: 1rem 0 0;
+	font-family: "JetBrains Mono", monospace;
+	font-weight: 800;
+	font-size: 56pt;
+	color: #adadad;
+	text-align: center;
+}
+
+/* Shrinks to fit long names on one line: --name-len (character count, set
+   inline per slide) drives the font-size, clamped to a sane range. CSS can't
+   measure rendered text length itself, so the length has to come from the
+   template that already knows the name. */
+.slide-place h1 {
+	margin: 0;
+	font-family: "JetBrains Mono", monospace;
+	font-weight: 800;
+	font-size: clamp(28pt, calc(85vw / (var(--name-len, 12) * 0.62)), 104pt);
+	color: #fff;
+	text-align: center;
+	white-space: nowrap;
+}
+
+/* Name on top, then any number of stat boxes (parts solved, score, ...)
+   spread across equal-width columns below it. */
+.slide-place {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.slide-place .stats {
+	display: grid;
+	grid-auto-flow: column;
+	grid-auto-columns: 1fr;
+	gap: 4rem;
+	margin-top: 2rem;
+}
+
+.slide-place .stat {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.slide-place .stat .value {
+	font-family: "JetBrains Mono", monospace;
+	font-weight: 800;
+	font-size: 56pt;
+	color: #fff;
+	text-align: center;
+}
+
+.slide-place .stat .label {
+	margin-top: 0.5rem;
+	font-family: "Helvetica Neue", Helvetica, "Liberation Sans", Arial, sans-serif;
+	font-size: 24pt;
+	color: #adadad;
+	text-align: center;
+}
+
+/* Any number of .col boxes; each gets an equal-width column. */
+.slide-columns {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+.slide-columns h1 {
+	margin: 0 0 2rem;
+	font-family: "JetBrains Mono", monospace;
+	font-weight: 800;
+	font-size: 48pt;
+	color: #fff;
+	text-align: left;
+}
+
+.slide-columns .cols {
+	flex: 1;
+	display: grid;
+	grid-auto-flow: column;
+	grid-auto-columns: 1fr;
+	gap: 3rem;
+	min-height: 0;
+}
+
+.slide-columns .col {
+	font-family: "Helvetica Neue", Helvetica, "Liberation Sans", Arial, sans-serif;
+	font-size: 36pt;
+	color: #adadad;
+	overflow: auto;
+}

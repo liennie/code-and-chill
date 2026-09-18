@@ -1,0 +1,7 @@
+<h1 id="slides"><a href="/{{ $.Event.Path }}/admin">Admin</a>::Slides</h1>
+
+<ul>
+	{{- range .Admin.SlideDecks }}
+	<li><a href="/{{ $.Event.Path }}/admin/slides/{{ . }}">{{ . }}</a></li>
+	{{- end }}
+</ul>

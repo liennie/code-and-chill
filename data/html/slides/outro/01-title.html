@@ -1,0 +1,11 @@
+<div class="slide-title">
+	<h1>Code && Chill</h1>
+	<p class="subtitle">
+		{{- $seg := splitList "::" .Event.Name }}
+		{{- range $i, $_ := $seg }}
+		{{- if $i }}::{{ end }}
+		{{- if or $i (eq (len $seg) 1) }}<span class="secondary-color">{{ . }}</span>
+		{{- else }}{{ . }}{{ end }}
+		{{- end -}}
+	</p>
+</div>

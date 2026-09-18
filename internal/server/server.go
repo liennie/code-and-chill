@@ -130,6 +130,9 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 	adminJSETag, adminJSHandler := cachedHandler(dataFile(fsys, "extra/admin.js"))
 	etags["/admin.js"] = adminJSETag
 
+	slideDeckNames := discoverSlideDecks(fsys)
+	slidesSkeleton := parseSlidesSkeleton(fsys)
+
 	eventMiddleware := func(event puzzles.Event) func(http.Handler) http.Handler {
 		return func(handler http.Handler) http.Handler {
 			handler = etagsMiddleware(etags, handler)
@@ -287,32 +290,19 @@ func newHandler(config Config, db *db.DB, session *session.Store, auth *auth.Aut
 			notFoundHandler,
 		))
 
-		pres := newAdminPresentationContainer("/" + e + "/admin/presentation")
-
-		reg("GET", "/admin/presentation", "html/admin/presentation.html", adminMux(
-			pres.middleware(page(htmlDataFunc(http.StatusOK, "Admin :: Presentation", readFile(fsys, "html/admin/presentation.html")))),
+		reg("GET", "/admin/slides", "html/admin/slides.html", adminMux(
+			adminSlidesListMiddleware(slideDeckNames, page(htmlDataFunc(http.StatusOK, "Admin :: Slides", readFile(fsys, "html/admin/slides.html")))),
 			notFoundHandler,
 		))
 
-		reg("POST", "/admin/presentation/upload", "adminPresentationContainer.uploadHandler", adminMux(
-			pres.uploadHandler(),
-			notFoundHandler,
-		))
+		for _, deckName := range slideDeckNames {
+			deck := loadSlideDeck(fsys, deckName, "/"+e+"/admin/slides")
 
-		reg("GET", "/admin/presentation/download", "adminPresentationContainer.downloadHandler", adminMux(
-			pres.downloadHandler(notFoundHandler),
-			notFoundHandler,
-		))
-
-		reg("GET", "/admin/presentation/render", "adminPresentationContainer.renderHandler", adminMux(
-			leaderboardMiddleware(auth, event, pres.renderHandler(notFoundHandler)),
-			notFoundHandler,
-		))
-
-		reg("POST", "/admin/presentation/clear", "adminPresentationContainer.clearHandler", adminMux(
-			pres.clearHandler(),
-			notFoundHandler,
-		))
+			reg("GET", "/admin/slides/"+deckName, "slideDeck.handler", adminMux(
+				leaderboardMiddleware(auth, event, deck.handler(slidesSkeleton, "Admin :: Slides :: "+deckName, etags)),
+				notFoundHandler,
+			))
+		}
 
 		reg("GET", "/admin/notifier", "html/admin/notifier.html", adminMux(
 			adminPuzzleListMiddleware(event, page(htmlDataFunc(http.StatusOK, "Admin :: Notifier", readFile(fsys, "html/admin/notifier.html")))),

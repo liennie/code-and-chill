@@ -125,7 +125,7 @@ type adminData struct {
 
 	LastSolves []adminSolveData
 
-	PresFileName string
+	SlideDecks []string
 }
 
 type adminSolveData struct {

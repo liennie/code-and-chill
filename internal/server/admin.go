@@ -1,23 +1,17 @@
 package server
 
 import (
-	"archive/zip"
-	"bytes"
 	"cmp"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"maps"
 	"net/http"
-	"net/url"
 	"slices"
 	"strconv"
 	"strings"
-	"text/template"
 	"time"
 
-	"github.com/Masterminds/sprig/v3"
 	"github.com/liennie/code-and-chill/internal/auth"
 	"github.com/liennie/code-and-chill/internal/ctxlog"
 	"github.com/liennie/code-and-chill/internal/notifier"
@@ -182,6 +176,16 @@ func adminPuzzleListMiddleware(event puzzles.Event, next http.Handler) http.Hand
 	})
 }
 
+func adminSlidesListMiddleware(decks []string, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		pd := pageDataFromContext(r.Context())
+		pd.Admin = &adminData{}
+		pd.Admin.SlideDecks = decks
+
+		next.ServeHTTP(w, r)
+	})
+}
+
 func adminPuzzleProgressData(puzzle puzzles.Puzzle, userID string, progress *auth.UserProgress) puzzleProgressData {
 	ii := inputIndex(userID, puzzle)
 
@@ -293,263 +297,6 @@ func adminPuzzleInputHandler(event puzzles.Event, notfound http.Handler) http.Ha
 		}
 
 		puzzle[idx].ServeHTTP(w, r)
-	})
-}
-
-// presentationData holds pre-calculated values for presentation templates.
-// Fields are flat, grouping related values into small substructs, so
-// templates can use short paths such as .Leaderboard.First.Name.
-type presentationData struct {
-	Event presentationEventData
-	Now   time.Time
-
-	LB presentationLeaderboardData
-
-	Solvers     int
-	Part1Solves int
-	Part2Solves int
-}
-
-type presentationEventData struct {
-	Name string
-}
-
-type presentationLeaderboardData struct {
-	First  *presentationPlaceData
-	Second *presentationPlaceData
-	Third  *presentationPlaceData
-}
-
-type presentationPlaceData struct {
-	Name  string
-	Parts int
-	Score int
-}
-
-func newPresentationData(pd *pageData) presentationData {
-	place := func(i int) *presentationPlaceData {
-		if i >= len(pd.Leaderboard) || pd.Leaderboard[i].Solved == 0 {
-			return nil
-		}
-		lb := pd.Leaderboard[i]
-		return &presentationPlaceData{
-			Name:  lb.User.Name,
-			Parts: lb.Solved,
-			Score: lb.Score,
-		}
-	}
-
-	return presentationData{
-		Event: presentationEventData{
-			Name: pd.Event.Name,
-		},
-		Now: pd.Now,
-		LB: presentationLeaderboardData{
-			First:  place(0),
-			Second: place(1),
-			Third:  place(2),
-		},
-		Solvers:     pd.Solvers,
-		Part1Solves: pd.Part1Solves,
-		Part2Solves: pd.Part2Solves,
-	}
-}
-
-type adminPresentationContainer struct {
-	ret         string
-	retHasQuery bool
-
-	fileName    string
-	contentType string
-	content     []byte
-}
-
-func newAdminPresentationContainer(ret string) *adminPresentationContainer {
-	return &adminPresentationContainer{
-		ret:         ret,
-		retHasQuery: strings.Contains(ret, "?"),
-	}
-}
-
-func (a *adminPresentationContainer) middleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		pd := pageDataFromContext(r.Context())
-		pd.Admin = &adminData{}
-
-		if a.fileName != "" {
-			pd.Admin.PresFileName = a.fileName
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}
-
-func (a *adminPresentationContainer) retURL(v url.Values) string {
-	if len(v) == 0 {
-		return a.ret
-	}
-
-	if a.retHasQuery {
-		return a.ret + "&" + v.Encode()
-	} else {
-		return a.ret + "?" + v.Encode()
-	}
-}
-
-func (a *adminPresentationContainer) retStatus(status string) string {
-	if status == "" {
-		return a.ret
-	}
-
-	v := url.Values{}
-	v.Set("status", status)
-	return a.retURL(v)
-}
-
-func (a *adminPresentationContainer) uploadHandler() http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		logger := ctxlog.Get(r.Context())
-
-		ret := func(status string) {
-			http.Redirect(w, r, a.retStatus(status), http.StatusSeeOther)
-		}
-
-		err := r.ParseMultipartForm(100 * 1024 * 1024)
-		if err != nil {
-			logger.Error("multipart parse", "error", err)
-			ret("parse-err")
-			return
-		}
-
-		presFiles := r.MultipartForm.File["presentation"]
-		if len(presFiles) == 0 {
-			ret("no-file")
-			return
-		}
-		if len(presFiles) != 1 {
-			ret("too-many-files")
-			return
-		}
-
-		fileMeta := presFiles[0]
-		f, err := fileMeta.Open()
-		if err != nil {
-			logger.Error("multipart open", "error", err)
-			ret("open-err")
-			return
-		}
-		defer f.Close()
-
-		content, err := io.ReadAll(f)
-		if err != nil {
-			logger.Error("multipart read", "error", err)
-			ret("read-err")
-			return
-		}
-
-		_, err = zip.NewReader(bytes.NewReader(content), fileMeta.Size)
-		if err != nil {
-			logger.Error("multipart unzip", "error", err)
-			ret("zip-err")
-			return
-		}
-
-		a.fileName = fileMeta.Filename
-		a.contentType = fileMeta.Header.Get("Content-Type")
-		a.content = content
-		ret("up-ok")
-	})
-}
-
-func (a *adminPresentationContainer) downloadHandler(notFound http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if a.fileName == "" {
-			notFound.ServeHTTP(w, r)
-			return
-		}
-
-		w.Header().Set("Content-Type", a.contentType)
-		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", a.fileName))
-		w.WriteHeader(http.StatusOK)
-		w.Write(a.content)
-	})
-}
-
-func (a *adminPresentationContainer) renderHandler(notFound http.Handler) http.Handler {
-	readAll := func(f *zip.File) ([]byte, error) {
-		r, err := f.Open()
-		if err != nil {
-			return nil, fmt.Errorf("open: %w", err)
-		}
-		defer r.Close()
-
-		return io.ReadAll(r)
-	}
-
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if a.fileName == "" {
-			notFound.ServeHTTP(w, r)
-			return
-		}
-
-		srcZip, err := zip.NewReader(bytes.NewReader(a.content), int64(len(a.content)))
-		if err != nil {
-			panic(fmt.Errorf("zip reader: %w", err))
-		}
-
-		pd := pageDataFromContext(r.Context())
-		pdata := newPresentationData(pd)
-
-		dst := &bytes.Buffer{}
-		dstZip := zip.NewWriter(dst)
-		for _, f := range srcZip.File {
-			if f.Name == "content.xml" {
-				content, err := readAll(f)
-				if err != nil {
-					panic(fmt.Errorf("read %q: %w", f.Name, err))
-				}
-
-				t, err := template.New(f.Name).Funcs(sprig.HtmlFuncMap()).Funcs(extraFuncs).Parse(string(content))
-				if err != nil {
-					panic(fmt.Errorf("parse %q: %w", f.Name, err))
-				}
-
-				fh := f.FileHeader
-				w, err := dstZip.CreateHeader(&fh)
-				if err != nil {
-					panic(fmt.Errorf("create %q: %w", f.Name, err))
-				}
-
-				err = t.Execute(w, pdata)
-				if err != nil {
-					panic(fmt.Errorf("execute %q: %w", f.Name, err))
-				}
-
-			} else {
-				err := dstZip.Copy(f)
-				if err != nil {
-					panic(fmt.Errorf("copy %q: %w", f.Name, err))
-				}
-			}
-		}
-
-		err = dstZip.Close()
-		if err != nil {
-			panic(fmt.Errorf("close zip: %w", err))
-		}
-
-		w.Header().Set("Content-Type", a.contentType)
-		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", a.fileName))
-		w.WriteHeader(http.StatusOK)
-		w.Write(dst.Bytes())
-	})
-}
-
-func (a *adminPresentationContainer) clearHandler() http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		a.fileName = ""
-		a.content = nil
-		http.Redirect(w, r, a.retStatus("clear-ok"), http.StatusSeeOther)
 	})
 }
 

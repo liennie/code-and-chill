@@ -29,14 +29,14 @@ auth:
     exchangeTimeout: 10s
     guildID: "1472383140310814783"
 
-notifier:
-  baseURI: http://localhost:8080/
-  discord:
-    token: secret/discord.token.txt
-    channels:
-      gt7:
-        notifications: "1472419290568331458"
-        forum: "1472400581229547621"
+# notifier:
+#   baseURI: http://localhost:8080/
+#   discord:
+#     token: secret/discord.token.txt
+#     channels:
+#       gt7:
+#         notifications: "1472419290568331458"
+#         forum: "1472400581229547621"
 
 puzzles:
   name: "Code && Chill"
