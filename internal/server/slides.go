@@ -27,10 +27,21 @@ type presentationData struct {
 	Solvers     int
 	Part1Solves int
 	Part2Solves int
+
+	Fastest *presentationSolveData
+	Slowest *presentationSolveData
 }
 
 type presentationEventData struct {
 	Name string
+}
+
+type presentationSolveData struct {
+	User   string
+	Puzzle string
+	Part   int
+	Time   time.Time
+	Unlock time.Time
 }
 
 type presentationLeaderboardData struct {
@@ -58,6 +69,19 @@ func newPresentationData(pd *pageData) presentationData {
 		}
 	}
 
+	solve := func(s *solveExtremeData) *presentationSolveData {
+		if s == nil {
+			return nil
+		}
+		return &presentationSolveData{
+			User:   s.User,
+			Puzzle: s.Puzzle,
+			Part:   s.Part,
+			Time:   s.Time,
+			Unlock: s.Unlock,
+		}
+	}
+
 	return presentationData{
 		Event: presentationEventData{
 			Name: pd.Event.Name,
@@ -71,6 +95,9 @@ func newPresentationData(pd *pageData) presentationData {
 		Solvers:     pd.Solvers,
 		Part1Solves: pd.Part1Solves,
 		Part2Solves: pd.Part2Solves,
+
+		Fastest: solve(pd.FastestSolve),
+		Slowest: solve(pd.SlowestSolve),
 	}
 }
 
@@ -178,6 +205,8 @@ func (d *slideDeck) handler(skeleton *template.Template, title string, etags map
 		}
 
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		// Allow same-origin framing so the admin deck list can show a live iframe thumbnail.
+		w.Header().Set("X-Frame-Options", "SAMEORIGIN")
 		if _, err := io.Copy(w, buf); err != nil {
 			logger := ctxlog.Get(r.Context())
 			logger.Error("failed to write response", "error", err)

@@ -469,6 +469,13 @@ func leaderboardMiddleware(a *auth.Auth, event puzzles.Event, next http.Handler)
 
 		ups, solves, points := prepareSolves(a, event)
 
+		puzzleByID := make(map[string]puzzles.Puzzle, len(event.Puzzles))
+		for _, p := range event.Puzzles {
+			puzzleByID[p.ID] = p
+		}
+
+		var fastest, slowest *solveExtremeData
+
 		for _, solve := range solves {
 			switch solve.part {
 			case 0:
@@ -491,7 +498,34 @@ func leaderboardMiddleware(a *auth.Auth, event puzzles.Event, next http.Handler)
 			if solve.time.After(up.lastSolve) {
 				up.lastSolve = solve.time
 			}
+
+			puzzle, ok := puzzleByID[solve.puzzle]
+			if ok && !solve.time.Before(puzzle.Unlock) {
+				dur := solve.time.Sub(puzzle.Unlock)
+
+				if fastest == nil || dur < fastest.Time.Sub(fastest.Unlock) {
+					fastest = &solveExtremeData{
+						User:   up.user.Name,
+						Puzzle: puzzle.Name,
+						Part:   solve.part + 1,
+						Time:   solve.time,
+						Unlock: puzzle.Unlock,
+					}
+				}
+				if slowest == nil || dur > slowest.Time.Sub(slowest.Unlock) {
+					slowest = &solveExtremeData{
+						User:   up.user.Name,
+						Puzzle: puzzle.Name,
+						Part:   solve.part + 1,
+						Time:   solve.time,
+						Unlock: puzzle.Unlock,
+					}
+				}
+			}
 		}
+
+		pd.FastestSolve = fastest
+		pd.SlowestSolve = slowest
 
 		slices.SortFunc(ups, (*userProgress).Compare)
 

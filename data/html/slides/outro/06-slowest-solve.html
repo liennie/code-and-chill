@@ -1,0 +1,7 @@
+{{ if .Slowest }}
+<div class="slide-title">
+	<h1 style="--name-len: {{ add (len .Slowest.User) 3 }}">💪 {{ .Slowest.User }}</h1>
+	<p class="subtitle"><span class="secondary-color">{{ solveTime .Slowest.Time .Slowest.Unlock }}</span></p>
+	<p class="subtitle">{{ .Slowest.Puzzle }}, Part {{ .Slowest.Part }}</p>
+</div>
+{{ end }}

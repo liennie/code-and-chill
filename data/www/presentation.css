@@ -47,14 +47,20 @@ body {
 	display: flex;
 }
 
+/* Shrinks to fit long names/titles on one line: --name-len (character count,
+   set inline per slide when the text might be long) drives the font-size,
+   clamped to a sane range. CSS can't measure rendered text length itself, so
+   the length has to come from the template that already knows the text. */
 .slide-title h1,
-.slide-centered h1 {
+.slide-centered h1,
+.slide-place h1 {
 	margin: 0;
 	font-family: "JetBrains Mono", monospace;
 	font-weight: 800;
-	font-size: 104pt;
+	font-size: clamp(28pt, calc(85vw / (var(--name-len, 10) * 0.62)), 104pt);
 	color: #fff;
 	text-align: center;
+	white-space: nowrap;
 }
 
 .slide-title .subtitle,
@@ -65,20 +71,6 @@ body {
 	font-size: 56pt;
 	color: #adadad;
 	text-align: center;
-}
-
-/* Shrinks to fit long names on one line: --name-len (character count, set
-   inline per slide) drives the font-size, clamped to a sane range. CSS can't
-   measure rendered text length itself, so the length has to come from the
-   template that already knows the name. */
-.slide-place h1 {
-	margin: 0;
-	font-family: "JetBrains Mono", monospace;
-	font-weight: 800;
-	font-size: clamp(28pt, calc(85vw / (var(--name-len, 12) * 0.62)), 104pt);
-	color: #fff;
-	text-align: center;
-	white-space: nowrap;
 }
 
 /* Name on top, then any number of stat boxes (parts solved, score, ...)

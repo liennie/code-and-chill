@@ -1,7 +1,12 @@
 <h1 id="slides"><a href="/{{ $.Event.Path }}/admin">Admin</a>::Slides</h1>
 
-<ul>
+<ul class="deck-list">
 	{{- range .Admin.SlideDecks }}
-	<li><a href="/{{ $.Event.Path }}/admin/slides/{{ . }}">{{ . }}</a></li>
+	<li>
+		<a href="/{{ $.Event.Path }}/admin/slides/{{ . }}">
+			<span class="deck-thumb"><iframe src="/{{ $.Event.Path }}/admin/slides/{{ . }}" tabindex="-1" loading="lazy"></iframe></span>
+			<span class="deck-name">{{ . }}</span>
+		</a>
+	</li>
 	{{- end }}
 </ul>

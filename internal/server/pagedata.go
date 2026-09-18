@@ -45,6 +45,9 @@ type pageData struct {
 	Part1Solves int
 	Part2Solves int
 
+	FastestSolve *solveExtremeData
+	SlowestSolve *solveExtremeData
+
 	Dark    bool
 	Title   string
 	Content template.HTML
@@ -52,6 +55,16 @@ type pageData struct {
 	Admin *adminData
 
 	ETags map[string]string
+}
+
+// solveExtremeData describes the fastest or slowest solve (unlock to solve
+// time) seen across all puzzles and users.
+type solveExtremeData struct {
+	User   string
+	Puzzle string
+	Part   int
+	Time   time.Time
+	Unlock time.Time
 }
 
 type eventData struct {
